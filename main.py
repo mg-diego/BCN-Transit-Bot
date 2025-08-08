@@ -29,7 +29,7 @@ import html
 from favorites_manager import FavoritesManager
 
 # Telegram token
-TELEGRAM_TOKEN = '<TOKEN>' 
+TELEGRAM_TOKEN = '8317002003:AAEhNCjOiLonP5DkTfgBfGSdstnOUr-jd_g' 
 
 # Estados
 MENU, ASK_METRO_LINE, ASK_METRO_STATION, ASK_BUS_LINE, ASK_BUS_STOP = range(5)
@@ -216,7 +216,7 @@ async def go_back(query, context: CallbackContext) -> int:
         return ASK_METRO_LINE
     return MENU
 
-async def button(update: Update, context: CallbackContext) -> int:
+async def menu(update: Update, context: CallbackContext) -> int:
     query = update.callback_query
     await query.answer()
 
@@ -241,25 +241,47 @@ async def button(update: Update, context: CallbackContext) -> int:
         user_id = query.from_user.id
         favs = favorites_manager.get_all_favorites(user_id)
 
+        fav_keyboard = []
+        
         if not favs["metro"] and not favs["bus"]:
-            text = f"Hola '{user_id}', tu lista de favoritos está vacía."
-        else:
-            lines = ["Tus favoritos:\n"]
+            await query.edit_message_text(
+                f"Hola {query.from_user.first_name} 👋\nAún no tienes nada en tu lista de favoritos. ¡Empieza a añadir algunos para encontrarlos más rápido!"
+            )
+            clear_history(context)
+            return ConversationHandler.END
 
-            if favs["metro"]:
-                lines.append("Metro:")
-                for item in favs["metro"]:
-                    # Personaliza el texto según los campos que tengas
-                    lines.append(f" - {item.get('NOM_LINIA', 'Sin nombre')} (Estación {item.get('NOM_ESTACIO', '')})")
+        # Metro favorites
+        if favs["metro"]:
+            for item in favs["metro"]:
+                metro_stations_cache[item.get('CODI_ESTACIO')] = {
+                    "metro_line_name": item.get('NOM_LINIA'),
+                    "station_name": item.get('NOM_ESTACIO'),
+                    "station_group_code": item.get("CODI_GRUP_ESTACIO"),
+                    "coordinates": item.get('coordinates')
+                }
+                name = f"{item.get('NOM_LINIA', 'Sin nombre')} - {item.get('NOM_ESTACIO', '')}"
+                fav_keyboard.append([
+                    InlineKeyboardButton(f"🚇 {name}", callback_data=f"metro_station:{item.get('CODI_ESTACIO')}")
+                ])
 
-            if favs["bus"]:
-                lines.append("\nBus:")
-                for item in favs["bus"]:
-                    lines.append(f" - {item.get('CODI_PARADA', 'Sin nombre')} (Línea {item.get('NOM_PARADA', '')})")
+        # Bus favorites
+        if favs["bus"]:
+            for item in favs["bus"]:
+                name = f"({item.get('CODI_PARADA', '')})  {item.get('NOM_PARADA', '')}"
+                fav_keyboard.append([
+                    InlineKeyboardButton(f"🚌 {name}", callback_data=f"show_bus_fav:{item.get('id')}")
+                ])
 
-            text = "\n".join(lines)
+        # Close button
+        fav_keyboard.append([InlineKeyboardButton("❌ Cerrar", callback_data="close_favorites")])
 
-        await query.edit_message_text(text)
+        reply_markup = InlineKeyboardMarkup(fav_keyboard)
+
+        await query.edit_message_text(
+            "📌 Tus favoritos:",
+            reply_markup=reply_markup
+        )
+
         clear_history(context)
         return ConversationHandler.END
 
@@ -310,9 +332,6 @@ async def handle_selection(update: Update, context: CallbackContext) -> int:
 
     return MENU
 
-async def add_to_favorites(update: Update, context: CallbackContext) -> int:
-    pass
-
 async def add_fav_callback(update: Update, context: CallbackContext):
     query = update.callback_query
     await query.answer()
@@ -330,6 +349,7 @@ async def add_fav_callback(update: Update, context: CallbackContext):
             "CODI_ESTACIO": item_id,
             "NOM_ESTACIO": cache_item["station_name"],
             "CODI_LINIA": 5,
+            "CODI_GRUP_ESTACIO": cache_item["station_group_code"],
             "NOM_LINIA": cache_item["metro_line_name"],
             "coordinates": cache_item["coordinates"]
         }
@@ -391,9 +411,10 @@ async def handle_detailed_selection(update: Update, context: CallbackContext) ->
         return ConversationHandler.END
 
     if data.startswith("metro_station:"):
-        _, station_id= data.split(":")
+        _, station_id = data.split(":")
 
         station = metro_stations_cache.get(int(station_id))
+        print(metro_stations_cache)
 
         desc_text = (
             f"🚏 <b>ESTACIÓN '{station["station_name"].upper()}'</b> 🚏\n\n"
@@ -559,7 +580,7 @@ def main():
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler("search", search), CommandHandler("start", start)],
         states={
-            MENU: [CallbackQueryHandler(button)],
+            MENU: [CallbackQueryHandler(menu)],
             ASK_METRO_LINE: [CallbackQueryHandler(handle_metro_line)],
             ASK_BUS_LINE: [CallbackQueryHandler(handle_bus_line)],
         },

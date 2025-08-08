@@ -23,8 +23,8 @@ logger = logging.getLogger(__name__)
 
 # https://developer.tmb.cat/api-docs/v1
 
-APP_ID = '<APP_ID>'
-APP_KEY = '<APP_KEY>'
+APP_ID = 'df68e9ef'
+APP_KEY = '04880df3606c44ff8e96428d2ce10d26'
 
 # Endpoint base de TMB
 BASE_URL_TRANSIT = 'https://api.tmb.cat/v1/transit'
