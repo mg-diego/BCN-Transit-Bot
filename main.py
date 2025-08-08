@@ -29,7 +29,7 @@ import html
 from favorites_manager import FavoritesManager
 
 # Telegram token
-TELEGRAM_TOKEN = '8317002003:AAEhNCjOiLonP5DkTfgBfGSdstnOUr-jd_g' 
+TELEGRAM_TOKEN = '<TOKEN>' 
 
 # Estados
 MENU, ASK_METRO_LINE, ASK_METRO_STATION, ASK_BUS_LINE, ASK_BUS_STOP = range(5)
