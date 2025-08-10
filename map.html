@@ -21,6 +21,8 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lz-string@1.4.4/libs/lz-string.min.js"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
 
     <script>
         // Leer parámetros de la URL
@@ -105,16 +107,42 @@
         const bounds = [];
         coordsList.forEach(stop => {
             const icon = createColoredIcon(`#${stop.color}`);
-            L.marker([stop.lat, stop.lon], { icon })
-                .addTo(map)
-                .bindPopup(`📍 ${stop.name || "Parada"}`);
+
+            const marker = L.marker([stop.lat, stop.lon], { icon }).addTo(map);
+
+            // Popup con botón
+            const popupContent = document.createElement('div');
+            popupContent.innerHTML = `<p>📍 ${stop.name || "Parada"}</p>`;
+
+            const btn = document.createElement('button');
+            btn.textContent = "Seleccionar parada";
+            btn.style.cursor = "pointer";
+            btn.style.marginTop = "5px";
+            btn.style.padding = "5px 10px";
+
+            btn.addEventListener('click', () => {
+            if (window.Telegram?.WebApp) {
+                // Enviar datos al bot como string JSON
+                window.Telegram.WebApp.sendData(JSON.stringify({
+                    lat: stop.lat,
+                    lon: stop.lon,
+                    name: stop.name,
+                    color: stop.color
+                }));
+
+                marker.closePopup();
+
+                window.Telegram.WebApp.close();
+            } else {
+                alert("Esta función solo funciona dentro de la WebApp de Telegram.");
+            }
+            });
+
+            popupContent.appendChild(btn);
+
+            marker.bindPopup(popupContent);
             bounds.push([stop.lat, stop.lon]);
         });
-
-        // Ajustar vista
-        if (bounds.length > 1) {
-            map.fitBounds(bounds, { padding: [50, 50] });
-        }
-    </script>
+        </script>
 </body>
 </html>

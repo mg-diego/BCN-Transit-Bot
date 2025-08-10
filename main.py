@@ -10,7 +10,7 @@ from api import (
     get_metro_station_connections,
     get_metro_station_alerts
 )
-import logging, time
+import logging, time, json
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
 from telegram.ext import (
     ApplicationBuilder,
@@ -19,6 +19,7 @@ from telegram.ext import (
     ConversationHandler,
     MessageHandler,
     CommandHandler,
+    ContextTypes,
     filters,
 )
 
@@ -587,6 +588,30 @@ async def help_command(update: Update, context: CallbackContext) -> None:
 
     await update.message.reply_text(help_text, parse_mode='HTML')
 
+async def webapp_data_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    # Verifica si el mensaje tiene web_app_data
+    if update.message and update.message.web_app_data:
+        data_str = update.message.web_app_data.data  # string JSON enviado desde la webapp
+        try:
+            data = json.loads(data_str)
+            lat = data.get("lat")
+            lon = data.get("lon")
+            name = data.get("name")
+            color = data.get("color")
+
+            # Aquí puedes hacer lo que necesites con esos datos,
+            # p.ej. guardar en BD, enviar info al usuario, etc.
+
+            await update.message.reply_text(
+                f"Parada seleccionada:\n"
+                f"Nombre: {name}\n"
+                f"Latitud: {lat}\n"
+                f"Longitud: {lon}\n"
+                f"Color: #{color}"
+            )
+
+        except json.JSONDecodeError:
+            await update.message.reply_text("Error al interpretar los datos recibidos.")
 # Main
 def main():
     application = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
@@ -607,6 +632,7 @@ def main():
     application.add_handler(CallbackQueryHandler(handle_detailed_selection, pattern=r"^metro_station:|^bus_stop:|close_station_info"))
     application.add_handler(CallbackQueryHandler(add_fav_callback, pattern=r"^add_fav:"))
     application.add_handler(CallbackQueryHandler(remove_fav_callback, pattern=r"^remove_fav:"))
+    application.add_handler(MessageHandler(filters.StatusUpdate.WEB_APP_DATA, webapp_data_handler))
     application.run_polling()
 
 if __name__ == "__main__":

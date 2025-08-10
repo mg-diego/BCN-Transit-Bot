@@ -20,6 +20,7 @@ class Mapper:
 
         json_str = json.dumps(data)
         compressed = lz.compressToEncodedURIComponent(json_str)
+        print(compressed)
         return compressed
     
     def map_bus_stops(self, from_origin, from_destination):        
@@ -38,4 +39,5 @@ class Mapper:
 
         json_str = json.dumps(data)
         compressed = lz.compressToEncodedURIComponent(json_str)
+        print(compressed)
         return compressed
