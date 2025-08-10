@@ -68,7 +68,7 @@
         let coordsList = [];
 
         if (compressed) {
-            const decompressed = LZString.decompressFromEncodedURIComponent(compressedData);
+            const decompressed = LZString.decompressFromEncodedURIComponent(compressed);
             const jsonData = JSON.parse(decompressed);
             console.log(jsonData)
             if (jsonData && jsonData.stops) {
