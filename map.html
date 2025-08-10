@@ -40,10 +40,12 @@
 
         // Obtener JSON desde URL (parámetro "data")
         const encodedData = getQueryParam("data");
+        console.log(encodedData)
         let coordsList = [];
 
         if (encodedData) {
             const jsonData = decodeBase64Json(encodedData);
+            console.log(jsonData)
             if (jsonData && jsonData.stops) {
                 coordsList = jsonData.stops.map(stop => ({
                     lat: stop.lat,

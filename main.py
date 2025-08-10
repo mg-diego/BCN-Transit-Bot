@@ -53,6 +53,10 @@ metro_stations_cache = {}
 bus_lines_cache = {}
 bus_stops_cache = {}
 
+stations = get_stations_by_metro_line(1)
+mapper = Mapper()
+encoded = mapper.map_metro_stations(stations)
+
 def add_to_metro_lines_cache(metro_line):
     metro_lines_cache[metro_line.CODI_LINIA] = {
         "name": metro_line.NOM_LINIA,

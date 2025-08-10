@@ -103,7 +103,6 @@ def get_metro_lines():
 def get_stations_by_metro_line(line):
     url = f'{BASE_URL_TRANSIT}/linies/metro/{line}/estacions'
     data = api_request(url)
-    print(data)
     features = data['features']
 
     stations = []
