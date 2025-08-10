@@ -9,7 +9,8 @@ class Mapper:
                 {
                     "lat": station.coordinates[1],
                     "lon": station.coordinates[0],
-                    "name": station.NOM_ESTACIO
+                    "name": station.NOM_ESTACIO,
+                    "color": station.COLOR_LINIA
                 }
                 for station in stations
             ]
