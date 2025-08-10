@@ -103,6 +103,7 @@ def get_metro_lines():
 def get_stations_by_metro_line(line):
     url = f'{BASE_URL_TRANSIT}/linies/metro/{line}/estacions'
     data = api_request(url)
+    print(data)
     features = data['features']
 
     stations = []
@@ -210,6 +211,11 @@ def get_metro_station_alerts(metro_line, metro_station_id):
 
     return station_alerts
 
+def get_metro_trams(line_id):
+    url = f"https://api.tmb.cat/v1/transit/linies/metro/{line_id}/trams"
+    print(api_request(url))
+
+
 def api_request(endpoint):
     headers = {
         'Accept': 'application/json'
@@ -229,3 +235,5 @@ def api_request(endpoint):
         logger.error(response.text)
         return {}
 
+
+#get_metro_trams(1)

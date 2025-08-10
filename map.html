@@ -21,32 +21,39 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // Función para leer parámetros de la URL
+        // Leer parámetros de la URL
         function getQueryParam(name) {
             const params = new URLSearchParams(window.location.search);
             return params.get(name);
         }
 
-        // Función para decodificar Base64 a JSON
-        function decodeCoords(encoded) {
+        // Decodificar Base64 a JSON
+        function decodeBase64Json(encoded) {
             try {
                 const jsonStr = atob(encoded);
                 return JSON.parse(jsonStr);
             } catch (e) {
-                console.error("Error decoding coordinates", e);
-                return [];
+                console.error("Error decoding JSON", e);
+                return null;
             }
         }
 
-        // Obtener coordenadas desde la URL
-        const encodedCoords = getQueryParam("coords");
+        // Obtener JSON desde URL (parámetro "data")
+        const encodedData = getQueryParam("data");
         let coordsList = [];
 
-        if (encodedCoords) {
-            coordsList = decodeCoords(encodedCoords);
+        if (encodedData) {
+            const jsonData = decodeBase64Json(encodedData);
+            if (jsonData && jsonData.stops) {
+                coordsList = jsonData.stops.map(stop => ({
+                    lat: stop.lat,
+                    lon: stop.lon,
+                    name: stop.name
+                }));
+            }
         }
 
-        // Si no hay coords, usar un ejemplo
+        // Si no hay datos, ejemplo por defecto
         if (!coordsList.length) {
             coordsList = [
                 { lat: 41.3851, lon: 2.1734, name: "Parada 1" },
@@ -61,7 +68,7 @@
         // Inicializar mapa
         const map = L.map('map').setView([avgLat, avgLon], 13);
 
-        // Añadir capa base
+        // Capa base
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap contributors'
         }).addTo(map);
@@ -75,7 +82,7 @@
             bounds.push([stop.lat, stop.lon]);
         });
 
-        // Ajustar vista para que se vean todos los marcadores
+        // Ajustar vista
         if (bounds.length > 1) {
             map.fitBounds(bounds, { padding: [50, 50] });
         }

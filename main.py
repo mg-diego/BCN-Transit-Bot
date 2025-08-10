@@ -26,6 +26,7 @@ import asyncio
 
 from favorites_manager import FavoritesManager
 from secrets_manager import SecretsManager
+from mapper import Mapper
 
 # Telegram token
 sm = SecretsManager()
@@ -90,11 +91,14 @@ def clear_history(context: CallbackContext):
 
 # Keyboards
 def get_main_menu_keyboard():
+    stations = get_stations_by_metro_line(1)
+    mapper = Mapper()
+    encoded = mapper.map_metro_stations(stations)
     return InlineKeyboardMarkup([
         [InlineKeyboardButton("🚇 Metro", callback_data="metro")],
         [InlineKeyboardButton("🚌 Bus", callback_data="bus")],
         [InlineKeyboardButton("♥️ Favorites", callback_data="favorites")],
-        [InlineKeyboardButton("Mapa", web_app=WebAppInfo(url="https://mg-diego.github.io/timeline-explorer/index.html"))]
+        [InlineKeyboardButton("Mapa", web_app=WebAppInfo(url=f"https://mg-diego.github.io/Metro-Bus-BCN/map.html?data={encoded}"))]
     ])
 
 def get_metro_lines_keyboard():
