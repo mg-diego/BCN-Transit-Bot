@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapa Leaflet - Varias paradas</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+        }
+        #map {
+            height: 100%;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // Función para leer parámetros de la URL
+        function getQueryParam(name) {
+            const params = new URLSearchParams(window.location.search);
+            return params.get(name);
+        }
+
+        // Función para decodificar Base64 a JSON
+        function decodeCoords(encoded) {
+            try {
+                const jsonStr = atob(encoded);
+                return JSON.parse(jsonStr);
+            } catch (e) {
+                console.error("Error decoding coordinates", e);
+                return [];
+            }
+        }
+
+        // Obtener coordenadas desde la URL
+        const encodedCoords = getQueryParam("coords");
+        let coordsList = [];
+
+        if (encodedCoords) {
+            coordsList = decodeCoords(encodedCoords);
+        }
+
+        // Si no hay coords, usar un ejemplo
+        if (!coordsList.length) {
+            coordsList = [
+                { lat: 41.3851, lon: 2.1734, name: "Parada 1" },
+                { lat: 41.3825, lon: 2.1769, name: "Parada 2" }
+            ];
+        }
+
+        // Calcular centro aproximado
+        const avgLat = coordsList.reduce((sum, c) => sum + c.lat, 0) / coordsList.length;
+        const avgLon = coordsList.reduce((sum, c) => sum + c.lon, 0) / coordsList.length;
+
+        // Inicializar mapa
+        const map = L.map('map').setView([avgLat, avgLon], 13);
+
+        // Añadir capa base
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        // Añadir marcadores
+        const bounds = [];
+        coordsList.forEach(stop => {
+            L.marker([stop.lat, stop.lon])
+                .addTo(map)
+                .bindPopup(`📍 ${stop.name || "Parada"}`);
+            bounds.push([stop.lat, stop.lon]);
+        });
+
+        // Ajustar vista para que se vean todos los marcadores
+        if (bounds.length > 1) {
+            map.fitBounds(bounds, { padding: [50, 50] });
+        }
+    </script>
+</body>
+</html>

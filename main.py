@@ -11,7 +11,7 @@ from api import (
     get_metro_station_alerts
 )
 import logging, time
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
 from telegram.ext import (
     ApplicationBuilder,
     CallbackContext,
@@ -25,9 +25,11 @@ from telegram.ext import (
 import asyncio
 
 from favorites_manager import FavoritesManager
+from secrets_manager import SecretsManager
 
 # Telegram token
-TELEGRAM_TOKEN = '' 
+sm = SecretsManager()
+TELEGRAM_TOKEN = sm.get('TELEGRAM_TOKEN')
 
 # Estados
 MENU, ASK_METRO_LINE, ASK_METRO_STATION, ASK_BUS_LINE, ASK_BUS_STOP = range(5)
@@ -91,7 +93,8 @@ def get_main_menu_keyboard():
     return InlineKeyboardMarkup([
         [InlineKeyboardButton("🚇 Metro", callback_data="metro")],
         [InlineKeyboardButton("🚌 Bus", callback_data="bus")],
-        [InlineKeyboardButton("♥️ Favorites", callback_data="favorites")]
+        [InlineKeyboardButton("♥️ Favorites", callback_data="favorites")],
+        [InlineKeyboardButton("Mapa", web_app=WebAppInfo(url="https://mg-diego.github.io/timeline-explorer/index.html"))]
     ])
 
 def get_metro_lines_keyboard():
