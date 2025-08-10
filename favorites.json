@@ -2,39 +2,9 @@
   "4138595": {
     "metro": [
       {
-        "CODI_ESTACIO": 801,
-        "NOM_ESTACIO": "Sagrada Família",
-        "CODI_LINIA": 5,
-        "NOM_LINIA": "L5",
-        "coordinates": [
-          41.4036,
-          2.1744
-        ]
-      },
-      {
-        "CODI_ESTACIO": "516",
-        "NOM_ESTACIO": "Badal",
-        "CODI_LINIA": 5,
-        "NOM_LINIA": "L5",
-        "coordinates": [
-          2.12740211,
-          41.37558063
-        ]
-      },
-      {
-        "CODI_ESTACIO": "428",
-        "NOM_ESTACIO": "Joanic",
-        "CODI_LINIA": 5,
-        "NOM_LINIA": "L4",
-        "coordinates": [
-          2.16322503,
-          41.4064269
-        ]
-      },
-      {
         "CODI_ESTACIO": "132",
         "NOM_ESTACIO": "Navas",
-        "CODI_LINIA": 5,
+        "CODI_GRUP_ESTACIO": 6660132,
         "NOM_LINIA": "L1",
         "coordinates": [
           2.18705678,
@@ -42,40 +12,33 @@
         ]
       },
       {
-        "CODI_ESTACIO": "130",
-        "NOM_ESTACIO": "Glòries",
-        "CODI_LINIA": 5,
-        "CODI_GRUP_ESTACIO": 6660130,
-        "NOM_LINIA": "L1",
+        "CODI_ESTACIO": "525",
+        "NOM_ESTACIO": "Camp de l'Arpa",
+        "CODI_GRUP_ESTACIO": 6660525,
+        "NOM_LINIA": "L5",
         "coordinates": [
-          2.18753747,
-          41.40227722
+          2.18149721,
+          41.41505961
+        ]
+      },
+      {
+        "CODI_ESTACIO": "516",
+        "NOM_ESTACIO": "Badal",
+        "CODI_GRUP_ESTACIO": 6660516,
+        "NOM_LINIA": "L5",
+        "coordinates": [
+          2.12740211,
+          41.37558063
         ]
       }
     ],
     "bus": [
-      {
-        "CODI_PARADA": 1234,
-        "NOM_PARADA": "Diagonal / Passeig de Gràcia",
-        "coordinates": [
-          41.3948,
-          2.164
-        ]
-      },
       {
         "CODI_PARADA": "1007",
         "NOM_PARADA": "Meridiana - Biscaia",
         "coordinates": [
           2.18675617,
           41.41679108
-        ]
-      },
-      {
-        "CODI_PARADA": "376",
-        "NOM_PARADA": "Les Corts - Pl Dr Ignasi Barraquer",
-        "coordinates": [
-          2.14063415,
-          41.39011494
         ]
       }
     ]

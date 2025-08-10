@@ -19,17 +19,15 @@ from telegram.ext import (
     ConversationHandler,
     MessageHandler,
     CommandHandler,
-    ContextTypes,
     filters,
 )
 
 import asyncio
-import html
 
 from favorites_manager import FavoritesManager
 
 # Telegram token
-TELEGRAM_TOKEN = '<TOKEN>' 
+TELEGRAM_TOKEN = '' 
 
 # Estados
 MENU, ASK_METRO_LINE, ASK_METRO_STATION, ASK_BUS_LINE, ASK_BUS_STOP = range(5)
@@ -253,7 +251,7 @@ async def menu(update: Update, context: CallbackContext) -> int:
         # Metro favorites
         if favs["metro"]:
             for item in favs["metro"]:
-                metro_stations_cache[item.get('CODI_ESTACIO')] = {
+                metro_stations_cache[int(item.get('CODI_ESTACIO'))] = {
                     "metro_line_name": item.get('NOM_LINIA'),
                     "station_name": item.get('NOM_ESTACIO'),
                     "station_group_code": item.get("CODI_GRUP_ESTACIO"),
@@ -267,9 +265,13 @@ async def menu(update: Update, context: CallbackContext) -> int:
         # Bus favorites
         if favs["bus"]:
             for item in favs["bus"]:
+                bus_stops_cache[int(item.get('CODI_PARADA'))] = {
+                    "bus_stop_name": item.get('NOM_PARADA'),
+                    "coordinates": item.get('coordinates')
+                }
                 name = f"({item.get('CODI_PARADA', '')})  {item.get('NOM_PARADA', '')}"
                 fav_keyboard.append([
-                    InlineKeyboardButton(f"🚌 {name}", callback_data=f"show_bus_fav:{item.get('id')}")
+                    InlineKeyboardButton(f"🚌 {name}", callback_data=f"bus_stop:{item.get('CODI_PARADA')}")
                 ])
 
         # Close button
@@ -348,7 +350,6 @@ async def add_fav_callback(update: Update, context: CallbackContext):
         new_fav_item = {
             "CODI_ESTACIO": item_id,
             "NOM_ESTACIO": cache_item["station_name"],
-            "CODI_LINIA": 5,
             "CODI_GRUP_ESTACIO": cache_item["station_group_code"],
             "NOM_LINIA": cache_item["metro_line_name"],
             "coordinates": cache_item["coordinates"]
@@ -414,7 +415,9 @@ async def handle_detailed_selection(update: Update, context: CallbackContext) ->
         _, station_id = data.split(":")
 
         station = metro_stations_cache.get(int(station_id))
-        print(metro_stations_cache)
+        print(f"station_id: {station_id}")
+        print(f"station: \n{station}" )
+        print(f"cache: \n{metro_stations_cache}")
 
         desc_text = (
             f"🚏 <b>ESTACIÓN '{station["station_name"].upper()}'</b> 🚏\n\n"

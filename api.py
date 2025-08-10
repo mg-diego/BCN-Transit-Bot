@@ -1,12 +1,11 @@
 import requests
-import json
 import re
 import logging
 
 from data.metro_line import MetroLine
-from data.metro_station import MetroStation, create_metro_station
+from data.metro_station import create_metro_station
 from data.next_metro import MetroLineRoute, NextMetro
-from data.metro_access import MetroAccess, create_metro_access
+from data.metro_access import create_metro_access
 from data.metro_connection import MetroConnection
 
 from data.bus_stop import BusStop, create_bus_stop
@@ -23,8 +22,8 @@ logger = logging.getLogger(__name__)
 
 # https://developer.tmb.cat/api-docs/v1
 
-APP_ID = '<APP_ID>'
-APP_KEY = '<APP_KEY>'
+APP_ID = ''
+APP_KEY = ''
 
 # Endpoint base de TMB
 BASE_URL_TRANSIT = 'https://api.tmb.cat/v1/transit'
