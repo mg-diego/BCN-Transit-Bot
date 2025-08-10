@@ -61,12 +61,13 @@
             }
 
         // Obtener JSON desde URL (parámetro "data")
-        const encodedData = getQueryParam("data");
-        console.log(encodedData)
+        const compressed = getQueryParam("data");
+        console.log(compressed)
         let coordsList = [];
 
-        if (encodedData) {
-            const jsonData = decodeBase64Json(encodedData);
+        if (compressed) {
+            const decompressed = LZString.decompressFromEncodedURIComponent(compressedData);
+            const jsonData = JSON.parse(decompressed);
             console.log(jsonData)
             if (jsonData && jsonData.stops) {
                 coordsList = jsonData.stops.map(stop => ({

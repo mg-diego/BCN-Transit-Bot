@@ -91,14 +91,10 @@ def clear_history(context: CallbackContext):
 
 # Keyboards
 def get_main_menu_keyboard():
-    stations = get_stations_by_metro_line(1)
-    mapper = Mapper()
-    encoded = mapper.map_metro_stations(stations)
     return InlineKeyboardMarkup([
         [InlineKeyboardButton("🚇 Metro", callback_data="metro")],
         [InlineKeyboardButton("🚌 Bus", callback_data="bus")],
-        [InlineKeyboardButton("♥️ Favorites", callback_data="favorites")],
-        [InlineKeyboardButton("Mapa", web_app=WebAppInfo(url=f"https://mg-diego.github.io/Metro-Bus-BCN/map.html?data={encoded}"))]
+        [InlineKeyboardButton("♥️ Favorites", callback_data="favorites")]
     ])
 
 def get_metro_lines_keyboard():
@@ -125,12 +121,17 @@ def get_bus_lines_keyboard():
 def get_metro_stations_keyboard(line_id, line_name):
     stations = get_stations_by_metro_line(line_id)
     [add_to_metro_stations_cache(station, line_name) for station in stations]
+    mapper = Mapper()
+    encoded = mapper.map_metro_stations(stations)
 
     buttons = [
         InlineKeyboardButton(f"{station.ORDRE_ESTACIO}. {station.NOM_ESTACIO}", callback_data=f"metro_station:{station.CODI_ESTACIO}")
         for station in stations
     ]
+
+    rows = []
     rows = chunk_buttons(buttons, 2)
+    rows.append([InlineKeyboardButton("🗺️ Mapa", web_app=WebAppInfo(url=f"https://mg-diego.github.io/Metro-Bus-BCN/map.html?data={encoded}"))])
     rows.append([InlineKeyboardButton("🔙 Volver", callback_data="back")])
     return InlineKeyboardMarkup(rows)
 
@@ -148,7 +149,9 @@ def get_bus_line_stops_keyboard(line_id):
 
     [add_to_bus_stops_cache(stop) for stop in from_origin]
     [add_to_bus_stops_cache(stop) for stop in from_destination]
-
+    
+    mapper = Mapper()
+    encoded = mapper.map_bus_stops(from_origin, from_destination)
 
     from_origin_buttons = [
         InlineKeyboardButton(
@@ -169,13 +172,14 @@ def get_bus_line_stops_keyboard(line_id):
     # Crear filas con dos columnas (una de cada sentido)
     rows = []
     max_len = max(len(from_origin_buttons), len(from_destination_buttons))
-    for i in range(max_len):
-        col1 = from_origin_buttons[i] if i < len(from_origin_buttons) else None
-        col2 = from_destination_buttons[i] if i < len(from_destination_buttons) else None
-        row = [btn for btn in (col1, col2) if btn is not None]
-        rows.append(row)
+   # for i in range(max_len):
+    #    col1 = from_origin_buttons[i] if i < len(from_origin_buttons) else None
+   #     col2 = from_destination_buttons[i] if i < len(from_destination_buttons) else None
+   #     row = [btn for btn in (col1, col2) if btn is not None]
+   #     rows.append(row)
 
     # Botón de volver al final
+    rows.append([InlineKeyboardButton("🗺️ Mapa", web_app=WebAppInfo(url=f"https://mg-diego.github.io/Metro-Bus-BCN/map.html?data={encoded}"))])
     rows.append([InlineKeyboardButton("🔙 Volver", callback_data="back")])
 
     return InlineKeyboardMarkup(rows)
