@@ -11,7 +11,7 @@ from api import (
     get_metro_station_alerts
 )
 import logging, time, json
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo, ReplyKeyboardMarkup, KeyboardButton
 from telegram.ext import (
     ApplicationBuilder,
     CallbackContext,
@@ -132,7 +132,7 @@ def get_metro_stations_keyboard(line_id, line_name):
 
     rows = []
     rows = chunk_buttons(buttons, 2)
-    rows.append([InlineKeyboardButton("🗺️ Mapa", web_app=WebAppInfo(url=f"https://mg-diego.github.io/Metro-Bus-BCN/map.html?data={encoded}"))])
+    #rows.append([InlineKeyboardButton("🗺️ Mapa", web_app=WebAppInfo(url=f"https://mg-diego.github.io/Metro-Bus-BCN/map.html?data={encoded}"))])
     rows.append([InlineKeyboardButton("🔙 Volver", callback_data="back")])
     return InlineKeyboardMarkup(rows)
 
@@ -180,10 +180,10 @@ def get_bus_line_stops_keyboard(line_id):
    #     rows.append(row)
 
     # Botón de volver al final
-    rows.append([InlineKeyboardButton("🗺️ Mapa", web_app=WebAppInfo(url=f"https://mg-diego.github.io/Metro-Bus-BCN/map.html?data={encoded}"))])
+    # rows.append([InlineKeyboardButton("🗺️ Mapa", web_app=WebAppInfo(url=f"https://mg-diego.github.io/Metro-Bus-BCN/map.html?data={encoded}"))])
     rows.append([InlineKeyboardButton("🔙 Volver", callback_data="back")])
 
-    return InlineKeyboardMarkup(rows)
+    return InlineKeyboardMarkup(rows), encoded
 
 def create_favorite_keyboard(is_favorite: bool, item_type:str, item_id: str):
     if is_favorite:
@@ -325,15 +325,28 @@ async def handle_bus_line(update: Update, context: CallbackContext) -> int:
     push_history(context, ASK_BUS_LINE)
     _, line_id, line_name = data.split(":")
     await query.edit_message_text(f"⏳ Cargando la línea de bus '{line_id}'...")
-    reply_markup = get_bus_line_stops_keyboard(line_id)
-    await query.edit_message_text(
-        f"🚌 - <b>Línea {line_name}</b>\n\n"
-        "Selecciona una parada de bus:\n"
-        "   ⏩ = sentido ida\n"
-        "   ⏪ = sentido vuelta",
-        reply_markup=reply_markup,
+    reply_markup2, encoded = get_bus_line_stops_keyboard(line_id)
+
+    await context.bot.delete_message(chat_id=query.message.chat_id, message_id=query.message.message_id)
+
+    message = await context.bot.send_message(
+        chat_id=query.message.chat_id,
+        text=(
+            f"🚌 Has seleccionado la <b>Línea {line_name}</b>.\n\n"
+            "Puedes explorar el mapa interactivo para elegir una parada específica. "
+            "Pulsa el botón de abajo para abrir el mapa y seleccionar tu parada preferida."
+        ),
+        reply_markup=ReplyKeyboardMarkup.from_button(
+            KeyboardButton(
+                text="🗺️ Abrir mapa y seleccionar parada",
+                web_app=WebAppInfo(url=f"https://mg-diego.github.io/Metro-Bus-BCN/map.html?data={encoded}"),
+            )
+        ),
         parse_mode="HTML"
     )
+
+    bot_messages_to_delete.append(message)
+    
     return ASK_BUS_STOP
 
 async def handle_selection(update: Update, context: CallbackContext) -> int:
@@ -502,6 +515,8 @@ async def handle_detailed_selection(update: Update, context: CallbackContext) ->
         return ASK_METRO_STATION
 
     if data.startswith("bus_stop:"):
+        pass
+        '''
         _, bus_stop_id = data.split(":")
 
         bus_stop = bus_stops_cache.get(int(bus_stop_id))
@@ -551,6 +566,7 @@ async def handle_detailed_selection(update: Update, context: CallbackContext) ->
                 except Exception as e:
                     logger.warning(f"Error actualizando estación: {e}")
                     break
+        
 
             # Cancelar tarea anterior si existe
         if user_id in station_update_tasks:
@@ -559,6 +575,7 @@ async def handle_detailed_selection(update: Update, context: CallbackContext) ->
         station_update_tasks[user_id] = asyncio.create_task(update_loop())
 
         return ASK_BUS_STOP
+        '''
 
     clear_history(context)
     return ConversationHandler.END
@@ -588,10 +605,150 @@ async def help_command(update: Update, context: CallbackContext) -> None:
 
     await update.message.reply_text(help_text, parse_mode='HTML')
 
+async def inline_bus_stop_handler(update: Update, context: CallbackContext):
+    query = update.callback_query
+    await query.answer()
+    data = query.data
+
+    user_id = query.from_user.id
+    chat_id = query.message.chat.id
+
+    _, bus_stop_id = data.split(":")
+    bus_stop_id = bus_stop_id.strip()
+
+    bus_stop = bus_stops_cache.get(int(bus_stop_id))
+
+    desc_text = (
+        f"🚏 <b>PARADA '{bus_stop['bus_stop_name'].upper()}'</b> 🚏"
+    )
+    message = await query.edit_message_text(text=desc_text, parse_mode='HTML')
+    bot_messages_to_delete.append(message)
+
+    location_message = await context.bot.send_location(
+        chat_id=chat_id,
+        latitude=bus_stop["coordinates"][1],
+        longitude=bus_stop["coordinates"][0]
+    )
+    bot_messages_to_delete.append(location_message)
+
+    # Primer mensaje
+    message = await context.bot.send_message(
+        text="⏳ Cargando información de la parada...",
+        chat_id=chat_id
+    )
+    bot_messages_to_delete.append(message)
+
+    async def update_loop():
+        while True:
+            next_buses = get_next_bus_at_stop(bus_stop_id)
+            formatted_routes = "\n\n".join(str(route) for route in next_buses)
+
+            text = (
+                f"🚉 <u>Próximos Buses:</u>\n{formatted_routes} \n\n"
+                f"🚨 <u>Alertas:</u> \n - TBD"
+            )
+
+            is_fav = favorites_manager.has_favorite(user_id, "bus", bus_stop_id)
+            keyboard = create_favorite_keyboard(is_fav, "bus", bus_stop_id)
+
+            try:
+                await context.bot.edit_message_text(
+                    chat_id=chat_id,
+                    message_id=message.message_id,
+                    text=text,
+                    parse_mode='HTML',
+                    reply_markup=keyboard
+                )
+                await asyncio.sleep(1)
+            except asyncio.CancelledError:
+                break
+            except Exception as e:
+                logger.warning(f"Error actualizando estación: {e}")
+                break
+
+    # Cancelar tarea anterior si existe
+    if user_id in station_update_tasks:
+        station_update_tasks[user_id].cancel()
+
+    station_update_tasks[user_id] = asyncio.create_task(update_loop())
+
+
 async def webapp_data_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Verifica si el mensaje tiene web_app_data
     if update.message and update.message.web_app_data:
         data_str = update.message.web_app_data.data  # string JSON enviado desde la webapp
+        data = json.loads(data_str)
+        print(f"data: {data}")
+
+        user_id = update.message.from_user.id
+
+        bus_stop_id = data.get("name").split("-")[0]
+        bus_stop_id = bus_stop_id.strip()
+
+        bus_stop = bus_stops_cache.get(int(bus_stop_id))
+
+        desc_text = (
+            f"🚏 <b>PARADA '{bus_stop["bus_stop_name"].upper()}'</b> 🚏"
+        )
+        message = await update.message.reply_text(text=desc_text, parse_mode='HTML')
+        bot_messages_to_delete.append(message)
+
+        location_message = await context.bot.send_location(
+            chat_id=update.message.chat_id,
+            latitude=bus_stop["coordinates"][1],
+            longitude=bus_stop["coordinates"][0]
+        )
+        
+        bot_messages_to_delete.append(location_message)
+
+        # Primer mensaje
+        message = await context.bot.send_message(text="⏳ Cargando información de la parada...", chat_id=update.message.chat_id)
+        bot_messages_to_delete.append(message)
+
+        async def update_loop():
+            while True:
+                next_buses = get_next_bus_at_stop(bus_stop_id)
+                formatted_routes = "\n\n".join(str(route) for route in next_buses)
+
+                text = (
+                    f"🚉 <u>Próximos Buses:</u>\n{formatted_routes} \n\n"
+                    f"🚨 <u>Alertas:</u> \n - TBD"
+                )
+
+                is_fav = favorites_manager.has_favorite(user_id, "bus", bus_stop_id)
+                keyboard = create_favorite_keyboard(is_fav, "bus", bus_stop_id)
+
+                try:
+                    await context.bot.edit_message_text(
+                        chat_id=update.message.chat_id,
+                        message_id=message.message_id,
+                        text=text,
+                        parse_mode='HTML',
+                        reply_markup=keyboard
+                    )
+                    await asyncio.sleep(1)
+                except asyncio.CancelledError:
+                    break
+                except Exception as e:
+                    logger.warning(f"Error actualizando estación: {e}")
+                    break
+
+        # Cancelar tarea anterior si existe
+        if user_id in station_update_tasks:
+            station_update_tasks[user_id].cancel()
+
+        station_update_tasks[user_id] = asyncio.create_task(update_loop())
+
+
+
+
+
+
+
+
+
+'''
+
         try:
             data = json.loads(data_str)
             lat = data.get("lat")
@@ -612,6 +769,8 @@ async def webapp_data_handler(update: Update, context: ContextTypes.DEFAULT_TYPE
 
         except json.JSONDecodeError:
             await update.message.reply_text("Error al interpretar los datos recibidos.")
+            '''
+
 # Main
 def main():
     application = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
@@ -629,7 +788,8 @@ def main():
 
     application.add_handler(conv_handler)
     application.add_handler(CommandHandler("help", help_command))
-    application.add_handler(CallbackQueryHandler(handle_detailed_selection, pattern=r"^metro_station:|^bus_stop:|close_station_info"))
+    application.add_handler(CallbackQueryHandler(handle_detailed_selection, pattern=r"^metro_station:|close_station_info"))
+    application.add_handler(CallbackQueryHandler(inline_bus_stop_handler, pattern=r"^bus_stop:"))
     application.add_handler(CallbackQueryHandler(add_fav_callback, pattern=r"^add_fav:"))
     application.add_handler(CallbackQueryHandler(remove_fav_callback, pattern=r"^remove_fav:"))
     application.add_handler(MessageHandler(filters.StatusUpdate.WEB_APP_DATA, webapp_data_handler))

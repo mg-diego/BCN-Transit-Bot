@@ -40,6 +40,22 @@
           2.18675617,
           41.41679108
         ]
+      },
+      {
+        "CODI_PARADA": "384",
+        "NOM_PARADA": "Sant Antoni Maria Claret - Espronceda",
+        "coordinates": [
+          2.18597199,
+          41.41991502
+        ]
+      },
+      {
+        "CODI_PARADA": "1825",
+        "NOM_PARADA": "Cardenal Tedeschini - Pl del Congrés Eucarístic",
+        "coordinates": [
+          2.18152308,
+          41.42618499
+        ]
       }
     ]
   }
