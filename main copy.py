@@ -78,6 +78,8 @@ def add_to_bus_stops_cache(bus_stop):
     }
 
 # Utils
+def chunk_buttons(buttons, n=2):
+    return [buttons[i:i + n] for i in range(0, len(buttons), n)]
 
 def push_history(context: CallbackContext, state: int):
     context.user_data.setdefault("history", []).append(state)
@@ -88,9 +90,35 @@ def pop_history(context: CallbackContext) -> int:
 def clear_history(context: CallbackContext):
     context.user_data["history"] = []
 
-
-
 # Keyboards
+def get_main_menu_keyboard():
+    return InlineKeyboardMarkup([
+        [InlineKeyboardButton("🚇 Metro", callback_data="metro"],
+        [InlineKeyboardButton("🚌 Bus", callback_data="bus")],
+        [InlineKeyboardButton("♥️ Favorites", callback_data="favorites")]
+    ])
+
+def get_metro_lines_keyboard():
+    metro_lines = get_metro_lines()
+    [add_to_metro_lines_cache(metro_line) for metro_line in metro_lines]
+
+    buttons = [
+        [InlineKeyboardButton(f"{line.NOM_LINIA} - {line.DESC_LINIA}", callback_data=f"metro_line:{line.CODI_LINIA}")]
+        for line in metro_lines
+    ]
+    buttons.append([InlineKeyboardButton("🔙 Volver", callback_data="back")])
+    return InlineKeyboardMarkup(buttons)
+
+def get_bus_lines_keyboard():
+    bus_lines = get_bus_lines()
+    buttons = [
+        InlineKeyboardButton(f"{line.NOM_LINIA}", callback_data=f"bus_line:{line.CODI_LINIA}:{line.NOM_LINIA}")
+        for line in bus_lines
+    ]
+    rows = chunk_buttons(buttons, 5)
+    buttons.append([InlineKeyboardButton("🔙 Volver", callback_data="back")])
+    return InlineKeyboardMarkup(rows)
+
 def get_metro_stations_keyboard(line_id, line_name):
     stations = get_stations_by_metro_line(line_id)
     [add_to_metro_stations_cache(station, line_name) for station in stations]
@@ -157,6 +185,19 @@ def get_bus_line_stops_keyboard(line_id):
 
     return InlineKeyboardMarkup(rows), encoded
 
+def create_favorite_keyboard(is_favorite: bool, item_type:str, item_id: str):
+    if is_favorite:
+        fav_button = InlineKeyboardButton("💔 Quitar de Favoritos", callback_data=f"remove_fav:{item_type}:{item_id}")
+    else:
+        fav_button = InlineKeyboardButton("♥️ Añadir a Favoritos", callback_data=f"add_fav:{item_type}:{item_id}")
+
+    keyboard = InlineKeyboardMarkup([
+        [
+            fav_button,
+            InlineKeyboardButton("❌ Cerrar", callback_data="close_station_info")
+        ]
+    ])
+    return keyboard
 
 
 

@@ -2,15 +2,15 @@ import requests
 import re
 import logging
 
-from data.metro_line import MetroLine
-from data.metro_station import create_metro_station
-from data.next_metro import MetroLineRoute, NextMetro
-from data.metro_access import create_metro_access
-from data.metro_connection import MetroConnection
+from domain.metro_line import MetroLine
+from domain.metro_station import create_metro_station
+from domain.next_metro import MetroLineRoute, NextMetro
+from domain.metro_access import create_metro_access
+from domain.metro_connection import MetroConnection
 
-from data.bus_stop import BusStop, create_bus_stop
-from data.bus_line import BusLine
-from data.next_bus import BusLineRoute, NextBus
+from domain.bus_stop import BusStop, create_bus_stop
+from domain.bus_line import BusLine
+from domain.next_bus import BusLineRoute, NextBus
 
 
 # Configura el logger
@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 # https://developer.tmb.cat/api-docs/v1
 
 
-from secrets_manager import SecretsManager
+from providers.secrets_manager import SecretsManager
 
 sm = SecretsManager()
 APP_ID = sm.get('APP_ID')
