@@ -34,7 +34,7 @@ class BusHandler:
 
         stops = await self.bus_service.get_stops_by_line(line_id)
         mapper = Mapper()
-        encoded = mapper.map_bus_stops(stops)
+        encoded = mapper.map_bus_stops(stops, line_id)
 
         message = await context.bot.send_message(
             chat_id=query.message.chat_id,
@@ -53,11 +53,12 @@ class BusHandler:
             data_str = update.message.web_app_data.data  # string JSON enviado desde la webapp
             data = json.loads(data_str)
             bus_stop_id = data.get("name").split("-")[0]
-            bus_stop_id = bus_stop_id.strip()           
+            bus_stop_id = bus_stop_id.strip()
+            line_id = data.get("line_id")   
 
             user_id = update.message.from_user.id
 
-            bus_stop = self.bus_service.get_stop_by_id(bus_stop_id)
+            bus_stop = await self.bus_service.get_stop_by_id(bus_stop_id, line_id)
 
             desc_text = (
                 f"🚏 <b>PARADA '{bus_stop.NOM_PARADA.upper()}'</b> 🚏"
@@ -73,6 +74,33 @@ class BusHandler:
             # Primer mensaje
             message = await context.bot.send_message(text="⏳ Cargando información de la parada...", chat_id=update.message.chat_id)
             
+            async def update_loop():
+                while True:
+                    try:
+                        next_buses = await self.bus_service.get_stop_routes(bus_stop_id)
+
+                        text = (
+                            f"🚉 <u>Próximos Buses:</u>\n{next_buses}"
+                        )
+
+                        await context.bot.edit_message_text(
+                            chat_id = update.message.chat_id,
+                            message_id=message.message_id,
+                            text=text,
+                            parse_mode='HTML',
+                            reply_markup=self.keyboard_factory.close_updates_menu(user_id)
+                        )
+
+                        await asyncio.sleep(1)
+                    
+                    except asyncio.CancelledError:
+                        logger.info(f"Loop de actualización cancelado para usuario {user_id}")
+                        break
+                    except Exception as e:
+                        logger.warning(f"Error actualizando estación: {e}")
+                        break
+
+            self.update_manager.start_task(user_id, update_loop)
             '''
             async def update_loop():
                 while True:
@@ -110,50 +138,6 @@ class BusHandler:
             '''
 
     async def show_station(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Muestra la información de una estación de una línea."""
-        query = update.callback_query
-        await query.answer()
-        data = query.data        
-        user_id = query.from_user.id
-
-        _, line_id, metro_station_id = data.split(":")
-
-        station = await self.metro_service.get_station_by_id(metro_station_id, line_id)
-        station_accesses = await self.metro_service.get_station_accesses(station.CODI_GRUP_ESTACIO)
-
-        desc_text = (
-            f"🚏 <b>ESTACIÓN '{station.NOM_ESTACIO.upper()}'</b> 🚏\n\n"
-            "Selecciona una entrada de metro para más detalles:"
-        )
-        await query.edit_message_text(text=desc_text, parse_mode='HTML')
-
-        location_message = await context.bot.send_location(
-            chat_id=query.message.chat_id,
-            latitude=station.coordinates[1],
-            longitude=station.coordinates[0],
-            reply_markup=self.keyboard_factory.metro_station_access_menu(station_accesses)
-        )
-
-        message = await context.bot.send_message(chat_id=query.message.chat_id, text="⏳ Cargando información de la estación...")
-
-        routes = await self.metro_service.get_station_routes(metro_station_id)
-        station_connections = await self.metro_service.get_metro_station_connections(metro_station_id)
-        station_alerts = await self.metro_service.get_metro_station_alerts(line_id, metro_station_id)
-
-        text = (
-            f"🚉 <u>Próximos Metros:</u>\n{routes} \n\n"
-            f"🔛 <u>Conexiones:</u> \n{station_connections}\n\n"
-            f"🚨 <u>Alertas:</u> \n{station_alerts}"
-        )
-
-        await context.bot.edit_message_text(
-            chat_id=query.message.chat_id,
-            message_id=message.message_id,
-            text=text,
-            parse_mode='HTML',
-            #reply_markup=keyboard
-        )
-
         async def update_loop():
             while True:
                 try:

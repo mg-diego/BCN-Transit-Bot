@@ -54,3 +54,7 @@ class BusService:
         stops = await self.get_stops_by_line(line_id)
         stop = next((s for s in stops if str(s.CODI_PARADA) == str(stop_id)), None)
         return stop
+    
+    async def get_stop_routes(self, stop_id):
+        routes = await self.transport_api_service.get_next_bus_at_stop(stop_id)
+        return "\n\n".join(str(route) for route in routes)
