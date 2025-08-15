@@ -97,7 +97,7 @@ class TransportApiService:
             factory_fn=create_bus_stop
         )
 
-        return [from_origin, from_destination]
+        return from_origin + from_destination
 
 
     async def get_metro_lines(self):

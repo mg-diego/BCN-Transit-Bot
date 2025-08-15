@@ -103,8 +103,10 @@
             attribution: '© OpenStreetMap contributors'
         }).addTo(map);
 
-        // Añadir marcadores
+        // Añadir marcadores y tramos
         const bounds = [];
+        let prevStop = null;
+
         coordsList.forEach(stop => {
             const icon = createColoredIcon(`#${stop.color}`);
 
@@ -121,27 +123,48 @@
             btn.style.padding = "5px 10px";
 
             btn.addEventListener('click', () => {
-            if (window.Telegram?.WebApp) {
-                // Enviar datos al bot como string JSON
-                window.Telegram.WebApp.sendData(JSON.stringify({
-                    lat: stop.lat,
-                    lon: stop.lon,
-                    name: stop.name,
-                    color: stop.color
-                }));
-
-                marker.closePopup();
-                window.Telegram.WebApp.close();
-            } else {
-                alert("Esta función solo funciona dentro de la WebApp de Telegram.");
-            }
+                if (window.Telegram?.WebApp) {
+                    window.Telegram.WebApp.sendData(JSON.stringify({
+                        lat: stop.lat,
+                        lon: stop.lon,
+                        name: stop.name,
+                        color: stop.color
+                    }));
+                    marker.closePopup();
+                    window.Telegram.WebApp.close();
+                } else {
+                    alert("Esta función solo funciona dentro de la WebApp de Telegram.");
+                }
             });
 
             popupContent.appendChild(btn);
-
             marker.bindPopup(popupContent);
+
             bounds.push([stop.lat, stop.lon]);
+
+            // 🔹 Si hay parada anterior, dibujar línea de su color
+            if (prevStop) {
+                L.polyline(
+                    [
+                        [prevStop.lat, prevStop.lon],
+                        [stop.lat, stop.lon]
+                    ],
+                    {
+                        color: `#${prevStop.color}`,
+                        weight: 4,
+                        opacity: 0.8
+                    }
+                ).addTo(map);
+            }
+
+            prevStop = stop;
         });
+
+        // Ajustar vista para mostrar todas las paradas
+        if (bounds.length > 0) {
+            map.fitBounds(bounds);
+        }
+
         </script>
 </body>
 </html>

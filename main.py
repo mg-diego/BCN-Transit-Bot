@@ -27,7 +27,7 @@ import asyncio
 
 from providers.favorites_manager import FavoritesManager
 from providers.secrets_manager import SecretsManager
-from mapper import Mapper
+from providers.mapper import Mapper
 
 from ui.keyboard_factory import KeyboardFactory
 

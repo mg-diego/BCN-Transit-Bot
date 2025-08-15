@@ -1,5 +1,4 @@
 import json
-import base64
 import lzstring
 
 class Mapper:
@@ -22,7 +21,7 @@ class Mapper:
         compressed = lz.compressToEncodedURIComponent(json_str)
         return compressed
     
-    def map_bus_stops(self, from_origin, from_destination):        
+    def map_bus_stops(self, stops):        
         lz = lzstring.LZString()        
         data = {
             "stops": [
@@ -32,7 +31,7 @@ class Mapper:
                     "name": f"{stop.CODI_PARADA} - {stop.NOM_PARADA}",
                     "color": stop.COLOR_REC
                 }
-                for stop in from_origin + from_destination
+                for stop in stops
             ]
         }
 

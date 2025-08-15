@@ -3,12 +3,14 @@ from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandle
 
 from ui.menu_handler import MenuHandler
 from ui.metro_handler import MetroHandler
+from ui.bus_handler import BusHandler
 from ui.help_handler import HelpHandler
 from ui.keyboard_factory import KeyboardFactory
 
 from application.message_service import MessageService
 from application.navigation_history import NavigationHistory
 from application.metro_service import MetroService
+from application.bus_service import BusService
 from application.cache_service import CacheService
 from application.update_manager import UpdateManager
 
@@ -25,9 +27,11 @@ def main():
     transport_api_service = TransportApiService(app_id=secrets_manager.get('APP_ID') , app_key=secrets_manager.get('APP_KEY'))
     cache_service = CacheService()
     metro_service = MetroService(transport_api_service, cache_service)
+    bus_service = BusService(transport_api_service, cache_service)
     
     menu_handler = MenuHandler(keyboard_factory, message_service, navigation_history)
     metro_handler = MetroHandler(keyboard_factory, metro_service, update_manager)
+    bus_handler = BusHandler(keyboard_factory, bus_service, update_manager)
     help_handler = HelpHandler(message_service, keyboard_factory)
 
     application = ApplicationBuilder().token(secrets_manager.get('TELEGRAM_TOKEN')).build()
@@ -42,6 +46,13 @@ def main():
     application.add_handler(CallbackQueryHandler(metro_handler.show_station, pattern=r"^metro_station"))
     application.add_handler(CallbackQueryHandler(metro_handler.show_line_stations, pattern=r"^metro_line"))
     application.add_handler(CallbackQueryHandler(metro_handler.show_lines, pattern=r"^metro$"))
+
+    
+    
+    application.add_handler(CallbackQueryHandler(bus_handler.show_line_stops, pattern=r"^bus_line"))
+    application.add_handler(CallbackQueryHandler(bus_handler.show_lines, pattern=r"^bus$"))
+
+
     application.add_handler(CallbackQueryHandler(metro_handler.close_updates, pattern=r"^close_updates:"))
 
 

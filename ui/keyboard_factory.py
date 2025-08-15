@@ -1,4 +1,4 @@
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton, WebAppInfo
 from typing import List
 
 from domain.metro_line import MetroLine
@@ -52,6 +52,23 @@ class KeyboardFactory:
         rows = self._chunk_buttons(buttons, 2)
         return InlineKeyboardMarkup(rows)
     
+    def bus_lines_menu(self, bus_lines: List[BusLine])  -> InlineKeyboardMarkup:
+        buttons = [
+            InlineKeyboardButton(f"{line.NOM_LINIA}", callback_data=f"bus_line:{line.CODI_LINIA}:{line.NOM_LINIA}")
+            for line in bus_lines
+        ]
+        rows = self._chunk_buttons(buttons, 5)
+        buttons.append(self._back_button(self.MENU_CALLBACK))
+        return InlineKeyboardMarkup(rows)
+    
+    def bus_stops_map_menu(self, encoded):
+        return ReplyKeyboardMarkup.from_button(
+                KeyboardButton(
+                    text="🗺️ Abrir mapa y seleccionar parada",
+                    web_app=WebAppInfo(url=f"https://mg-diego.github.io/Metro-Bus-BCN/map.html?data={encoded}"),
+                )
+        )
+    
     def help_menu(self):
         return InlineKeyboardMarkup([self._back_button(self.MENU_CALLBACK)])
     
@@ -76,21 +93,6 @@ class KeyboardFactory:
 
 
 
-
-
-
-
-
-    def bus_lines_menu(self, bus_lines: List[BusLine]) -> InlineKeyboardMarkup:
-        buttons = [
-            InlineKeyboardButton(f"{line.NOM_LINIA}", callback_data=f"bus_line:{line.CODI_LINIA}:{line.NOM_LINIA}")
-            for line in bus_lines
-        ]
-        rows = self.chunk_buttons(buttons, 5)
-
-        buttons.append([InlineKeyboardButton("🔙 Volver", callback_data="menu_main")])
-        return InlineKeyboardMarkup(rows)
-
     def favorites_menu(self, is_favorite: bool, item_type:str, item_id: str):
         if is_favorite:
             fav_button = InlineKeyboardButton("💔 Quitar de Favoritos", callback_data=f"remove_fav:{item_type}:{item_id}")
@@ -104,6 +106,3 @@ class KeyboardFactory:
             ]
         ])
         return keyboard
-    
-    def chunk_buttons(buttons, n=2):
-        return [buttons[i:i + n] for i in range(0, len(buttons), n)]
