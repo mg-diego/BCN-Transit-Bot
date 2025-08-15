@@ -1,5 +1,5 @@
 # main.py
-from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler
+from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, MessageHandler, filters
 
 from ui.menu_handler import MenuHandler
 from ui.metro_handler import MetroHandler
@@ -48,7 +48,8 @@ def main():
     application.add_handler(CallbackQueryHandler(metro_handler.show_lines, pattern=r"^metro$"))
 
     
-    
+
+    application.add_handler(MessageHandler(filters.StatusUpdate.WEB_APP_DATA, bus_handler.show_stop))
     application.add_handler(CallbackQueryHandler(bus_handler.show_line_stops, pattern=r"^bus_line"))
     application.add_handler(CallbackQueryHandler(bus_handler.show_lines, pattern=r"^bus$"))
 

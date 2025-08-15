@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import json
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes
 
@@ -45,6 +46,68 @@ class BusHandler:
             reply_markup=self.keyboard_factory.bus_stops_map_menu(encoded),
             parse_mode="HTML"
         )
+
+    async def show_stop(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        # Verifica si el mensaje tiene web_app_data
+        if update.message and update.message.web_app_data:
+            data_str = update.message.web_app_data.data  # string JSON enviado desde la webapp
+            data = json.loads(data_str)
+            bus_stop_id = data.get("name").split("-")[0]
+            bus_stop_id = bus_stop_id.strip()           
+
+            user_id = update.message.from_user.id
+
+            bus_stop = self.bus_service.get_stop_by_id(bus_stop_id)
+
+            desc_text = (
+                f"🚏 <b>PARADA '{bus_stop.NOM_PARADA.upper()}'</b> 🚏"
+            )
+            message = await update.message.reply_text(text=desc_text, parse_mode='HTML')
+
+            location_message = await context.bot.send_location(
+                chat_id=update.message.chat_id,
+                latitude=bus_stop.coordinates[1],
+                longitude=bus_stop.coordinates[0]
+            )
+
+            # Primer mensaje
+            message = await context.bot.send_message(text="⏳ Cargando información de la parada...", chat_id=update.message.chat_id)
+            
+            '''
+            async def update_loop():
+                while True:
+                    next_buses = get_next_bus_at_stop(bus_stop_id)
+                    formatted_routes = "\n\n".join(str(route) for route in next_buses)
+
+                    text = (
+                        f"🚉 <u>Próximos Buses:</u>\n{formatted_routes} \n\n"
+                        f"🚨 <u>Alertas:</u> \n - TBD"
+                    )
+
+                    #is_fav = favorites_manager.has_favorite(user_id, "bus", bus_stop_id)
+                    #keyboard = create_favorite_keyboard(is_fav, "bus", bus_stop_id)
+
+                    try:
+                        await context.bot.edit_message_text(
+                            chat_id=update.message.chat_id,
+                            message_id=message.message_id,
+                            text=text,
+                            parse_mode='HTML',
+                            #reply_markup=keyboard
+                        )
+                        await asyncio.sleep(1)
+                    except asyncio.CancelledError:
+                        break
+                    except Exception as e:
+                        logger.warning(f"Error actualizando estación: {e}")
+                        break
+
+            # Cancelar tarea anterior si existe
+            if user_id in station_update_tasks:
+                station_update_tasks[user_id].cancel()
+
+            station_update_tasks[user_id] = asyncio.create_task(update_loop())
+            '''
 
     async def show_station(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Muestra la información de una estación de una línea."""

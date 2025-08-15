@@ -68,12 +68,14 @@
         const compressed = getQueryParam("data");
         console.log(compressed)
         let coordsList = [];
+        let line_id = ''
 
         if (compressed) {
             const decompressed = LZString.decompressFromEncodedURIComponent(compressed);
             const jsonData = JSON.parse(decompressed);
             console.log(jsonData)
             if (jsonData && jsonData.stops) {
+                line_id = jsonData.line_id
                 coordsList = jsonData.stops.map(stop => ({
                     lat: stop.lat,
                     lon: stop.lon,
@@ -81,14 +83,6 @@
                     color: stop.color
                 }));
             }
-        }
-
-        // Si no hay datos, ejemplo por defecto
-        if (!coordsList.length) {
-            coordsList = [
-                { lat: 41.3851, lon: 2.1734, name: "Parada 1" },
-                { lat: 41.3825, lon: 2.1769, name: "Parada 2" }
-            ];
         }
 
         // Calcular centro aproximado
@@ -125,6 +119,7 @@
             btn.addEventListener('click', () => {
                 if (window.Telegram?.WebApp) {
                     window.Telegram.WebApp.sendData(JSON.stringify({
+                        line_id: line_id,
                         lat: stop.lat,
                         lon: stop.lon,
                         name: stop.name,
