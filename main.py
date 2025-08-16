@@ -1,5 +1,6 @@
-# main.py
 from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, MessageHandler, filters
+
+import logging
 
 from ui.menu_handler import MenuHandler
 from ui.metro_handler import MetroHandler
@@ -17,6 +18,9 @@ from application.update_manager import UpdateManager
 from providers.secrets_manager import SecretsManager
 from providers.transport_api_service import TransportApiService
 from providers.favorites_manager import FavoritesManager
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 def main():
     keyboard_factory = KeyboardFactory()
@@ -64,4 +68,5 @@ def main():
     application.run_polling()
 
 if __name__ == "__main__":
+    logger.info('Starting bot...')
     main()

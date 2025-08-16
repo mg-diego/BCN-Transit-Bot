@@ -1,4 +1,5 @@
 from pathlib import Path
+import os
 
 class SecretsManager:
     def __init__(self):
@@ -15,17 +16,20 @@ class SecretsManager:
         """
         path = Path(filepath)
         if not path.is_file():
-            raise FileNotFoundError(f"Secrets file not found: {filepath}")
+            self.secrets['TELEGRAM_TOKEN'] = os.environ.get('TELEGRAM_TOKEN')
+            self.secrets['APP_ID'] = os.environ.get('APP_ID')
+            self.secrets['APP_KEY'] = os.environ.get('APP_KEY')
 
-        with path.open("r", encoding="utf-8") as f:
-            for line in f:
-                line = line.strip()
-                if not line or line.startswith("#"):
-                    continue
-                if "=" not in line:
-                    continue
-                key, value = line.split("=", 1)
-                self.secrets[key.strip()] = value.strip()
+        else:
+            with path.open("r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if not line or line.startswith("#"):
+                        continue
+                    if "=" not in line:
+                        continue
+                    key, value = line.split("=", 1)
+                    self.secrets[key.strip()] = value.strip()
 
     def get(self, key: str, default=None):
         """
