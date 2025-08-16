@@ -1,5 +1,13 @@
 from pathlib import Path
 import os
+import logging
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+console_handler = logging.StreamHandler()
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+console_handler.setFormatter(formatter)
+logger.addHandler(console_handler)
 
 class SecretsManager:
     def __init__(self):
@@ -30,6 +38,8 @@ class SecretsManager:
                         continue
                     key, value = line.split("=", 1)
                     self.secrets[key.strip()] = value.strip()
+
+        logger.info(self.secrets)
 
     def get(self, key: str, default=None):
         """
