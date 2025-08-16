@@ -115,12 +115,12 @@ class MetroService:
             line = next((l for l in await self.get_all_lines() if str(l.CODI_LINIA) == str(metro_line_id)), None)
             alerts = await self.transport_api_service.get_metro_station_alerts(line.ORIGINAL_NOM_LINIA, station_id)
 
-        formatted_connections = (
-            "\n".join(str(c) for c in alerts)
-            or "      - Esta estación no tiene ninguna alerta."
+        formatted_alerts = (
+            "\n".join(f"<pre>{c}</pre>" for c in alerts)
+            or "      <pre> - Esta estación no tiene ninguna alerta. </pre>"
         )
 
-        return formatted_connections
+        return formatted_alerts
     
     async def get_station_routes(self, metro_station_id):
         routes = await self.transport_api_service.get_next_metro_at_station(metro_station_id)
