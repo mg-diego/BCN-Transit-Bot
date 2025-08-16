@@ -16,30 +16,27 @@ class SecretsManager:
         :param filepath: Ruta al archivo 'secrets'.
         """
         self.secrets = {}
-        self._load('secrets')
-
-    def _load(self, filepath: str):
-        """
-        Lee el archivo y guarda las claves/valores en memoria.
-        """
-        path = Path(filepath)
-        if not path.is_file():
-            self.secrets['TELEGRAM_TOKEN'] = os.environ.get('TELEGRAM_TOKEN')
-            self.secrets['APP_ID'] = os.environ.get('APP_ID')
-            self.secrets['APP_KEY'] = os.environ.get('APP_KEY')
-
-        else:
-            with path.open("r", encoding="utf-8") as f:
-                for line in f:
-                    line = line.strip()
-                    if not line or line.startswith("#"):
-                        continue
-                    if "=" not in line:
-                        continue
-                    key, value = line.split("=", 1)
-                    self.secrets[key.strip()] = value.strip()
+        self._load_env()
+        self._load_file('secrets')        
 
         logger.info(self.secrets)
+        
+    def _load_env(self):
+        self.secrets['TELEGRAM_TOKEN'] = os.environ.get('TELEGRAM_TOKEN')
+        self.secrets['APP_ID'] = os.environ.get('APP_ID')
+        self.secrets['APP_KEY'] = os.environ.get('APP_KEY')
+
+    def _load_file(self, filepath: str):
+        path = Path(filepath)
+        if not path.is_file():
+            return
+        with path.open("r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith("#") or "=" not in line:
+                    continue
+                key, value = line.split("=", 1)
+                self.secrets[key.strip()] = value.strip()
 
     def get(self, key: str, default=None):
         """
