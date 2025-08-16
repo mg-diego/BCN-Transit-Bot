@@ -6,29 +6,10 @@
         "NOM_ESTACIO": "Navas",
         "CODI_GRUP_ESTACIO": 6660132,
         "NOM_LINIA": "L1",
+        "CODI_LINIA": "1",
         "coordinates": [
           2.18705678,
           41.41618671
-        ]
-      },
-      {
-        "CODI_ESTACIO": "525",
-        "NOM_ESTACIO": "Camp de l'Arpa",
-        "CODI_GRUP_ESTACIO": 6660525,
-        "NOM_LINIA": "L5",
-        "coordinates": [
-          2.18149721,
-          41.41505961
-        ]
-      },
-      {
-        "CODI_ESTACIO": "516",
-        "NOM_ESTACIO": "Badal",
-        "CODI_GRUP_ESTACIO": 6660516,
-        "NOM_LINIA": "L5",
-        "coordinates": [
-          2.12740211,
-          41.37558063
         ]
       }
     ],
@@ -36,25 +17,19 @@
       {
         "CODI_PARADA": "1007",
         "NOM_PARADA": "Meridiana - Biscaia",
+        "CODI_LINIA": "62",
         "coordinates": [
           2.18675617,
           41.41679108
         ]
       },
       {
-        "CODI_PARADA": "384",
-        "NOM_PARADA": "Sant Antoni Maria Claret - Espronceda",
+        "CODI_PARADA": "1511",
+        "NOM_PARADA": "Pla de las Madres de la Plaza de Mayo",
+        "CODI_LINIA": "182",
         "coordinates": [
-          2.18597199,
-          41.41991502
-        ]
-      },
-      {
-        "CODI_PARADA": "1825",
-        "NOM_PARADA": "Cardenal Tedeschini - Pl del Congrés Eucarístic",
-        "coordinates": [
-          2.18152308,
-          41.42618499
+          2.1722267,
+          41.43521716
         ]
       }
     ]

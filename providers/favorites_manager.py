@@ -8,7 +8,6 @@ class FavoritesManager:
         self._favorites: Dict[str, Dict[str, List[Dict[str, Any]]]] = {}
         self._load()
 
-    # --- Internal persistence helpers ---
     def _load(self):
         """Load favorites from JSON file."""
         if os.path.exists(self.storage_path):
@@ -25,7 +24,6 @@ class FavoritesManager:
         with open(self.storage_path, "w", encoding="utf-8") as f:
             json.dump(self._favorites, f, ensure_ascii=False, indent=2)
 
-    # --- Public API ---
     def add_favorite(self, user_id: int, fav_type: str, item: Dict[str, Any]):
         """
         Add an item to the user's favorites.
