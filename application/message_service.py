@@ -1,10 +1,13 @@
+
+from collections import defaultdict
 from telegram.constants import ParseMode
 from telegram import Update, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 
 class MessageService:
     def __init__(self, bot=None):
-        self._bot = bot
+        self._bot = bot        
+        self._user_messages = defaultdict(list)
 
     def set_bot_instance(self, bot):
         """Inyecta la instancia del bot (opcional para pruebas o uso externo)."""
@@ -24,30 +27,34 @@ class MessageService:
 
     async def send_new_message(self, update: Update, text: str, reply_markup: InlineKeyboardMarkup = None, parse_mode=ParseMode.HTML):
         """Envía un nuevo mensaje (no edita)."""
-        await update.message.reply_text(
+        msg = await update.message.reply_text(
             text=text,
             reply_markup=reply_markup,
             parse_mode=parse_mode
         )
+        self._cache_message(update, msg)
 
     async def edit_inline_message(self, update: Update, text: str, reply_markup: InlineKeyboardMarkup = None, parse_mode=ParseMode.HTML):
         """Edita el mensaje proveniente de un botón inline."""
         query = update.callback_query
         await query.answer()
-        await query.edit_message_text(
+        msg = await query.edit_message_text(
             text=text,
             reply_markup=reply_markup,
             parse_mode=parse_mode
         )
+        self._cache_message(update, msg)
 
     async def send_message_direct(self, chat_id: int, context: ContextTypes.DEFAULT_TYPE, text: str, reply_markup: InlineKeyboardMarkup = None, parse_mode=ParseMode.HTML):
         """Envía un mensaje a un chat directamente con ID (por ejemplo, desde web_app_data)."""
-        await context.bot.send_message(
+        msg = await context.bot.send_message(
             chat_id=chat_id,
             text=text,
             reply_markup=reply_markup,
             parse_mode=parse_mode
         )
+        self._user_messages[chat_id].append(msg.message_id)
+        return msg
 
     async def edit_message_by_id(self, chat_id: int, message_id: int, text: str, reply_markup: InlineKeyboardMarkup = None, parse_mode=ParseMode.HTML):
         """Edita un mensaje ya enviado si tienes chat_id y message_id."""
@@ -77,21 +84,43 @@ class MessageService:
         if not self._bot:
             raise ValueError("Bot instance not set. Usa set_bot_instance(bot) primero.")
         
-        return await self._bot.send_message(
+        msg = await self._bot.send_message(
             chat_id=self.get_chat_id(update),
             text=text,
             reply_markup=reply_markup,
             parse_mode=parse_mode
         )
+        self._cache_message(update, msg)
+        return msg
         
     async def send_location(self, update: Update, latitude: str, longitude: str, reply_markup=None):
         if not self._bot:
             raise ValueError("Bot instance not set. Usa set_bot_instance(bot) primero.")
         
-        return await self._bot.send_location(
+        msg = await self._bot.send_location(
             chat_id=self.get_chat_id(update),
             latitude=latitude,
             longitude=longitude,
             reply_markup=reply_markup
         )
+        self._cache_message(update, msg)
+        return msg
+    
+    def _cache_message(self, update, msg):
+        """Guarda el message_id en el cache del usuario."""
+        user_id = self.get_user_id(update)
+        self._user_messages[user_id].append(msg.message_id)
 
+    async def clear_user_messages(self, user_id: int):
+        """Borra todos los mensajes enviados a un usuario y limpia el cache."""
+        if not self._bot:
+            raise ValueError("Bot instance not set. Usa set_bot_instance(bot) primero.")
+
+        chat_id = user_id  # normalmente user_id == chat_id en bots privados
+        if user_id in self._user_messages:
+            for msg_id in self._user_messages[user_id]:
+                try:
+                    await self._bot.delete_message(chat_id=chat_id, message_id=msg_id)
+                except Exception as e:
+                    print(f"⚠️ Error al borrar mensaje {msg_id}: {e}")
+            self._user_messages[user_id].clear()

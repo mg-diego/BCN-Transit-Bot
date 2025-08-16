@@ -24,4 +24,4 @@ class HelpHandler:
     )
 
     async def show_help(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        await self.message_service.edit_inline_message(update, self.HELP_TEXT, reply_markup=self.keyboard_factory.help_menu())
+        await self.message_service.handle_interaction(update, self.HELP_TEXT, reply_markup=self.keyboard_factory.help_menu())

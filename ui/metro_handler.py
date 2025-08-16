@@ -97,5 +97,7 @@ class MetroHandler:
         user_id = int(user_id_str)
 
         self.update_manager.cancel_task(user_id)
-        await self.message_service.edit_inline_message(update, "✅ Actualización detenida.")
+        await self.message_service.edit_inline_message(update, "🧹 Limpiando mensajes antiguos... un momento, por favor.")
+        await self.message_service.clear_user_messages(user_id)
+        await self.message_service.send_new_message_from_callback(update, "✅ ¡Búsqueda finalizada!\n\n¿Te gustaría buscar otra vez?\n\nEscribe /start y la empezamos 🔍")
         
