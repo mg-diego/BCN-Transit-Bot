@@ -166,11 +166,22 @@
 
         legend.onAdd = function () {
             const div = L.DomUtil.create('div', 'info legend');
-            div.style.background = "white";
-            div.style.padding = "10px";
-            div.style.borderRadius = "8px";
-            div.style.boxShadow = "0 0 5px rgba(0,0,0,0.3)";
-            div.innerHTML = "<h4>Direcciones</h4>";
+            div.style.background = "rgba(255, 255, 255, 0.9)";
+            div.style.padding = "12px 15px";
+            div.style.borderRadius = "12px";
+            div.style.boxShadow = "0 2px 6px rgba(0,0,0,0.3)";
+            div.style.font = "14px Arial, sans-serif";
+            div.style.color = "#333";
+
+            div.innerHTML = `<h4 style="
+                margin: 0 0 8px 0;
+                font-size: 15px;
+                font-weight: bold;
+                text-align: center;
+                color: #222;
+                border-bottom: 1px solid #ccc;
+                padding-bottom: 4px;
+            ">Direcciones</h4>`;
 
             // Obtener direcciones únicas con su color
             const uniqueDirections = {};
@@ -183,9 +194,17 @@
             // Pintar en la leyenda
             for (const [direction, color] of Object.entries(uniqueDirections)) {
                 div.innerHTML += `
-                    <div style="display:flex; align-items:center; margin:4px 0;">
-                        <span style="width:18px; height:18px; background:${color}; border:1px solid #000; display:inline-block; margin-right:8px;"></span>
-                        ${direction}
+                    <div style="display:flex; align-items:center; margin:6px 0;">
+                        <span style="
+                            width:16px;
+                            height:16px;
+                            border-radius:50%;
+                            background:${color};
+                            border:1px solid #444;
+                            display:inline-block;
+                            margin-right:10px;
+                        "></span>
+                        <span style="flex:1;">${direction}</span>
                     </div>
                 `;
             }
@@ -194,7 +213,6 @@
         };
 
         legend.addTo(map);
-
         </script>
 </body>
 </html>
