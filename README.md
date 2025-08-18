@@ -60,51 +60,50 @@ Just open the link, start the bot, and explore Barcelona’s metro and bus netwo
 ```mermaid
 graph TD
 
-    10["Telegram Bot"]
-    7["User<br>(External Actor)"]
-    8["External Transport API<br>REST/JSON"]
-    9["User Data<br>Google Sheets"]
+    10["💻 Telegram Bot"]
+    7["👤 User"]
+    8["🌐 External Transport API"]
+    9["⭐ Favorites Data"]
 
     subgraph 1["User Interface CLI"]
-        31["Bus Handler"]
-        32["Favorites Handler"]
-        33["Help Handler"]
-        34["Keyboard Factory"]
-        35["Menu Handler"]
-        36["Metro Handler"]
+        31["🚇 Metro Handler"]
+        32["🚌 Bus Handler"]
+        33["❤️ Favorites Handler"]
+        34["❓ Help Handler"]
+        35["⌨️ Keyboard Factory"]
+        36["📋 Menu Handler"]
     end
 
     subgraph 2["Providers"]
-        26["User Data Manager"]
-        27["Logger"]
-        28["Mapper"]
-        29["Secrets Manager"]
-        30["Transport API Service"]
+        26["❤️ Favorites Manager"]
+        27["📝 Logger"]
+        28["🗺️ Mapper"]
+        29["🔒 Secrets Manager"]
+        30["🌐 Transport API Service"]
     end
 
     subgraph 3["Domain Models Data Classes"]
         subgraph 4["Metro Domain Models"]
-            20["Metro Access"]
-            21["Metro Connection"]
-            22["Metro Line"]
-            23["Metro Station"]
-            24["Next Metro"]
-            25["Next Scheduled Metro"]
+            20["🚇 Metro Access"]
+            21["🔗 Metro Connection"]
+            22["🛤️ Metro Line"]
+            23["🚉 Metro Station"]
+            24["⏱️ Next Metro"]
+            25["📅 Next Scheduled Metro"]
         end
         subgraph 5["Bus Domain Models"]
-            17["Bus Line"]
-            18["Bus Stop"]
-            19["Next Bus"]
+            17["🚌 Bus Line"]
+            18["🛑 Bus Stop"]
+            19["⏱️ Next Bus"]
         end
     end
 
     subgraph 6["Application Services"]
-        11["Bus Service"]
-        12["Metro Service"]
-        13["Cache Service"]
-        14["Message Service"]
-        15["Navigation History"]
-        16["Update Manager"]
+        11["🚇 Metro Service"]
+        12["🚌 Bus Service"]
+        13["💾 Cache Service"]
+        14["💬 Message Service"]
+        15["🔄 Update Manager"]
     end
 
     %% Edges
@@ -116,9 +115,7 @@ graph TD
     2 -->|Manages| 9
     7 -->|Interacts with| 10
 
-    %% =============================
-    %% Classes & Colors (only boxes)
-    %% =============================
+    %% Classes & Colors
     classDef ui fill:#2196f3,color:#fff,stroke:#1a237e,stroke-width:2px;
     classDef providers fill:#4caf50,color:#fff,stroke:#1b5e20,stroke-width:2px;
     classDef domain fill:#ff9800,color:#000,stroke:#e65100,stroke-width:2px;
@@ -131,7 +128,7 @@ graph TD
     class 31,32,33,34,35,36 ui;
     class 26,27,28,29,30 providers;
     class 20,21,22,23,24,25,17,18,19 domain;
-    class 11,12,13,14,15,16 services;
+    class 11,12,13,14,15 services;
     class 8,9 external;
     class 10 cli;
     class 7 actor;
@@ -142,7 +139,6 @@ graph TD
 
 ## 🔰 Contributing
 
-- **💬 [Join the Discussions](https://github.com/mg-diego/BCN-Transit-Bot/discussions)**: Share your insights, provide feedback, or ask questions.
 - **🐛 [Report Issues](https://github.com/mg-diego/BCN-Transit-Bot/issues)**: Submit bugs found or log feature requests for the `BCN-Transit-Bot` project.
 - **💡 [Submit Pull Requests](https://github.com/mg-diego/BCN-Transit-Bot/blob/main/CONTRIBUTING.md)**: Review open PRs, and submit your own PRs.
 
