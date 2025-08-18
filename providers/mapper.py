@@ -30,7 +30,8 @@ class Mapper:
                     "lat": stop.coordinates[1],
                     "lon": stop.coordinates[0],
                     "name": f"{stop.CODI_PARADA} - {stop.NOM_PARADA}",
-                    "color": stop.COLOR_REC
+                    "color": stop.COLOR_REC,
+                    "direction": stop.SENTIT_DESTI
                 }
                 for stop in stops
             ]

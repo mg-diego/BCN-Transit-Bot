@@ -1,7 +1,6 @@
 from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, MessageHandler, filters
 
 import logging
-import asyncio
 
 from ui.menu_handler import MenuHandler
 from ui.metro_handler import MetroHandler
