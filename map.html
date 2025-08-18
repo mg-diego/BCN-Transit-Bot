@@ -1,179 +1,190 @@
 <!DOCTYPE html>
 <html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Mapa Leaflet - Varias paradas</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
     <style>
-        html, body {
-            height: 100%;
-            margin: 0;
-        }
-        #map {
-            height: 100%;
-            width: 100%;
-        }
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+      }
+      #map {
+        height: 100%;
+        width: 100%;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div id="map"></div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lz-string@1.4.4/libs/lz-string.min.js"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-
     <script>
-        // Leer parámetros de la URL
-        function getQueryParam(name) {
-            const params = new URLSearchParams(window.location.search);
-            return params.get(name);
-        }
+      // Leer parámetros de la URL
+      function getQueryParam(name) {
+        const params = new URLSearchParams(window.location.search);
+        return params.get(name);
+      }
 
-        // Decodificar Base64 a JSON
-        function decodeBase64Json(encoded) {
-            try {
-                const jsonStr = atob(encoded);
-                return JSON.parse(jsonStr);
-            } catch (e) {
-                console.error("Error decoding JSON", e);
-                return null;
-            }
+      // Decodificar Base64 a JSON
+      function decodeBase64Json(encoded) {
+        try {
+          const jsonStr = atob(encoded);
+          return JSON.parse(jsonStr);
+        } catch (e) {
+          console.error("Error decoding JSON", e);
+          return null;
         }
+      }
 
-        function createColoredIcon(hexColor) {
-            // SVG simple con relleno dinámico en hexColor
-            const svg = `
+      function createColoredIcon(hexColor) {
+        // SVG simple con relleno dinámico en hexColor
+        const svg = `
             <svg xmlns="http://www.w3.org/2000/svg" width="25" height="41" viewBox="0 0 25 41">
                 <path fill="${hexColor}" stroke="black" stroke-width="1" d="M12.5 0C7 0 3 4.5 3 10c0 7.5 9.5 20 9.5 20s9.5-12.5 9.5-20c0-5.5-4-10-9.5-10z"/>
                 <circle fill="white" cx="12.5" cy="10" r="4"/>
             </svg>
             `;
-            // Codifica el SVG a base64 para usarlo como URL de imagen
-            const svgUrl = "data:image/svg+xml;base64," + btoa(svg);
+        // Codifica el SVG a base64 para usarlo como URL de imagen
+        const svgUrl = "data:image/svg+xml;base64," + btoa(svg);
 
-            return new L.Icon({
-                iconUrl: svgUrl,
-                iconSize: [25, 41],
-                iconAnchor: [12, 41],
-                popupAnchor: [1, -34],
-                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-                shadowSize: [41, 41],
-                shadowAnchor: [12, 41],
-            });
-            }
+        return new L.Icon({
+          iconUrl: svgUrl,
+          iconSize: [25, 41],
+          iconAnchor: [12, 41],
+          popupAnchor: [1, -34],
+          shadowUrl:
+            "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
+          shadowSize: [41, 41],
+          shadowAnchor: [12, 41],
+        });
+      }
 
-        // Obtener JSON desde URL (parámetro "data")
-        const compressed = getQueryParam("data");
-        console.log(compressed)
-        let coordsList = [];
-        let line_id = ''
+      // Obtener JSON desde URL (parámetro "data")
+      const compressed = getQueryParam("data");
+      console.log(compressed);
+      let coordsList = [];
+      let line_id = "";
 
-        if (compressed) {
-            const decompressed = LZString.decompressFromEncodedURIComponent(compressed);
-            const jsonData = JSON.parse(decompressed);
-            console.log(jsonData)
-            if (jsonData && jsonData.stops) {
-                line_id = jsonData.line_id
-                coordsList = jsonData.stops.map(stop => ({
-                    lat: stop.lat,
-                    lon: stop.lon,
-                    name: stop.name,
-                    color: stop.color,
-                    direction: stop.direction
-                }));
-            }
+      if (compressed) {
+        const decompressed =
+          LZString.decompressFromEncodedURIComponent(compressed);
+        const jsonData = JSON.parse(decompressed);
+        console.log(jsonData);
+        if (jsonData && jsonData.stops) {
+          line_id = jsonData.line_id;
+          coordsList = jsonData.stops.map((stop) => ({
+            lat: stop.lat,
+            lon: stop.lon,
+            name: stop.name,
+            color: stop.color,
+            direction: stop.direction,
+          }));
         }
+      }
 
-        // Calcular centro aproximado
-        const avgLat = coordsList.reduce((sum, c) => sum + c.lat, 0) / coordsList.length;
-        const avgLon = coordsList.reduce((sum, c) => sum + c.lon, 0) / coordsList.length;
+      // Calcular centro aproximado
+      const avgLat =
+        coordsList.reduce((sum, c) => sum + c.lat, 0) / coordsList.length;
+      const avgLon =
+        coordsList.reduce((sum, c) => sum + c.lon, 0) / coordsList.length;
 
-        // Inicializar mapa
-        const map = L.map('map').setView([avgLat, avgLon], 13);
+      // Inicializar mapa
+      const map = L.map("map").setView([avgLat, avgLon], 13);
 
-        // Capa base
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors'
-        }).addTo(map);
+      // Capa base
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: "© OpenStreetMap contributors",
+      }).addTo(map);
 
-        // Añadir marcadores y tramos
-        const bounds = [];
-        let prevStop = null;
+      // Añadir marcadores y tramos
+      const bounds = [];
+      let prevStop = null;
 
-        coordsList.forEach(stop => {
-            const icon = createColoredIcon(`#${stop.color}`);
+      coordsList.forEach((stop) => {
+        const icon = createColoredIcon(`#${stop.color}`);
 
-            const marker = L.marker([stop.lat, stop.lon], { icon }).addTo(map);
+        const marker = L.marker([stop.lat, stop.lon], { icon }).addTo(map);
 
-            // Popup con botón
-            const popupContent = document.createElement('div');
-            popupContent.innerHTML = `<p>📍 ${stop.name || "Parada"}</p>`;
+        // Popup con botón
+        const popupContent = document.createElement("div");
+        popupContent.innerHTML = `<p>📍 ${stop.name || "Parada"}</p>`;
 
-            const btn = document.createElement('button');
-            btn.textContent = "Seleccionar parada";
-            btn.style.cursor = "pointer";
-            btn.style.marginTop = "5px";
-            btn.style.padding = "5px 10px";
+        const btn = document.createElement("button");
+        btn.textContent = "Seleccionar parada";
+        btn.style.cursor = "pointer";
+        btn.style.marginTop = "5px";
+        btn.style.padding = "5px 10px";
 
-            btn.addEventListener('click', () => {
-                if (window.Telegram?.WebApp) {
-                    window.Telegram.WebApp.sendData(JSON.stringify({
-                        line_id: line_id,
-                        lat: stop.lat,
-                        lon: stop.lon,
-                        name: stop.name,
-                        color: stop.color
-                    }));
-                    marker.closePopup();
-                    window.Telegram.WebApp.close();
-                } else {
-                    alert("Esta función solo funciona dentro de la WebApp de Telegram.");
-                }
-            });
-
-            popupContent.appendChild(btn);
-            marker.bindPopup(popupContent);
-
-            bounds.push([stop.lat, stop.lon]);
-
-            // 🔹 Si hay parada anterior, dibujar línea de su color
-            if (prevStop) {
-                L.polyline(
-                    [
-                        [prevStop.lat, prevStop.lon],
-                        [stop.lat, stop.lon]
-                    ],
-                    {
-                        color: `#${prevStop.color}`,
-                        weight: 4,
-                        opacity: 0.8
-                    }
-                ).addTo(map);
-            }
-
-            prevStop = stop;
+        btn.addEventListener("click", () => {
+          if (window.Telegram?.WebApp) {
+            window.Telegram.WebApp.sendData(
+              JSON.stringify({
+                line_id: line_id,
+                lat: stop.lat,
+                lon: stop.lon,
+                name: stop.name,
+                color: stop.color,
+              })
+            );
+            marker.closePopup();
+            window.Telegram.WebApp.close();
+          } else {
+            alert(
+              "Esta función solo funciona dentro de la WebApp de Telegram."
+            );
+          }
         });
 
-        // Ajustar vista para mostrar todas las paradas
-        if (bounds.length > 0) {
-            map.fitBounds(bounds);
+        popupContent.appendChild(btn);
+        marker.bindPopup(popupContent);
+
+        bounds.push([stop.lat, stop.lon]);
+
+        // 🔹 Si hay parada anterior, dibujar línea de su color
+        if (prevStop) {
+          L.polyline(
+            [
+              [prevStop.lat, prevStop.lon],
+              [stop.lat, stop.lon],
+            ],
+            {
+              color: `#${prevStop.color}`,
+              weight: 4,
+              opacity: 0.8,
+            }
+          ).addTo(map);
         }
 
-        // 🔹 Crear leyenda a partir de "direction" en cada stop
-        const legend = L.control({ position: 'bottomright' });
+        prevStop = stop;
+      });
 
-        legend.onAdd = function () {
-            const div = L.DomUtil.create('div', 'info legend');
-            div.style.background = "rgba(255, 255, 255, 0.9)";
-            div.style.padding = "12px 15px";
-            div.style.borderRadius = "12px";
-            div.style.boxShadow = "0 2px 6px rgba(0,0,0,0.3)";
-            div.style.font = "14px Arial, sans-serif";
-            div.style.color = "#333";
+      // Ajustar vista para mostrar todas las paradas
+      if (bounds.length > 0) {
+        map.fitBounds(bounds);
+      }
 
-            div.innerHTML = `<h4 style="
+      // 🔹 Crear leyenda a partir de "direction" en cada stop
+      const legend = L.control({ position: "bottomright" });
+
+      legend.onAdd = function () {
+        const div = L.DomUtil.create("div", "info legend");
+        div.style.background = "rgba(255, 255, 255, 0.9)";
+        div.style.padding = "12px 15px";
+        div.style.borderRadius = "12px";
+        div.style.boxShadow = "0 2px 6px rgba(0,0,0,0.3)";
+        div.style.font = "14px Arial, sans-serif";
+        div.style.color = "#333";
+
+        div.innerHTML = `<h4 style="
                 margin: 0 0 8px 0;
                 font-size: 15px;
                 font-weight: bold;
@@ -183,17 +194,17 @@
                 padding-bottom: 4px;
             ">Direcciones</h4>`;
 
-            // Obtener direcciones únicas con su color
-            const uniqueDirections = {};
-            coordsList.forEach(stop => {
-                if (!uniqueDirections[stop.direction]) {
-                    uniqueDirections[stop.direction] = `#${stop.color}`;
-                }
-            });
+        // Obtener direcciones únicas con su color
+        const uniqueDirections = {};
+        coordsList.forEach((stop) => {
+          if (!uniqueDirections[stop.direction]) {
+            uniqueDirections[stop.direction] = `#${stop.color}`;
+          }
+        });
 
-            // Pintar en la leyenda
-            for (const [direction, color] of Object.entries(uniqueDirections)) {
-                div.innerHTML += `
+        // Pintar en la leyenda
+        for (const [direction, color] of Object.entries(uniqueDirections)) {
+          div.innerHTML += `
                     <div style="display:flex; align-items:center; margin:6px 0;">
                         <span style="
                             width:16px;
@@ -207,12 +218,12 @@
                         <span style="flex:1;">${direction}</span>
                     </div>
                 `;
-            }
+        }
 
-            return div;
-        };
+        return div;
+      };
 
-        legend.addTo(map);
-        </script>
-</body>
+      legend.addTo(map);
+    </script>
+  </body>
 </html>
