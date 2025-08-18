@@ -1,5 +1,5 @@
 <p align="center">
-    <img src="https://i.imgur.com/xPsCudE.jpeg" align="center" width="30%">
+    <img src="docs/banner.jpg" align="center" width="80%">
 </p>
 <p align="center">
 	<img src="https://img.shields.io/badge/Telegram-Bot-blue?logo=telegram" alt="telegram-bot">
@@ -12,7 +12,6 @@
 <p align="center">
 	<!-- default option, no dependency badges. -->
 </p>
-<br>
 
 ## 🔗 Table of Contents
 
