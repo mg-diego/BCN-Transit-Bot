@@ -1,9 +1,12 @@
 import json
+from typing import List
+from domain.bus_stop import BusStop
+from domain.metro_station import MetroStation
 import lzstring
 
 class Mapper:
 
-    def map_metro_stations(self, stations):
+    def map_metro_stations(self, stations: List[MetroStation]):
         lz = lzstring.LZString()
         data = {
             "stops": [
@@ -21,7 +24,7 @@ class Mapper:
         compressed = lz.compressToEncodedURIComponent(json_str)
         return compressed
     
-    def map_bus_stops(self, stops, line_id):        
+    def map_bus_stops(self, stops: List[BusStop], line_id):        
         lz = lzstring.LZString()        
         data = {
             "line_id": line_id,
@@ -31,7 +34,7 @@ class Mapper:
                     "lon": stop.coordinates[0],
                     "name": f"{stop.CODI_PARADA} - {stop.NOM_PARADA}",
                     "color": stop.COLOR_REC,
-                    "direction": stop.SENTIT_DESTI
+                    "direction": stop.DESTI_SENTIT
                 }
                 for stop in stops
             ]
