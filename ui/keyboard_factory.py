@@ -65,7 +65,7 @@ class KeyboardFactory:
         return ReplyKeyboardMarkup.from_button(
                 KeyboardButton(
                     text="🗺️ Abrir mapa y seleccionar parada",
-                    web_app=WebAppInfo(url=f"https://mg-diego.github.io/Metro-Bus-BCN/map.html?data={encoded}"),
+                    web_app=WebAppInfo(url=f"https://mg-diego.github.io/BCN-Transit-Bot/map.html?data={encoded}"),
                 )
         )
     

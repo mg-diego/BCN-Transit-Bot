@@ -17,9 +17,7 @@ class SecretsManager:
         """
         self.secrets = {}
         self._load_env()
-        self._load_file('secrets')        
-
-        logger.info(self.secrets)
+        self._load_file('secrets')
         
     def _load_env(self):
         self.secrets['TELEGRAM_TOKEN'] = os.environ.get('TELEGRAM_TOKEN')
