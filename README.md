@@ -60,56 +60,82 @@ Just open the link, start the bot, and explore Barcelona’s metro and bus netwo
 ```mermaid
 graph TD
 
-    10["CLI Application<br>Python CLI"]
+    10["CLI Application CLI"]
     7["User<br>External Actor"]
     8["External Transport API<br>REST/JSON"]
     9["Favorites Data<br>JSON File"]
-    subgraph 1["User Interface<br>Python CLI"]
-        31["Bus Handler<br>Python"]
-        32["Favorites Handler<br>Python"]
-        33["Help Handler<br>Python"]
-        34["Keyboard Factory<br>Python"]
-        35["Menu Handler<br>Python"]
-        36["Metro Handler<br>Python"]
+
+    subgraph 1["User Interface CLI"]
+        31["Bus Handler"]
+        32["Favorites Handler"]
+        33["Help Handler"]
+        34["Keyboard Factory"]
+        35["Menu Handler"]
+        36["Metro Handler"]
     end
-    subgraph 2["Providers<br>Python"]
-        26["Favorites Manager<br>Python"]
-        27["Logger<br>Python"]
-        28["Mapper<br>Python"]
-        29["Secrets Manager<br>Python"]
-        30["Transport API Service<br>Python"]
+
+    subgraph 2["Providers"]
+        26["Favorites Manager"]
+        27["Logger"]
+        28["Mapper"]
+        29["Secrets Manager"]
+        30["Transport API Service"]
     end
-    subgraph 3["Domain Models<br>Python Data Classes"]
-        subgraph 4["Metro Domain Models<br>Python"]
-            20["Metro Access<br>Python"]
-            21["Metro Connection<br>Python"]
-            22["Metro Line<br>Python"]
-            23["Metro Station<br>Python"]
-            24["Next Metro<br>Python"]
-            25["Next Scheduled Metro<br>Python"]
+
+    subgraph 3["Domain Models Data Classes"]
+        subgraph 4["Metro Domain Models"]
+            20["Metro Access"]
+            21["Metro Connection"]
+            22["Metro Line"]
+            23["Metro Station"]
+            24["Next Metro"]
+            25["Next Scheduled Metro"]
         end
-        subgraph 5["Bus Domain Models<br>Python"]
-            17["Bus Line<br>Python"]
-            18["Bus Stop<br>Python"]
-            19["Next Bus<br>Python"]
+        subgraph 5["Bus Domain Models"]
+            17["Bus Line"]
+            18["Bus Stop"]
+            19["Next Bus"]
         end
     end
-    subgraph 6["Application Services<br>Python"]
-        11["Bus Service<br>Python"]
-        12["Metro Service<br>Python"]
-        13["Cache Service<br>Python"]
-        14["Message Service<br>Python"]
-        15["Navigation History<br>Python"]
-        16["Update Manager<br>Python"]
+
+    subgraph 6["Application Services"]
+        11["Bus Service"]
+        12["Metro Service"]
+        13["Cache Service"]
+        14["Message Service"]
+        15["Navigation History"]
+        16["Update Manager"]
     end
-    %% Edges at this level (grouped by source)
-    10["CLI Application<br>Python CLI"] -->|Drives| 1["User Interface<br>Python CLI"]
-    6["Application Services<br>Python"] -->|Uses| 2["Providers<br>Python"]
-    6["Application Services<br>Python"] -->|Uses| 3["Domain Models<br>Python Data Classes"]
-    1["User Interface<br>Python CLI"] -->|Invokes| 6["Application Services<br>Python"]
-    2["Providers<br>Python"] -->|Connects to| 8["External Transport API<br>REST/JSON"]
-    2["Providers<br>Python"] -->|Manages| 9["Favorites Data<br>JSON File"]
-    7["User<br>External Actor"] -->|Interacts with| 10["CLI Application<br>Python CLI"]
+
+    %% Edges
+    10 -->|Drives| 1
+    6 -->|Uses| 2
+    6 -->|Uses| 3
+    1 -->|Invokes| 6
+    2 -->|Connects to| 8
+    2 -->|Manages| 9
+    7 -->|Interacts with| 10
+
+    %% =============================
+    %% Classes & Colors (only boxes)
+    %% =============================
+    classDef ui fill:#2196f3,color:#fff,stroke:#1a237e,stroke-width:2px;
+    classDef providers fill:#4caf50,color:#fff,stroke:#1b5e20,stroke-width:2px;
+    classDef domain fill:#ff9800,color:#000,stroke:#e65100,stroke-width:2px;
+    classDef services fill:#9c27b0,color:#fff,stroke:#4a148c,stroke-width:2px;
+    classDef external fill:#90a4ae,color:#000,stroke:#37474f,stroke-width:2px;
+    classDef cli fill:#607d8b,color:#fff,stroke:#263238,stroke-width:2px;
+    classDef actor fill:#f44336,color:#fff,stroke:#b71c1c,stroke-width:2px;
+
+    %% Assign classes ONLY to internal boxes
+    class 31,32,33,34,35,36 ui;
+    class 26,27,28,29,30 providers;
+    class 20,21,22,23,24,25,17,18,19 domain;
+    class 11,12,13,14,15,16 services;
+    class 8,9 external;
+    class 10 cli;
+    class 7 actor;
+
 ```
 
 
