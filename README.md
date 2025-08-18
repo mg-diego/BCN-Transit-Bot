@@ -54,6 +54,13 @@ The bot is already deployed and available on Telegram:
 
 Just open the link, start the bot, and explore Barcelona’s metro and bus network in real time.
 
+
+https://github.com/user-attachments/assets/824458b8-456d-4c1b-a00f-a180094d11cd
+
+
+
+
+
 ## 🛠️ Project Architecture
 
 ```mermaid
