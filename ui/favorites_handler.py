@@ -3,8 +3,8 @@ from telegram.ext import ContextTypes
 
 class FavoritesHandler:
 
-    def __init__(self, favorites_manager, keyboard_factory, metro_service, bus_service):
-        self.favorites_manager = favorites_manager
+    def __init__(self, user_data_manager, keyboard_factory, metro_service, bus_service):
+        self.user_data_manager = user_data_manager
         self.keyboard_factory = keyboard_factory
         self.metro_service = metro_service
         self.bus_service = bus_service
@@ -12,12 +12,11 @@ class FavoritesHandler:
     async def show_favorites(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         query = update.callback_query
         await query.answer()
-        data = query.data
 
         user_id = query.from_user.id
-        favs = self.favorites_manager.get_all_favorites(user_id)
+        favs = self.user_data_manager.get_favorites_by_user(user_id)
 
-        if not favs["metro"] and not favs["bus"]:
+        if favs == []:
             await query.edit_message_text(
                 f"Hola {query.from_user.first_name} 👋\nAún no tienes nada en tu lista de favoritos. ¡Empieza a añadir algunos para encontrarlos más rápido!",
                 reply_markup=self.keyboard_factory.help_menu()
@@ -45,7 +44,7 @@ class FavoritesHandler:
                 "CODI_ESTACIO": item_id,
                 "NOM_ESTACIO": item.NOM_ESTACIO,
                 "CODI_GRUP_ESTACIO": item.CODI_GRUP_ESTACIO,
-                "NOM_LINIA": item.NOM_LINIA,
+                "NOM_LINIA": item.EMOJI_NOM_LINIA,
                 "CODI_LINIA": line_id,
                 "coordinates": item.coordinates
             }
@@ -59,7 +58,7 @@ class FavoritesHandler:
                 "coordinates": item.coordinates
             }
 
-        self.favorites_manager.add_favorite(user_id, item_type, new_fav_item)
+        self.user_data_manager.add_favorite(user_id, item_type, new_fav_item)
         keyboard = self.keyboard_factory.update_menu(is_favorite=True, item_type=item_type, item_id=item_id, line_id=line_id, user_id=user_id)
 
         await query.edit_message_reply_markup(reply_markup=keyboard)
@@ -73,7 +72,7 @@ class FavoritesHandler:
         data = query.data
         _, item_type, line_id, item_id = data.split(":")
 
-        self.favorites_manager.remove_favorite(user_id, item_type, item_id)
+        self.user_data_manager.remove_favorite(user_id, item_type, item_id)
         keyboard = self.keyboard_factory.update_menu(is_favorite=False, item_type=item_type, item_id=item_id, line_id=line_id, user_id=user_id)
 
         await query.edit_message_reply_markup(reply_markup=keyboard)

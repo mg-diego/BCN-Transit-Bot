@@ -86,22 +86,27 @@ class KeyboardFactory:
         ])
         return keyboard
     
+    def error_menu(self, user_id):
+        keyboard = InlineKeyboardMarkup([
+            [
+                InlineKeyboardButton("❌ Cerrar", callback_data=f"close_updates:{user_id}")
+            ]
+        ])
+        return keyboard
+    
     def favorites_menu(self, favs):
         fav_keyboard = []
         # Metro favorites
-        if favs["metro"]:
-            for item in favs["metro"]:
-                name = f"{item.get('NOM_LINIA', 'Sin nombre')} - {item.get('NOM_ESTACIO', '')}"
+        for item in favs:
+            if item['type'] == "metro":
+                name = f"{item.get('nom_linia', 'Sin nombre')} - {item.get('name', '')}"
                 fav_keyboard.append([
-                    InlineKeyboardButton(f"🚇 {name}", callback_data=f"metro_station:{item.get('CODI_LINIA')}:{item.get('CODI_ESTACIO')}")
+                    InlineKeyboardButton(f"🚇 {name}", callback_data=f"metro_station:{item.get('codi_linia')}:{item.get('code')}")
                 ])
-
-        # Bus favorites
-        if favs["bus"]:
-            for item in favs["bus"]:
-                name = f"({item.get('CODI_PARADA', '')})  {item.get('NOM_PARADA', '')}"
+            elif item['type'] == "bus":
+                name = f"({item.get('code', '')})  {item.get('name', '')}"
                 fav_keyboard.append([
-                    InlineKeyboardButton(f"🚌 {name}", callback_data=f"bus_stop:{item.get('CODI_LINIA')}:{item.get('CODI_PARADA')}")
+                    InlineKeyboardButton(f"🚌 {name}", callback_data=f"bus_stop:{item.get('codi_linia')}:{item.get('code')}")
                 ])
 
         # Close button

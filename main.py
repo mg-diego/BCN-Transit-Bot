@@ -1,6 +1,7 @@
 from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, MessageHandler, filters
 
 import logging
+import asyncio
 
 from ui.menu_handler import MenuHandler
 from ui.metro_handler import MetroHandler
@@ -17,7 +18,7 @@ from application.update_manager import UpdateManager
 
 from providers.secrets_manager import SecretsManager
 from providers.transport_api_service import TransportApiService
-from providers.favorites_manager import FavoritesManager
+from providers.user_data_manager import UserDataManager
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -31,17 +32,17 @@ def main():
     secrets_manager = SecretsManager()
     message_service = MessageService()
     update_manager = UpdateManager()
-    favorites_manager = FavoritesManager()
+    user_data_manager = UserDataManager()
 
     transport_api_service = TransportApiService(app_id=secrets_manager.get('APP_ID') , app_key=secrets_manager.get('APP_KEY'))
     cache_service = CacheService()
     metro_service = MetroService(transport_api_service, cache_service)
     bus_service = BusService(transport_api_service, cache_service)
     
-    menu_handler = MenuHandler(keyboard_factory, message_service)
-    metro_handler = MetroHandler(keyboard_factory, metro_service, update_manager, favorites_manager, message_service)
-    bus_handler = BusHandler(keyboard_factory, bus_service, update_manager, favorites_manager, message_service)
-    favorites_handler = FavoritesHandler(favorites_manager, keyboard_factory, metro_service, bus_service)
+    menu_handler = MenuHandler(keyboard_factory, message_service, user_data_manager)
+    metro_handler = MetroHandler(keyboard_factory, metro_service, update_manager, user_data_manager, message_service)
+    bus_handler = BusHandler(keyboard_factory, bus_service, update_manager, user_data_manager, message_service)
+    favorites_handler = FavoritesHandler(user_data_manager, keyboard_factory, metro_service, bus_service)
     help_handler = HelpHandler(message_service, keyboard_factory)
 
     application = ApplicationBuilder().token(secrets_manager.get('TELEGRAM_TOKEN')).build()
@@ -71,6 +72,14 @@ def main():
 
     application.run_polling()
 
+def test():
+    user_data_manager = UserDataManager("TMB")
+    #users = await fav_manager.get_users()
+    #print(users)
+    uses = user_data_manager.register_user(user_id="123", username="diego")
+    print("Veces usado:", uses)
+
 if __name__ == "__main__":
     logger.info('Starting bot...')
     main()
+    #test()

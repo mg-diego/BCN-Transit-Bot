@@ -1,3 +1,5 @@
 python-telegram-bot>=20.0
 aiohttp
 lzstring
+gspread
+oauth2client

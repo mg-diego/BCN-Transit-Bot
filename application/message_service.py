@@ -74,6 +74,9 @@ class MessageService:
     def get_user_id(self, update):
         return update.callback_query.from_user.id if update.callback_query else update.message.from_user.id
     
+    def get_username(self, update):
+        return update.callback_query.from_user.first_name if update.callback_query else update.message.from_user.first_name
+    
     def get_chat_id(self, update):
         return update.callback_query.message.chat_id if update.callback_query else update.message.chat_id
 

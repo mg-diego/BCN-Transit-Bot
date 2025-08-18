@@ -28,6 +28,7 @@ class MetroStation:
     COLOR_LINIA: str
     PICTO: str
     PICTO_GRUP: str
+    EMOJI_NOM_LINIA: str
 
     coordinates: Tuple[float, float]
 
@@ -63,6 +64,20 @@ def create_metro_station(feature: dict) -> MetroStation:
         COLOR_LINIA=props['COLOR_LINIA'],
         PICTO=props['PICTO'],
         PICTO_GRUP=props['PICTO_GRUP'],
-        coordinates=(coords[0], coords[1])
+        coordinates=(coords[0], coords[1]),
+        EMOJI_NOM_LINIA=_set_emoji_at_name(props['NOM_LINIA'])
     )
+
+
+def _set_emoji_at_name(name):
+    emojis = {
+        "L1": "🟥",
+        "L2": "🟪",
+        "L3": "🟩",
+        "L4": "🟨",
+        "L5": "🟦",
+        "L9S": "🟧",
+        "L9N": "🟧",
+    }
+    return f"{emojis.get(name, "")} {name}"
 

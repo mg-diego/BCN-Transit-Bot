@@ -9,11 +9,11 @@ from providers.mapper import Mapper
 logger = logging.getLogger(__name__)
 
 class BusHandler:
-    def __init__(self, keyboard_factory, bus_service, update_manager, favorites_manager, message_service):
+    def __init__(self, keyboard_factory, bus_service, update_manager, user_data_manager, message_service):
         self.keyboard_factory = keyboard_factory
         self.bus_service = bus_service
         self.update_manager = update_manager
-        self.favorites_manager = favorites_manager
+        self.user_data_manager = user_data_manager
         self.message_service = message_service
         self.mapper = Mapper()
 
@@ -32,7 +32,7 @@ class BusHandler:
         stops = await self.bus_service.get_stops_by_line(line_id)
         encoded = self.mapper.map_bus_stops(stops, line_id)
 
-        message = await self.message_service.send_new_message_from_callback(
+        await self.message_service.send_new_message_from_callback(
             update = update,
             text=(
                 f"🚌 Has seleccionado la <b>Línea {line_name}</b>.\n\n"
@@ -61,7 +61,7 @@ class BusHandler:
         
         await self.message_service.handle_interaction(update, desc_text)
 
-        location_message = await self.message_service.send_location(
+        await self.message_service.send_location(
             update,
             bus_stop.coordinates[1],
             bus_stop.coordinates[0]
@@ -69,6 +69,7 @@ class BusHandler:
 
         # Primer mensaje
         message = await self.message_service.send_new_message_from_callback(update, text="⏳ Cargando información de la estación...")
+        self.user_data_manager.register_search("bus", line_id, bus_stop_id, bus_stop.NOM_PARADA)
         
         async def update_loop():
             while True:
@@ -79,7 +80,7 @@ class BusHandler:
                         f"🚉 <u>Próximos Buses:</u>\n{next_buses}"
                     )
 
-                    is_fav = self.favorites_manager.has_favorite(user_id, "bus", bus_stop_id)
+                    is_fav = self.user_data_manager.has_favorite(user_id, "bus", bus_stop_id)
 
                     await self.message_service.edit_message_by_id(
                         chat_id,
@@ -95,6 +96,12 @@ class BusHandler:
                     break
                 except Exception as e:
                     logger.warning(f"Error actualizando estación: {e}")
+                    await self.message_service.edit_message_by_id(
+                        chat_id,
+                        message.message_id,
+                        "⚠️ No se pudo actualizar la información de la estación.\n\n Por favor, haz click en el botón '❌ Cerrar' y reinicia la búsqueda.",
+                        reply_markup=self.keyboard_factory.error_menu(user_id)
+                    )
                     break
 
         self.update_manager.start_task(user_id, update_loop)

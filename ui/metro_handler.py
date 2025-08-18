@@ -6,11 +6,11 @@ from telegram.ext import ContextTypes
 logger = logging.getLogger(__name__)
 
 class MetroHandler:
-    def __init__(self, keyboard_factory, metro_service, update_manager, favorites_manager, message_service):
+    def __init__(self, keyboard_factory, metro_service, update_manager, user_data_manager, message_service):
         self.keyboard_factory = keyboard_factory
         self.metro_service = metro_service
         self.update_manager = update_manager
-        self.favorites_manager = favorites_manager
+        self.user_data_manager = user_data_manager
         self.message_service = message_service
 
     async def show_lines(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -45,7 +45,7 @@ class MetroHandler:
         )
         await self.message_service.edit_inline_message(update, desc_text)
 
-        location_message = await self.message_service.send_location(
+        await self.message_service.send_location(
             update,
             station.coordinates[1],
             station.coordinates[0],
@@ -53,6 +53,7 @@ class MetroHandler:
         )
 
         message = await self.message_service.send_new_message_from_callback(update, text="⏳ Cargando información de la estación...")
+        self.user_data_manager.register_search("metro", line_id, metro_station_id, station.NOM_ESTACIO)
         chat_id = self.message_service.get_chat_id(update)
 
         station_connections = await self.metro_service.get_metro_station_connections(metro_station_id)
@@ -69,7 +70,7 @@ class MetroHandler:
                         f"🚨 <u>Alertas:</u> \n{station_alerts}"
                     )
 
-                    is_fav = self.favorites_manager.has_favorite(user_id, "metro", metro_station_id)
+                    is_fav = self.user_data_manager.has_favorite(user_id, "metro", metro_station_id)
                     await self.message_service.edit_message_by_id(
                         chat_id,
                         message.message_id,
@@ -84,6 +85,12 @@ class MetroHandler:
                     break
                 except Exception as e:
                     logger.warning(f"Error actualizando estación: {e}")
+                    await self.message_service.edit_message_by_id(
+                        chat_id,
+                        message.message_id,
+                        "⚠️ No se pudo actualizar la información de la estación.\n\n Por favor, haz click en el botón '❌ Cerrar' y reinicia la búsqueda.",
+                        reply_markup=self.keyboard_factory.error_menu(user_id)
+                    )
                     break
 
 

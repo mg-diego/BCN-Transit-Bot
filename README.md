@@ -60,10 +60,10 @@ Just open the link, start the bot, and explore Barcelona’s metro and bus netwo
 ```mermaid
 graph TD
 
-    10["CLI Application CLI"]
-    7["User<br>External Actor"]
+    10["Telegram Bot"]
+    7["User<br>(External Actor)"]
     8["External Transport API<br>REST/JSON"]
-    9["Favorites Data<br>JSON File"]
+    9["User Data<br>Google Sheets"]
 
     subgraph 1["User Interface CLI"]
         31["Bus Handler"]
@@ -75,7 +75,7 @@ graph TD
     end
 
     subgraph 2["Providers"]
-        26["Favorites Manager"]
+        26["User Data Manager"]
         27["Logger"]
         28["Mapper"]
         29["Secrets Manager"]
