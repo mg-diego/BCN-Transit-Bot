@@ -33,6 +33,7 @@ class MessageService:
             parse_mode=parse_mode
         )
         self._cache_message(update, msg)
+        return msg
 
     async def edit_inline_message(self, update: Update, text: str, reply_markup: InlineKeyboardMarkup = None, parse_mode=ParseMode.HTML):
         """Edita el mensaje proveniente de un botón inline."""

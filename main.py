@@ -7,6 +7,7 @@ from ui.metro_handler import MetroHandler
 from ui.bus_handler import BusHandler
 from ui.favorites_handler import FavoritesHandler
 from ui.help_handler import HelpHandler
+from ui.language_handler import LanguageHandler
 from ui.keyboard_factory import KeyboardFactory
 
 from application.message_service import MessageService
@@ -18,6 +19,7 @@ from application.update_manager import UpdateManager
 from providers.secrets_manager import SecretsManager
 from providers.transport_api_service import TransportApiService
 from providers.user_data_manager import UserDataManager
+from providers.language_manager import LanguageManager
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -27,7 +29,9 @@ console_handler.setFormatter(formatter)
 logger.addHandler(console_handler)
 
 def main():
-    keyboard_factory = KeyboardFactory()
+    language_manager = LanguageManager()
+
+    keyboard_factory = KeyboardFactory(language_manager)
     secrets_manager = SecretsManager()
     message_service = MessageService()
     update_manager = UpdateManager()
@@ -35,19 +39,21 @@ def main():
 
     transport_api_service = TransportApiService(app_id=secrets_manager.get('APP_ID') , app_key=secrets_manager.get('APP_KEY'))
     cache_service = CacheService()
-    metro_service = MetroService(transport_api_service, cache_service)
+    metro_service = MetroService(transport_api_service, language_manager, cache_service)
     bus_service = BusService(transport_api_service, cache_service)
     
-    menu_handler = MenuHandler(keyboard_factory, message_service, user_data_manager)
-    metro_handler = MetroHandler(keyboard_factory, metro_service, update_manager, user_data_manager, message_service)
-    bus_handler = BusHandler(keyboard_factory, bus_service, update_manager, user_data_manager, message_service)
-    favorites_handler = FavoritesHandler(user_data_manager, keyboard_factory, metro_service, bus_service)
-    help_handler = HelpHandler(message_service, keyboard_factory)
+    menu_handler = MenuHandler(keyboard_factory, message_service, user_data_manager, language_manager)
+    metro_handler = MetroHandler(keyboard_factory, metro_service, update_manager, user_data_manager, message_service, language_manager)
+    bus_handler = BusHandler(keyboard_factory, bus_service, update_manager, user_data_manager, message_service, language_manager)
+    favorites_handler = FavoritesHandler(user_data_manager, keyboard_factory, metro_service, bus_service, language_manager)
+    help_handler = HelpHandler(message_service, keyboard_factory, language_manager)
+    language_handler = LanguageHandler(keyboard_factory, user_data_manager, message_service, language_manager)
 
     application = ApplicationBuilder().token(secrets_manager.get('TELEGRAM_TOKEN')).build()
 
     application.add_handler(CommandHandler("start", menu_handler.show_menu))    
     application.add_handler(CallbackQueryHandler(menu_handler.show_menu, pattern=r"^menu$"))
+    application.add_handler(CallbackQueryHandler(menu_handler.back_to_menu, pattern=r"^back_to_menu"))
 
     application.add_handler(CommandHandler("help", help_handler.show_help))    
     application.add_handler(CallbackQueryHandler(help_handler.show_help, pattern=r"^help$"))
@@ -66,19 +72,14 @@ def main():
     application.add_handler(CallbackQueryHandler(favorites_handler.remove_favorite, pattern=r"^remove_fav"))    
     application.add_handler(CallbackQueryHandler(favorites_handler.show_favorites, pattern=r"^favorites$"))
 
+    application.add_handler(CallbackQueryHandler(language_handler.show_languages, pattern=r"^language"))
+    application.add_handler(CallbackQueryHandler(language_handler.update_language, pattern=r"^set_language"))    
+
     application.add_handler(CallbackQueryHandler(metro_handler.close_updates, pattern=r"^close_updates:"))
 
 
     application.run_polling()
 
-def test():
-    user_data_manager = UserDataManager("TMB")
-    #users = await fav_manager.get_users()
-    #print(users)
-    uses = user_data_manager.register_user(user_id="123", username="diego")
-    print("Veces usado:", uses)
-
 if __name__ == "__main__":
     logger.info('Starting bot...')
     main()
-    #test()

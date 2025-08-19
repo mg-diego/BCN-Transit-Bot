@@ -1,0 +1,48 @@
+{
+  "main.menu.loading": "⏳ Loading user profile...",
+  "main.menu.message": "👋 Welcome to the BCN Transit Bot!\n\n Choose an option to get started:",
+  "main.menu.metro": "🚇 Metro",
+  "main.menu.bus": "🚌 Bus",
+  "main.menu.favorites": "⭐ Favorites",
+  "main.menu.language": "🌐 Language",
+  "main.menu.help": "ℹ️ Help",
+
+  "keyboard.back": "🔙 Back",
+  "keyboard.close": "❌ Close",
+  "keyboard.favorites.add": "♥️ Add to Favorites",
+  "keyboard.favorites.remove": "💔 Remove from Favorites",
+  "keyboard.map": "🗺️ Open map and select stop",
+
+  "help.text": "ℹ️ <b>Help for BCN Transit Bot</b> ℹ️\n\nThis bot lets you quickly check updated information about <b>Metro</b> and <b>Bus</b> in the city of Barcelona.\n\n📋 <u>Available commands:</u>\n  • /start – Start a new search\n  • /help – Show this help message\n\n🚇 <u>To check the next metro trains:</u>\n  1. Tap 'Metro' in the menu.\n  2. Select a line.\n  3. Select a station.\n  4. You’ll see updated schedules and more details.\n\n🚌 <u>To check the next buses:</u>\n  1. Tap 'Bus' in the menu.\n  2. Select a line.\n  3. Select a station from the interactive map.\n  4. You’ll see updated schedules and more details.\n\n⭐ <u>To check your favorites:</u>\n  1. Tap 'Favorites' in the menu.\n  2. Select one of your saved favorites.\n  3. You’ll see updated schedules and more details.\n\n🌐 <u>To select the Language:</u>\n 1. Tap 'Language' in the menu.\n 2. Select one of the available languages (English, Spanish or Catalan).\n 3. You will see the application updated to the new language.\n\nDo you have questions or suggestions? I’m here to help!\n\n📬 <b>Contact:</b> <a href='https://github.com/mg-diego/BCN-Transit-Bot'>github.com/mg-diego/BCN-Transit-Bot</a>\n\n 🔖 <b>Version</b>: <code>v1.1</code>",
+
+  "metro.loading": "⏳ Loading metro lines...",
+  "metro.select.line": "Choose a metro line:",
+  "metro.line.stations": "'{line_id}' stations:",
+  "metro.station.name": "🚏 <b>'{station_name}' STATION</b> 🚏\n\nSelect a metro entrance for more details:",
+  "metro.station.loading": "⏳ Loading station information...",
+  "metro.station.next": "<u>Next Metros:</u>",
+  "metro.station.connections": "<u>Connections:</u>",
+  "metro.station.alerts": "<u>Alerts:</u>",
+  "metro.station.error": "⚠️ Station information could not be updated.\n\n Please click the '❌ Close' button and restart the search.",
+  "metro.station.no.connections": "      - This station has no Metro connections.",
+  "metro.station.no.alerts": "      <pre> - This station has no alerts. </pre>",
+
+  "bus.loading": "⏳ Loading bus lines...",
+  "bus.select.line": "Choose a bus line:",
+  "bus.line.stops": "🚌 You selected <b>Line {line_name}</b>.\n\nYou can explore the interactive map to choose a specific stop. Press the button below to open the map and select your preferred stop.",
+  "bus.stop.name": "🚏 <b>STOP '{bus_stop_name}'</b> 🚏",
+  "bus.stop.loading": "⏳ Loading stop information...",
+  "bus.stop.next": "<u>Next Buses:</u>",
+  "bus.stop.error": "⚠️ Could not update Stop information.\n\nPlease click the '❌ Close' button and restart your search.",
+
+  "search.cleaning": "🧹 Cleaning up old messages... one moment please.",
+  "search.finish": "✅ Search completed!\n\nWould you like to search again?\n\nType /start and we'll start it. 🔍",
+
+  "favorites.empty": "Hi {username} 👋\nYou don't have anything in your favorites list yet. Start adding some to find them faster!",
+  "favorites.message": "📌 Your favorites:",
+
+  "language.choose": "Choose your new language:",
+  "language.en": "🇬🇧 English",
+  "language.es": "🇪🇸 Spanish",
+  "language.ca": "(ꮯꭺꭲ) Catalan"
+}

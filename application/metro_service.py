@@ -1,14 +1,20 @@
+from typing import List
+from domain.metro_line import MetroLine
+from domain.metro_station import MetroStation
+from domain.metro_access import MetroAccess
+from domain.metro_connection import MetroConnection
 
 class MetroService:
-    def __init__(self, transport_api_service, cache_service=None):
+    def __init__(self, transport_api_service, language_manager, cache_service=None):
         """
         transport_api_service: servicio de infraestructura para consultar la API de transporte
         cache_service: servicio opcional para cachear respuestas
         """
         self.transport_api_service = transport_api_service
+        self.language_manager = language_manager
         self.cache_service = cache_service
 
-    async def get_all_lines(self):
+    async def get_all_lines(self) -> List[MetroLine]:
         """
         Devuelve todas las líneas de metro disponibles.
         Si hay cache_service, primero intenta recuperar de cache.
@@ -27,8 +33,13 @@ class MetroService:
             await self.cache_service.set(cache_key, lines, ttl=3600)  # Cache por 1 hora
 
         return lines
+    
+    async def get_line_by_id(self, line_id) -> MetroLine:
+        lines = await self.get_all_lines()
+        line = next((l for l in lines if str(l.CODI_LINIA) == str(line_id)), None)
+        return line
 
-    async def get_stations_by_line(self, line_id):
+    async def get_stations_by_line(self, line_id) -> List[MetroStation]:
         """
         Devuelve las estaciones de una línea de metro específica.
         """
@@ -47,7 +58,7 @@ class MetroService:
 
         return stations
     
-    async def get_station_accesses(self, group_code_id):
+    async def get_station_accesses(self, group_code_id) -> List[MetroAccess]:
         """
         Devuelve las entradas de una estación de metro
         """
@@ -66,7 +77,7 @@ class MetroService:
 
         return accesses
 
-    async def get_station_by_id(self, station_id, line_id):
+    async def get_station_by_id(self, station_id, line_id) -> MetroStation:
         """
         Devuelve una estación en base a su CODI_ESTACIó
         """
@@ -74,7 +85,7 @@ class MetroService:
         station = next((s for s in stations if str(s.CODI_ESTACIO) == str(station_id)), None)
         return station
 
-    async def get_metro_station_connections(self, station_id):
+    async def get_metro_station_connections(self, station_id) -> List[MetroConnection]:
         """
         Devuelve la lista de conexiones de una estación de metro.
         """
@@ -92,7 +103,7 @@ class MetroService:
 
         formatted_connections = (
             "\n".join(str(c) for c in connections)
-            or "      - Esta estación no tiene ninguna conexión de Metro."
+            or self.language_manager.t('metro.station.no.connections')
         )
 
         return formatted_connections
@@ -117,7 +128,7 @@ class MetroService:
 
         formatted_alerts = (
             "\n".join(f"<pre>{c}</pre>" for c in alerts)
-            or "      <pre> - Esta estación no tiene ninguna alerta. </pre>"
+            or self.language_manager.t('metro.station.no.alerts')
         )
 
         return formatted_alerts

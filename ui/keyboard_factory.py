@@ -11,9 +11,14 @@ class KeyboardFactory:
     MENU_CALLBACK = "menu"
     MENU_METRO_CALLBACK = "metro"
     MENU_BUS_CALLBACK = "bus"
-    MENU_FAVORITES_CALLLBACK = "favorites"
-    MENU_FAVORITES_CALLBACK = "help"
+    MENU_FAVORITES_CALLBACK = "favorites"
+    MENU_LANGUAGE_CALLBACK = "language"
+    MENU_HELP_CALLBACK = "help"
 
+    BACK_TO_MENU_CALLBACK = "back_to_menu"
+
+    def __init__(self, language_manager):
+        self.language_manager = language_manager
     
     def _chunk_buttons(self, buttons, n=2):
         return [buttons[i:i + n] for i in range(0, len(buttons), n)]
@@ -21,18 +26,20 @@ class KeyboardFactory:
     def create_main_menu(self):
         """Teclado del menú principal."""
         keyboard = [
-            [InlineKeyboardButton("🚇 Metro", callback_data=self.MENU_METRO_CALLBACK)],
-            [InlineKeyboardButton("🚌 Bus", callback_data=self.MENU_BUS_CALLBACK)],
-            [InlineKeyboardButton("⭐ Favoritos", callback_data=self.MENU_FAVORITES_CALLLBACK)],
-            [InlineKeyboardButton("ℹ️ Ayuda", callback_data=self.MENU_FAVORITES_CALLBACK)]
+            InlineKeyboardButton(self.language_manager.t('main.menu.metro'), callback_data=self.MENU_METRO_CALLBACK),
+            InlineKeyboardButton(self.language_manager.t('main.menu.bus'), callback_data=self.MENU_BUS_CALLBACK),
+            InlineKeyboardButton(self.language_manager.t('main.menu.favorites'), callback_data=self.MENU_FAVORITES_CALLBACK),
+            InlineKeyboardButton(self.language_manager.t('main.menu.language'), callback_data=self.MENU_LANGUAGE_CALLBACK)
         ]
-        return InlineKeyboardMarkup(keyboard)    
+        rows = self._chunk_buttons(keyboard, 2)
+        rows.append([InlineKeyboardButton(self.language_manager.t('main.menu.help'),callback_data=self.MENU_HELP_CALLBACK)])
+        return InlineKeyboardMarkup(rows)
     
     def metro_lines_menu(self, metro_lines: List[MetroLine]) -> InlineKeyboardMarkup:
         keyboard = []
         for line in metro_lines:
             keyboard.append([InlineKeyboardButton(f"{line.NOM_LINIA} - {line.DESC_LINIA}", callback_data=f"metro_line:{line.CODI_LINIA}")])
-        keyboard.append(self._back_button(self.MENU_CALLBACK))
+        keyboard.append(self._back_button(self.BACK_TO_MENU_CALLBACK))
         return InlineKeyboardMarkup(keyboard)
     
     def metro_stations_menu(self, metro_stations: List[MetroStation], line_id):
@@ -41,7 +48,7 @@ class KeyboardFactory:
             for metro_station in metro_stations
         ]
         rows = self._chunk_buttons(buttons, 2)
-        rows.append(self._back_button(self.MENU_METRO_CALLBACK))
+        rows.append(self._back_button(self.BACK_TO_MENU_CALLBACK))
         return InlineKeyboardMarkup(rows)
     
     def metro_station_access_menu(self, station_accesses: List[MetroAccess]):
@@ -52,36 +59,36 @@ class KeyboardFactory:
         rows = self._chunk_buttons(buttons, 2)
         return InlineKeyboardMarkup(rows)
     
-    def bus_lines_menu(self, bus_lines: List[BusLine])  -> InlineKeyboardMarkup:
+    def bus_lines_menu(self, bus_lines: List[BusLine]):
         buttons = [
             InlineKeyboardButton(f"{line.NOM_LINIA}", callback_data=f"bus_line:{line.CODI_LINIA}:{line.NOM_LINIA}")
             for line in bus_lines
         ]
         rows = self._chunk_buttons(buttons, 5)
-        buttons.append(self._back_button(self.MENU_CALLBACK))
+        rows.append(self._back_button(self.BACK_TO_MENU_CALLBACK))
         return InlineKeyboardMarkup(rows)
     
     def bus_stops_map_menu(self, encoded):
         return ReplyKeyboardMarkup.from_button(
                 KeyboardButton(
-                    text="🗺️ Abrir mapa y seleccionar parada",
+                    text=self.language_manager.t('keyboard.map'),
                     web_app=WebAppInfo(url=f"https://mg-diego.github.io/BCN-Transit-Bot/map.html?data={encoded}"),
                 )
         )
     
     def help_menu(self):
-        return InlineKeyboardMarkup([self._back_button(self.MENU_CALLBACK)])
+        return InlineKeyboardMarkup([self._back_button(self.BACK_TO_MENU_CALLBACK)])
     
     def update_menu(self, is_favorite: bool, item_type:str, item_id: str, line_id: str, user_id: str):
         if is_favorite:
-            fav_button = InlineKeyboardButton("💔 Quitar de Favoritos", callback_data=f"remove_fav:{item_type}:{line_id}:{item_id}")
+            fav_button = InlineKeyboardButton(self.language_manager.t('keyboard.favorites.remove'), callback_data=f"remove_fav:{item_type}:{line_id}:{item_id}")
         else:
-            fav_button = InlineKeyboardButton("♥️ Añadir a Favoritos", callback_data=f"add_fav:{item_type}:{line_id}:{item_id}")
+            fav_button = InlineKeyboardButton(self.language_manager.t('keyboard.favorites.add'), callback_data=f"add_fav:{item_type}:{line_id}:{item_id}")
 
         keyboard = InlineKeyboardMarkup([
             [
                 fav_button,
-                InlineKeyboardButton("❌ Cerrar", callback_data=f"close_updates:{user_id}")
+                self._close_button(user_id)
             ]
         ])
         return keyboard
@@ -89,14 +96,21 @@ class KeyboardFactory:
     def error_menu(self, user_id):
         keyboard = InlineKeyboardMarkup([
             [
-                InlineKeyboardButton("❌ Cerrar", callback_data=f"close_updates:{user_id}")
+                self._close_button(user_id)
             ]
         ])
         return keyboard
     
+    def _close_button(self, user_id: str):
+        """Devuelve el botón de cerrar menú."""
+        return InlineKeyboardButton(
+            self.language_manager.t('keyboard.close'),
+            callback_data=f"close_updates:{user_id}"
+    )
+    
     def favorites_menu(self, favs):
         fav_keyboard = []
-        # Metro favorites
+
         for item in favs:
             if item['type'] == "metro":
                 name = f"{item.get('nom_linia', 'Sin nombre')} - {item.get('name', '')}"
@@ -109,10 +123,18 @@ class KeyboardFactory:
                     InlineKeyboardButton(f"🚌 {name}", callback_data=f"bus_stop:{item.get('codi_linia')}:{item.get('code')}")
                 ])
 
-        # Close button
-        fav_keyboard.append(self._back_button(self.MENU_CALLBACK))
+        fav_keyboard.append(self._back_button(self.BACK_TO_MENU_CALLBACK))
         return InlineKeyboardMarkup(fav_keyboard)
     
     def _back_button(self, callback):
-        return [InlineKeyboardButton("🔙 Volver", callback_data=callback)]
+        return [InlineKeyboardButton(self.language_manager.t('keyboard.back'), callback_data=callback)]
+    
+    def language_menu(self, available_languages: dict):
+        buttons = [
+            InlineKeyboardButton(name, callback_data=f"set_language:{code}")
+            for code, name in available_languages.items()
+        ]
+        rows = self._chunk_buttons(buttons, 2)
+        rows.append(self._back_button(self.BACK_TO_MENU_CALLBACK))
+        return InlineKeyboardMarkup(rows)
     

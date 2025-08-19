@@ -18,6 +18,7 @@ class UserDataManager:
 
         self.USERS_LAST_START_COLUMN_INDEX = 4
         self.USERS_USES_COLUMN_INDEX = 5
+        self.USERS_LANGUAGE_INDEX = 6
 
         self.SEARCHES_LAST_SEARCH_COLUMN_INDEX = 6
         self.SEARCHES_USES_COLUMN_INDEX = 7
@@ -32,7 +33,7 @@ class UserDataManager:
         users = self.users_ws.get_all_records()
         now = str(datetime.now().strftime("%Y:%m:%d %H:%M:%S"))
 
-        for idx, user in enumerate(users, start=2):  # fila 2 porque fila 1 = headers
+        for idx, user in enumerate(users, start=2):
             if str(user["user_id"]) == str(user_id):
                 # Usuario ya existe → incrementar usos
                 new_uses = int(user["uses"]) + 1
@@ -41,8 +42,23 @@ class UserDataManager:
                 return new_uses
 
         # Si no existe → crear fila
-        self.users_ws.append_row([user_id, username, now, now, 1])
+        self.users_ws.append_row([user_id, username, now, now, 1, 'en'])
         return 1
+    
+    def update_user_language(self, user_id: int, new_language: str):
+        users = self.users_ws.get_all_records()
+
+        for idx, user in enumerate(users, start=2):
+            if str(user["user_id"]) == str(user_id):
+                self.users_ws.update_cell(idx, self.USERS_LANGUAGE_INDEX, new_language)
+                return True
+
+    def get_user_language(self, user_id: int):
+        users = self.users_ws.get_all_records()
+
+        for idx, user in enumerate(users, start=2):
+            if str(user["user_id"]) == str(user_id):
+                return user["language"]
 
     # ---------------------------
     # FAVORITES
