@@ -3,10 +3,29 @@ import logging
 from telegram import Update
 from telegram.ext import ContextTypes
 
+from ui.keyboard_factory import KeyboardFactory
+
+from application.metro_service import MetroService
+from application.update_manager import UpdateManager
+from application.message_service import MessageService
+
+from providers.user_data_manager import UserDataManager
+from providers.language_manager import LanguageManager
+
+from providers.mapper import Mapper
+
 logger = logging.getLogger(__name__)
 
 class MetroHandler:
-    def __init__(self, keyboard_factory, metro_service, update_manager, user_data_manager, message_service, language_manager):
+    def __init__(
+            self,
+            keyboard_factory: KeyboardFactory,
+            metro_service: MetroService,
+            update_manager: UpdateManager,
+            user_data_manager: UserDataManager,
+            message_service: MessageService,
+            language_manager: LanguageManager
+        ):
         self.keyboard_factory = keyboard_factory
         self.metro_service = metro_service
         self.update_manager = update_manager

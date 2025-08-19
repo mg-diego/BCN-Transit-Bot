@@ -1,6 +1,8 @@
+from providers.transport_api_service import TransportApiService
+from application.cache_service import CacheService
 
 class BusService:
-    def __init__(self, transport_api_service, cache_service=None):
+    def __init__(self, transport_api_service: TransportApiService, cache_service: CacheService = None):
         """
         transport_api_service: servicio de infraestructura para consultar la API de transporte
         cache_service: servicio opcional para cachear respuestas

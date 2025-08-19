@@ -1,16 +1,19 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton, WebAppInfo
 from typing import List
 
-from domain.metro_line import MetroLine
-from domain.metro_station import MetroStation
-from domain.metro_access import MetroAccess
-from domain.bus_line import BusLine
+from domain.metro.metro_line import MetroLine
+from domain.metro.metro_station import MetroStation
+from domain.metro.metro_access import MetroAccess
+from domain.bus.bus_line import BusLine
+from domain.tram.tram_line import TramLine
+from domain.tram.tram_stop import TramStop
 
 class KeyboardFactory:
 
     MENU_CALLBACK = "menu"
     MENU_METRO_CALLBACK = "metro"
     MENU_BUS_CALLBACK = "bus"
+    MENU_TRAM_CALLBACK = "tram"
     MENU_FAVORITES_CALLBACK = "favorites"
     MENU_LANGUAGE_CALLBACK = "language"
     MENU_HELP_CALLBACK = "help"
@@ -28,11 +31,13 @@ class KeyboardFactory:
         keyboard = [
             InlineKeyboardButton(self.language_manager.t('main.menu.metro'), callback_data=self.MENU_METRO_CALLBACK),
             InlineKeyboardButton(self.language_manager.t('main.menu.bus'), callback_data=self.MENU_BUS_CALLBACK),
+            InlineKeyboardButton(self.language_manager.t('main.menu.tram'), callback_data=self.MENU_TRAM_CALLBACK),
             InlineKeyboardButton(self.language_manager.t('main.menu.favorites'), callback_data=self.MENU_FAVORITES_CALLBACK),
-            InlineKeyboardButton(self.language_manager.t('main.menu.language'), callback_data=self.MENU_LANGUAGE_CALLBACK)
+            InlineKeyboardButton(self.language_manager.t('main.menu.language'), callback_data=self.MENU_LANGUAGE_CALLBACK),
+            InlineKeyboardButton(self.language_manager.t('main.menu.help'),callback_data=self.MENU_HELP_CALLBACK)
         ]
         rows = self._chunk_buttons(keyboard, 2)
-        rows.append([InlineKeyboardButton(self.language_manager.t('main.menu.help'),callback_data=self.MENU_HELP_CALLBACK)])
+        #rows.append([InlineKeyboardButton(self.language_manager.t('main.menu.help'),callback_data=self.MENU_HELP_CALLBACK)])
         return InlineKeyboardMarkup(rows)
     
     def metro_lines_menu(self, metro_lines: List[MetroLine]) -> InlineKeyboardMarkup:
@@ -42,10 +47,28 @@ class KeyboardFactory:
         keyboard.append(self._back_button(self.BACK_TO_MENU_CALLBACK))
         return InlineKeyboardMarkup(keyboard)
     
+    def tram_lines_menu(self, tram_lines: List[TramLine]) -> InlineKeyboardMarkup:
+        buttons = [
+            InlineKeyboardButton(line.name, callback_data=f"tram_line:{line.id}:{line.name}")
+            for line in tram_lines
+        ]
+        rows = self._chunk_buttons(buttons, 2)
+        rows.append(self._back_button(self.BACK_TO_MENU_CALLBACK))
+        return InlineKeyboardMarkup(rows)
+    
     def metro_stations_menu(self, metro_stations: List[MetroStation], line_id):
         buttons = [
             InlineKeyboardButton(f"{metro_station.ORDRE_ESTACIO}. {metro_station.NOM_ESTACIO}", callback_data=f"metro_station:{line_id}:{metro_station.CODI_ESTACIO}")
             for metro_station in metro_stations
+        ]
+        rows = self._chunk_buttons(buttons, 2)
+        rows.append(self._back_button(self.BACK_TO_MENU_CALLBACK))
+        return InlineKeyboardMarkup(rows)
+    
+    def tram_stops_menu(self, tram_stops: List[TramStop], line_id):
+        buttons = [
+            InlineKeyboardButton(f"{tram_stop.order}. {tram_stop.name}", callback_data=f"tram_stop:{line_id}:{tram_stop.id}")
+            for tram_stop in tram_stops
         ]
         rows = self._chunk_buttons(buttons, 2)
         rows.append(self._back_button(self.BACK_TO_MENU_CALLBACK))

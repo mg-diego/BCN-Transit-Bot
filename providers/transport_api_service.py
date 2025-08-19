@@ -1,16 +1,15 @@
-# infrastructure/transport_api_service.py
 import aiohttp
 import re
 
-from domain.metro_line import MetroLine
-from domain.metro_station import create_metro_station
-from domain.next_metro import MetroLineRoute, NextMetro
-from domain.metro_access import create_metro_access
-from domain.metro_connection import MetroConnection
+from domain.metro.metro_line import MetroLine
+from domain.metro.metro_station import create_metro_station
+from domain.metro.next_metro import MetroLineRoute, NextMetro
+from domain.metro.metro_access import create_metro_access
+from domain.metro.metro_connection import MetroConnection
 
-from domain.bus_stop import BusStop, create_bus_stop
-from domain.bus_line import BusLine
-from domain.next_bus import BusLineRoute, NextBus
+from domain.bus.bus_stop import BusStop, create_bus_stop
+from domain.bus.bus_line import BusLine
+from domain.bus.next_bus import BusLineRoute, NextBus
 
 
 class TransportApiService:

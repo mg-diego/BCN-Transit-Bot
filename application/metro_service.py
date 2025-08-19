@@ -1,11 +1,17 @@
 from typing import List
-from domain.metro_line import MetroLine
-from domain.metro_station import MetroStation
-from domain.metro_access import MetroAccess
-from domain.metro_connection import MetroConnection
+
+from domain.metro.metro_line import MetroLine
+from domain.metro.metro_station import MetroStation
+from domain.metro.metro_access import MetroAccess
+from domain.metro.metro_connection import MetroConnection
+
+from providers.transport_api_service import TransportApiService
+from providers.language_manager import LanguageManager
+
+from application.cache_service import CacheService
 
 class MetroService:
-    def __init__(self, transport_api_service, language_manager, cache_service=None):
+    def __init__(self, transport_api_service: TransportApiService, language_manager: LanguageManager, cache_service: CacheService = None):
         """
         transport_api_service: servicio de infraestructura para consultar la API de transporte
         cache_service: servicio opcional para cachear respuestas

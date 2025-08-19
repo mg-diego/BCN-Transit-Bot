@@ -21,8 +21,10 @@ class SecretsManager:
         
     def _load_env(self):
         self.secrets['TELEGRAM_TOKEN'] = os.environ.get('TELEGRAM_TOKEN')
-        self.secrets['APP_ID'] = os.environ.get('APP_ID')
-        self.secrets['APP_KEY'] = os.environ.get('APP_KEY')
+        self.secrets['TMB_APP_ID'] = os.environ.get('TMB_APP_ID')
+        self.secrets['TMB_APP_KEY'] = os.environ.get('TMB_APP_KEY')
+        self.secrets['TRAM_CLIENT_ID'] = os.environ.get('TRAM_CLIENT_ID')
+        self.secrets['TRAM_CLIENT_SECRET'] = os.environ.get('TRAM_CLIENT_SECRET')
 
     def _load_file(self, filepath: str):
         path = Path(filepath)

@@ -1,7 +1,7 @@
 import json
 from typing import List
-from domain.bus_stop import BusStop
-from domain.metro_station import MetroStation
+from domain.bus.bus_stop import BusStop
+from domain.metro.metro_station import MetroStation
 import lzstring
 
 class Mapper:
