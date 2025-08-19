@@ -41,6 +41,8 @@ It provides real-time information about metro and bus stops, interactive maps, a
 
 - ⭐ <b>Favorites:</b> Add and manage your favorite stations for faster access.
 
+- 🌐 <b>Language Support:</b> Switch between English, Spanish, and Catalan for a personalized experience.
+
 - 📊 <b>Usage Tracking:</b> Keeps track of user sessions to improve experience.
 
 
@@ -70,21 +72,27 @@ graph TD
     7["👤 User"]
     8["🌐 External Transport API"]
     9["⭐ Favorites Data"]
+    99["👤 User Profile Data"]
 
     subgraph 1["User Interface CLI"]
         31["🚇 Metro Handler"]
         32["🚌 Bus Handler"]
-        33["❤️ Favorites Handler"]
-        34["❓ Help Handler"]
-        35["⌨️ Keyboard Factory"]
-        36["📋 Menu Handler"]
+        33["⭐ Favorites Handler"]
+        34["🌐 Language Handler"]
+        35["❓ Help Handler"]
+        36["⌨️ Keyboard Factory"]
+        37["📋 Menu Handler"]
     end
 
-    subgraph 2["Providers"]
-        26["❤️ Favorites Manager"]
+    subgraph 2["Internal Providers"]
         27["📝 Logger"]
         28["🗺️ Mapper"]
         29["🔒 Secrets Manager"]
+        38["🌐 Language Manager"]
+    end
+
+    subgraph 98["External Providers"]
+        26["💾 User Data Manager"]
         30["🌐 Transport API Service"]
     end
 
@@ -115,10 +123,12 @@ graph TD
     %% Edges
     10 -->|Drives| 1
     6 -->|Uses| 2
+    6 -->|Uses| 98
     6 -->|Uses| 3
     1 -->|Invokes| 6
-    2 -->|Connects to| 8
-    2 -->|Manages| 9
+    30 -->|Connects to| 8
+    26 -->|Manages| 9
+    26 -->|Manages| 99
     7 -->|Interacts with| 10
 
     %% Classes & Colors
@@ -131,11 +141,11 @@ graph TD
     classDef actor fill:#f44336,color:#fff,stroke:#b71c1c,stroke-width:2px;
 
     %% Assign classes ONLY to internal boxes
-    class 31,32,33,34,35,36 ui;
-    class 26,27,28,29,30 providers;
+    class 31,32,33,34,35,36,37 ui;
+    class 26,27,28,29,30,38 providers;
     class 20,21,22,23,24,25,17,18,19 domain;
     class 11,12,13,14,15 services;
-    class 8,9 external;
+    class 8,9,99 external;
     class 10 cli;
     class 7 actor;
 
