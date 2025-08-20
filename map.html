@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Mapa Leaflet - Varias paradas</title>
+    <title>BCN Transit Bot</title>
     <link
       rel="stylesheet"
       href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -28,13 +28,11 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
     <script>
-      // Leer parámetros de la URL
       function getQueryParam(name) {
         const params = new URLSearchParams(window.location.search);
         return params.get(name);
       }
 
-      // Decodificar Base64 a JSON
       function decodeBase64Json(encoded) {
         try {
           const jsonStr = atob(encoded);
@@ -45,32 +43,40 @@
         }
       }
 
-      function createColoredIcon(hexColor) {
-        // SVG simple con relleno dinámico en hexColor
+      function createNumberedIcon(id, hexColor, showText = true) {
+        const textElement = showText
+          ? `<text x="14" y="10"
+                text-anchor="middle"
+                font-size="12"
+                font-weight="bold"
+                fill="#333"
+                stroke="white"
+              stroke-width="2"
+              paint-order="stroke"
+                font-family="Segoe UI, Roboto, Helvetica Neue, sans-serif">
+            ${id}
+          </text>`
+          : "";
+
         const svg = `
-            <svg xmlns="http://www.w3.org/2000/svg" width="25" height="41" viewBox="0 0 25 41">
-                <path fill="${hexColor}" stroke="black" stroke-width="1" d="M12.5 0C7 0 3 4.5 3 10c0 7.5 9.5 20 9.5 20s9.5-12.5 9.5-20c0-5.5-4-10-9.5-10z"/>
-                <circle fill="white" cx="12.5" cy="10" r="4"/>
-            </svg>
-            `;
-        // Codifica el SVG a base64 para usarlo como URL de imagen
+        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="36" viewBox="0 0 28 36">
+          ${textElement}
+          <circle cx="14" cy="26" r="6" fill="white" stroke="${hexColor}" stroke-width="2"/>
+        </svg>
+      `;
+
         const svgUrl = "data:image/svg+xml;base64," + btoa(svg);
 
         return new L.Icon({
           iconUrl: svgUrl,
-          iconSize: [25, 41],
-          iconAnchor: [12, 41],
-          popupAnchor: [1, -34],
-          shadowUrl:
-            "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
-          shadowSize: [41, 41],
-          shadowAnchor: [12, 41],
+          iconSize: [28, 36],
+          iconAnchor: [14, 26],
+          popupAnchor: [0, -28],
         });
       }
 
-      // Obtener JSON desde URL (parámetro "data")
       const compressed = getQueryParam("data");
-      console.log(compressed);
+
       let coordsList = [];
       let line_id = "";
 
@@ -78,10 +84,10 @@
         const decompressed =
           LZString.decompressFromEncodedURIComponent(compressed);
         const jsonData = JSON.parse(decompressed);
-        console.log(jsonData);
         if (jsonData && jsonData.stops) {
           line_id = jsonData.line_id;
           coordsList = jsonData.stops.map((stop) => ({
+            id: stop.name.split(" - ")[0],
             lat: stop.lat,
             lon: stop.lon,
             name: stop.name,
@@ -91,88 +97,112 @@
         }
       }
 
-      // Calcular centro aproximado
       const avgLat =
         coordsList.reduce((sum, c) => sum + c.lat, 0) / coordsList.length;
       const avgLon =
         coordsList.reduce((sum, c) => sum + c.lon, 0) / coordsList.length;
 
-      // Inicializar mapa
       const map = L.map("map").setView([avgLat, avgLon], 13);
 
-      // Capa base
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         attribution: "© OpenStreetMap contributors",
       }).addTo(map);
 
-      // Añadir marcadores y tramos
       const bounds = [];
       let prevStop = null;
+      let markers = [];
 
-      coordsList.forEach((stop) => {
-        const icon = createColoredIcon(`#${stop.color}`);
+      function addMarkers(zoomLevel) {
+        markers.forEach((marker) => map.removeLayer(marker));
+        markers = [];
 
-        const marker = L.marker([stop.lat, stop.lon], { icon }).addTo(map);
+        coordsList.forEach((stop) => {
+          const showText = zoomLevel >= 15;
+          const icon = createNumberedIcon(stop.id, `#${stop.color}`, showText);
 
-        // Popup con botón
-        const popupContent = document.createElement("div");
-        popupContent.innerHTML = `<p>📍 ${stop.name || "Parada"}</p>`;
+          const marker = L.marker([stop.lat, stop.lon], { icon }).addTo(map);
 
-        const btn = document.createElement("button");
-        btn.textContent = "Seleccionar parada";
-        btn.style.cursor = "pointer";
-        btn.style.marginTop = "5px";
-        btn.style.padding = "5px 10px";
+          const popupContent = document.createElement("div");
+          popupContent.style.fontFamily =
+            "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
+          popupContent.style.fontSize = "14px";
+          popupContent.style.color = "#222";
+          popupContent.style.textAlign = "center";
 
-        btn.addEventListener("click", () => {
-          if (window.Telegram?.WebApp) {
-            window.Telegram.WebApp.sendData(
-              JSON.stringify({
-                line_id: line_id,
-                lat: stop.lat,
-                lon: stop.lon,
-                name: stop.name,
-                color: stop.color,
-              })
-            );
-            marker.closePopup();
-            window.Telegram.WebApp.close();
-          } else {
-            alert(
-              "Esta función solo funciona dentro de la WebApp de Telegram."
-            );
-          }
-        });
+          popupContent.innerHTML = `<p style="margin:0 0 8px 0; font-weight: 600; font-size: 16px;">📍 ${
+            stop.name || "Parada"
+          }</p>`;
 
-        popupContent.appendChild(btn);
-        marker.bindPopup(popupContent);
+          const btn = document.createElement("button");
+          btn.textContent = "Seleccionar parada";
+          btn.style.cursor = "pointer";
+          btn.style.marginTop = "8px";
+          btn.style.padding = "8px 16px";
+          btn.style.border = "none";
+          btn.style.borderRadius = "6px";
+          btn.style.backgroundColor = "#007bff";
+          btn.style.color = "white";
+          btn.style.fontWeight = "600";
+          btn.style.fontSize = "14px";
+          btn.style.transition = "background-color 0.3s ease";
 
-        bounds.push([stop.lat, stop.lon]);
+          btn.onmouseenter = () => (btn.style.backgroundColor = "#0056b3");
+          btn.onmouseleave = () => (btn.style.backgroundColor = "#007bff");
 
-        // 🔹 Si hay parada anterior, dibujar línea de su color
-        if (prevStop) {
-          L.polyline(
-            [
+          btn.addEventListener("click", () => {
+            if (window.Telegram?.WebApp) {
+              window.Telegram.WebApp.sendData(
+                JSON.stringify({
+                  line_id: line_id,
+                  lat: stop.lat,
+                  lon: stop.lon,
+                  name: stop.name,
+                  color: stop.color,
+                })
+              );
+              marker.closePopup();
+              window.Telegram.WebApp.close();
+            } else {
+              alert(
+                "Esta función solo funciona dentro de la WebApp de Telegram."
+              );
+            }
+          });
+
+          popupContent.appendChild(btn);
+          marker.bindPopup(popupContent);
+
+          markers.push(marker);
+          bounds.push([stop.lat, stop.lon]);
+
+          if (prevStop) {
+            const latlngs = [
               [prevStop.lat, prevStop.lon],
               [stop.lat, stop.lon],
-            ],
-            {
+            ];
+
+            L.polyline(latlngs, {
               color: `#${prevStop.color}`,
               weight: 4,
               opacity: 0.8,
-            }
-          ).addTo(map);
-        }
+            }).addTo(map);
+          }
 
-        prevStop = stop;
+          prevStop = stop;
+        });
+      }
+
+      map.on("zoomend", () => {
+        const currentZoom = map.getZoom();
+        addMarkers(currentZoom);
       });
 
-      // Ajustar vista para mostrar todas las paradas
+      addMarkers(map.getZoom());
+
       if (bounds.length > 0) {
         map.fitBounds(bounds);
       }
 
-      // 🔹 Crear leyenda a partir de "direction" en cada stop
       const legend = L.control({ position: "bottomright" });
 
       legend.onAdd = function () {
@@ -194,7 +224,6 @@
                 padding-bottom: 4px;
             ">Direcciones</h4>`;
 
-        // Obtener direcciones únicas con su color
         const uniqueDirections = {};
         coordsList.forEach((stop) => {
           if (!uniqueDirections[stop.direction]) {
@@ -202,7 +231,6 @@
           }
         });
 
-        // Pintar en la leyenda
         for (const [direction, color] of Object.entries(uniqueDirections)) {
           div.innerHTML += `
                     <div style="display:flex; align-items:center; margin:6px 0;">

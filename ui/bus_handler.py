@@ -50,6 +50,7 @@ class BusHandler:
 
         stops = await self.bus_service.get_stops_by_line(line_id)
         encoded = self.mapper.map_bus_stops(stops, line_id)
+        print(encoded)
 
         await self.message_service.send_new_message_from_callback(
             update = update,

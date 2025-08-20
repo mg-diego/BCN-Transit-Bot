@@ -9,6 +9,8 @@ from domain.tram.tram_stop import TramStop
 from domain.tram.tram_connection import TramConnection, TramStopConnection
 from domain.tram.next_tram import TramLineRoute, NextTram
 
+#https://opendata.tram.cat/manual_en.pdf
+
 
 class TramApiService:
 
