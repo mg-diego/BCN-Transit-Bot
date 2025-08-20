@@ -13,14 +13,93 @@
       body {
         height: 100%;
         margin: 0;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       }
       #map {
         height: 100%;
         width: 100%;
+        transition: margin-left 0.3s;
+      }
+      /* Lateral menu */
+      #sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100%;
+        width: 250px;
+        max-width: 80vw;
+        background: #f8f9fa;
+        box-shadow: 2px 0 5px rgba(0,0,0,0.15);
+        overflow-y: auto;
+        transform: translateX(-250px);
+        transition: transform 0.3s ease;
+        z-index: 1000;
+        padding: 10px 15px;
+      }
+      #sidebar.open {
+        transform: translateX(0);
+      }
+      #sidebar h2 {
+        margin-top: 0;
+        font-size: 1.25rem;
+        text-align: center;
+        border-bottom: 1px solid #ddd;
+        padding-bottom: 8px;
+        color: #333;
+      }
+      #sidebar ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+      #sidebar ul li {
+        padding: 8px 10px;
+        border-bottom: 1px solid #ddd;
+        cursor: pointer;
+        color: #007bff;
+        user-select: none;
+        transition: background-color 0.2s ease;
+      }
+      #sidebar ul li:hover {
+        background-color: #e2e6ea;
+      }
+      /* Botón toggler */
+      #sidebarToggle {
+        position: fixed;
+        top: 15px;
+        left: 15px;
+        z-index: 1100;
+        background: #007bff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        padding: 8px 12px;
+        cursor: pointer;
+        font-size: 16px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        user-select: none;
+      }
+      #sidebarToggle:focus {
+        outline: none;
+      }
+      /* Ajustar margen mapa cuando sidebar abierto */
+      #map.sidebar-open {
+        margin-left: 250px;
+      }
+      .leaflet-control-zoom {
+        top: 10px !important;
+        right: 10px !important;
+        left: auto !important;
+        bottom: auto !important;
       }
     </style>
   </head>
   <body>
+    <button id="sidebarToggle">☰ Paradas</button>
+    <div id="sidebar" aria-label="Menú lateral de paradas">
+      <h2>Paradas</h2>
+      <ul id="stopsList"></ul>
+    </div>
     <div id="map"></div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -33,76 +112,63 @@
         return params.get(name);
       }
 
-      function decodeBase64Json(encoded) {
-        try {
-          const jsonStr = atob(encoded);
-          return JSON.parse(jsonStr);
-        } catch (e) {
-          console.error("Error decoding JSON", e);
-          return null;
-        }
-      }
-
       function createNumberedIcon(id, hexColor, showText = true) {
         const textElement = showText
           ? `<text x="14" y="10"
-                text-anchor="middle"
-                font-size="12"
-                font-weight="bold"
-                fill="#333"
-                stroke="white"
-              stroke-width="2"
-              paint-order="stroke"
-                font-family="Segoe UI, Roboto, Helvetica Neue, sans-serif">
-            ${id}
-          </text>`
-          : "";
+                  text-anchor="middle"
+                  font-size="10"
+                  font-weight="bold"
+                  fill="#333"
+                  font-family="Segoe UI, Roboto, Helvetica Neue, sans-serif"
+                  stroke="white" stroke-width="2" paint-order="stroke">
+              ${id}
+            </text>`
+          : '';
 
         const svg = `
-        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="36" viewBox="0 0 28 36">
-          ${textElement}
-          <circle cx="14" cy="26" r="6" fill="white" stroke="${hexColor}" stroke-width="2"/>
-        </svg>
-      `;
+          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="36" viewBox="0 0 28 36">
+            ${textElement}
+            <circle cx="14" cy="26" r="6" fill="white" stroke="${hexColor}" stroke-width="2"/>
+          </svg>
+        `;
 
         const svgUrl = "data:image/svg+xml;base64," + btoa(svg);
 
         return new L.Icon({
           iconUrl: svgUrl,
           iconSize: [28, 36],
-          iconAnchor: [14, 26],
+          iconAnchor: [14, 26], // Centro del círculo
           popupAnchor: [0, -28],
         });
       }
 
+      // Leer datos
       const compressed = getQueryParam("data");
-
       let coordsList = [];
       let line_id = "";
 
       if (compressed) {
-        const decompressed =
-          LZString.decompressFromEncodedURIComponent(compressed);
+        const decompressed = LZString.decompressFromEncodedURIComponent(compressed);
         const jsonData = JSON.parse(decompressed);
         if (jsonData && jsonData.stops) {
           line_id = jsonData.line_id;
-          coordsList = jsonData.stops.map((stop) => ({
+          coordsList = jsonData.stops.map(stop => ({
             id: stop.name.split(" - ")[0],
             lat: stop.lat,
             lon: stop.lon,
-            name: stop.name,
+            name: stop.name.split(" - ").slice(1).join(" - "),
             color: stop.color,
             direction: stop.direction,
           }));
         }
       }
+      console.log(coordsList)
+      // Calcular centro aproximado
+      const avgLat = coordsList.reduce((sum, c) => sum + c.lat, 0) / coordsList.length;
+      const avgLon = coordsList.reduce((sum, c) => sum + c.lon, 0) / coordsList.length;
 
-      const avgLat =
-        coordsList.reduce((sum, c) => sum + c.lat, 0) / coordsList.length;
-      const avgLon =
-        coordsList.reduce((sum, c) => sum + c.lon, 0) / coordsList.length;
-
-      const map = L.map("map").setView([avgLat, avgLon], 13);
+      // Inicializar mapa
+      const map = L.map("map", { zoomControl: false }).setView([avgLat, avgLon], 13);
 
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         attribution: "© OpenStreetMap contributors",
@@ -110,100 +176,121 @@
 
       const bounds = [];
       let prevStop = null;
-      let markers = [];
+      const markers = [];
 
-      function addMarkers(zoomLevel) {
-        markers.forEach((marker) => map.removeLayer(marker));
-        markers = [];
+      coordsList.forEach((stop) => {
+        const icon = createNumberedIcon(stop.id, `#${stop.color}`);
+        const marker = L.marker([stop.lat, stop.lon], { icon }).addTo(map);
 
-        coordsList.forEach((stop) => {
-          const showText = zoomLevel >= 15;
-          const icon = createNumberedIcon(stop.id, `#${stop.color}`, showText);
+        const popupContent = document.createElement("div");
+        popupContent.style.fontFamily = "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
+        popupContent.style.fontSize = "14px";
+        popupContent.style.color = "#222";
+        popupContent.style.textAlign = "center";
+        popupContent.innerHTML = `<p style="margin:0 0 8px 0; font-weight: 600; font-size: 16px;">📍(${stop.id}) - ${stop.name || "Parada"}</p>`;
 
-          const marker = L.marker([stop.lat, stop.lon], { icon }).addTo(map);
+        const btn = document.createElement("button");
+        btn.textContent = "Seleccionar parada";
+        btn.style.cursor = "pointer";
+        btn.style.marginTop = "8px";
+        btn.style.padding = "8px 16px";
+        btn.style.border = "none";
+        btn.style.borderRadius = "6px";
+        btn.style.backgroundColor = "#007bff";
+        btn.style.color = "white";
+        btn.style.fontWeight = "600";
+        btn.style.fontSize = "14px";
+        btn.style.transition = "background-color 0.3s ease";
 
-          const popupContent = document.createElement("div");
-          popupContent.style.fontFamily =
-            "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
-          popupContent.style.fontSize = "14px";
-          popupContent.style.color = "#222";
-          popupContent.style.textAlign = "center";
+        btn.onmouseenter = () => (btn.style.backgroundColor = "#0056b3");
+        btn.onmouseleave = () => (btn.style.backgroundColor = "#007bff");
 
-          popupContent.innerHTML = `<p style="margin:0 0 8px 0; font-weight: 600; font-size: 16px;">📍 ${
-            stop.name || "Parada"
-          }</p>`;
+        btn.addEventListener("click", () => {
+          if (window.Telegram?.WebApp) {
+            window.Telegram.WebApp.sendData(
+              JSON.stringify({
+                line_id: line_id,
+                lat: stop.lat,
+                lon: stop.lon,
+                name: stop.name,
+                color: stop.color,
+              })
+            );
+            marker.closePopup();
+            window.Telegram.WebApp.close();
+          } else {
+            alert("Esta función solo funciona dentro de la WebApp de Telegram.");
+          }
+        });
 
-          const btn = document.createElement("button");
-          btn.textContent = "Seleccionar parada";
-          btn.style.cursor = "pointer";
-          btn.style.marginTop = "8px";
-          btn.style.padding = "8px 16px";
-          btn.style.border = "none";
-          btn.style.borderRadius = "6px";
-          btn.style.backgroundColor = "#007bff";
-          btn.style.color = "white";
-          btn.style.fontWeight = "600";
-          btn.style.fontSize = "14px";
-          btn.style.transition = "background-color 0.3s ease";
+        popupContent.appendChild(btn);
+        marker.bindPopup(popupContent);
+        markers.push(marker);
 
-          btn.onmouseenter = () => (btn.style.backgroundColor = "#0056b3");
-          btn.onmouseleave = () => (btn.style.backgroundColor = "#007bff");
+        bounds.push([stop.lat, stop.lon]);
 
-          btn.addEventListener("click", () => {
-            if (window.Telegram?.WebApp) {
-              window.Telegram.WebApp.sendData(
-                JSON.stringify({
-                  line_id: line_id,
-                  lat: stop.lat,
-                  lon: stop.lon,
-                  name: stop.name,
-                  color: stop.color,
-                })
-              );
-              marker.closePopup();
-              window.Telegram.WebApp.close();
-            } else {
-              alert(
-                "Esta función solo funciona dentro de la WebApp de Telegram."
-              );
-            }
-          });
-
-          popupContent.appendChild(btn);
-          marker.bindPopup(popupContent);
-
-          markers.push(marker);
-          bounds.push([stop.lat, stop.lon]);
-
-          if (prevStop) {
-            const latlngs = [
+        if (prevStop) {
+          L.polyline(
+            [
               [prevStop.lat, prevStop.lon],
-              [stop.lat, stop.lon],
-            ];
-
-            L.polyline(latlngs, {
+              [stop.lat, stop.lon]
+            ],
+            {
               color: `#${prevStop.color}`,
               weight: 4,
               opacity: 0.8,
-            }).addTo(map);
-          }
+            }
+          ).addTo(map);
+        }
 
-          prevStop = stop;
-        });
-      }
-
-      map.on("zoomend", () => {
-        const currentZoom = map.getZoom();
-        addMarkers(currentZoom);
+        prevStop = stop;
       });
-
-      addMarkers(map.getZoom());
 
       if (bounds.length > 0) {
         map.fitBounds(bounds);
       }
 
+      // Sidebar toggle
+      const sidebar = document.getElementById('sidebar');
+      const toggleBtn = document.getElementById('sidebarToggle');
+      const stopsList = document.getElementById('stopsList');
+      const mapDiv = document.getElementById('map');
+
+      toggleBtn.addEventListener('click', () => {
+        sidebar.classList.toggle('open');
+        mapDiv.classList.toggle('sidebar-open');
+      });
+
+      // Llenar lista de paradas en sidebar
+      coordsList.forEach((stop, index) => {
+        const li = document.createElement('li');
+        li.textContent = stop.name || `Parada ${stop.id}`;
+        li.tabIndex = 0;
+        li.setAttribute('role', 'button');
+        li.setAttribute('aria-label', `Centrar mapa en parada ${stop.name}`);
+
+        li.addEventListener('click', () => {
+          map.setView([stop.lat, stop.lon], 16, { animate: true });
+          markers[index].openPopup();
+
+          // Opcional: cerrar sidebar al seleccionar
+          sidebar.classList.remove('open');
+          mapDiv.classList.remove('sidebar-open');
+        });
+
+        li.addEventListener('keydown', e => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            li.click();
+          }
+        });
+
+        stopsList.appendChild(li);
+      });
+
+      // Leyenda igual que antes
       const legend = L.control({ position: "bottomright" });
+      L.control.zoom({ position: 'topright' }).addTo(map);
 
       legend.onAdd = function () {
         const div = L.DomUtil.create("div", "info legend");
@@ -225,7 +312,7 @@
             ">Direcciones</h4>`;
 
         const uniqueDirections = {};
-        coordsList.forEach((stop) => {
+        coordsList.forEach(stop => {
           if (!uniqueDirections[stop.direction]) {
             uniqueDirections[stop.direction] = `#${stop.color}`;
           }
