@@ -3,6 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="docs/favicon.ico" type="image/x-icon" />
     <title>BCN Transit Bot</title>
     <link
       rel="stylesheet"
@@ -13,16 +14,17 @@
       body {
         height: 100%;
         margin: 0;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
       }
+
       #map {
         height: 100%;
         width: 100%;
         transition: margin-left 0.3s;
       }
-      /* Lateral menu */
+
+      /* Sidebar */
       #sidebar {
-        display: none;
         position: fixed;
         top: 0;
         left: 0;
@@ -30,16 +32,18 @@
         width: 250px;
         max-width: 80vw;
         background: #f8f9fa;
-        box-shadow: 2px 0 5px rgba(0,0,0,0.15);
+        box-shadow: 2px 0 5px rgba(0, 0, 0, 0.15);
         overflow-y: auto;
-        transform: translateX(-250px);
+        transform: translateX(-100%);
         transition: transform 0.3s ease;
         z-index: 1000;
         padding: 10px 15px;
       }
+
       #sidebar.open {
         transform: translateX(0);
       }
+
       #sidebar h2 {
         margin-top: 0;
         font-size: 1.25rem;
@@ -48,11 +52,13 @@
         padding-bottom: 8px;
         color: #333;
       }
+
       #sidebar ul {
         list-style: none;
         padding: 0;
         margin: 0;
       }
+
       #sidebar ul li {
         padding: 8px 10px;
         border-bottom: 1px solid #ddd;
@@ -61,10 +67,12 @@
         user-select: none;
         transition: background-color 0.2s ease;
       }
+
       #sidebar ul li:hover {
         background-color: #e2e6ea;
       }
-      /* Botón toggler */
+
+      /* Toggle Button */
       #sidebarToggle {
         position: fixed;
         top: 15px;
@@ -77,16 +85,20 @@
         padding: 8px 12px;
         cursor: pointer;
         font-size: 16px;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
         user-select: none;
+        transition: left 0.3s ease;
       }
+
+      #sidebar.open + #sidebarToggle {
+        left: 280px;
+      }
+
       #sidebarToggle:focus {
         outline: none;
       }
-      /* Ajustar margen mapa cuando sidebar abierto */
-      #map.sidebar-open {
-        margin-left: 250px;
-      }
+
+      /* Zoom control */
       .leaflet-control-zoom {
         top: 10px !important;
         right: 10px !important;
@@ -96,11 +108,36 @@
     </style>
   </head>
   <body>
-    <button id="sidebarToggle">☰ Paradas</button>
     <div id="sidebar" aria-label="Menú lateral de paradas">
-      <h2>Paradas</h2>
+      <div
+        style="
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin-bottom: 12px;
+        "
+      >
+        <img id="lineIcon" src="" alt="Icono línea" style="height: 28px" />
+        <h2 id="sidebarTitle" style="margin: 0; font-size: 1.4rem"></h2>
+      </div>
+      <label
+        for="directionSelect"
+        style="
+          font-size: 14px;
+          font-weight: 600;
+          display: block;
+          margin-bottom: 4px;
+        "
+      >
+        Seleccione un destino:
+      </label>
+      <select
+        id="directionSelect"
+        style="width: 100%; padding: 6px; font-size: 14px"
+      ></select>
       <ul id="stopsList"></ul>
     </div>
+    <button id="sidebarToggle">☰ Paradas</button>
     <div id="map"></div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -124,7 +161,7 @@
                   stroke="white" stroke-width="2" paint-order="stroke">
               ${id}
             </text>`
-          : '';
+          : "";
 
         const svg = `
           <svg xmlns="http://www.w3.org/2000/svg" width="28" height="36" viewBox="0 0 28 36">
@@ -138,22 +175,24 @@
         return new L.Icon({
           iconUrl: svgUrl,
           iconSize: [28, 36],
-          iconAnchor: [14, 26], // Centro del círculo
+          iconAnchor: [14, 26],
           popupAnchor: [0, -28],
         });
       }
 
-      // Leer datos
       const compressed = getQueryParam("data");
       let coordsList = [];
       let line_id = "";
+      let line_name = "";
 
       if (compressed) {
-        const decompressed = LZString.decompressFromEncodedURIComponent(compressed);
+        const decompressed =
+          LZString.decompressFromEncodedURIComponent(compressed);
         const jsonData = JSON.parse(decompressed);
         if (jsonData && jsonData.stops) {
           line_id = jsonData.line_id;
-          coordsList = jsonData.stops.map(stop => ({
+          line_name = jsonData.line_name;
+          coordsList = jsonData.stops.map((stop) => ({
             id: stop.name.split(" - ")[0],
             lat: stop.lat,
             lon: stop.lon,
@@ -163,13 +202,24 @@
           }));
         }
       }
-      console.log(coordsList)
-      // Calcular centro aproximado
-      const avgLat = coordsList.reduce((sum, c) => sum + c.lat, 0) / coordsList.length;
-      const avgLon = coordsList.reduce((sum, c) => sum + c.lon, 0) / coordsList.length;
 
-      // Inicializar mapa
-      const map = L.map("map", { zoomControl: false }).setView([avgLat, avgLon], 13);
+      const destinations = [...new Set(coordsList.map(stop => stop.direction))]; // Direcciones únicas
+      const sidebarTitle = document.getElementById("sidebarTitle");
+      sidebarTitle.textContent = `${destinations[0]} / ${destinations[1]}` || "";
+
+      const lineIcon = document.getElementById("lineIcon");
+      lineIcon.src = `https://cdn.tmb.cat/icons/raw/svg/${line_name}.svg`;
+      lineIcon.alt = `Icono línea ${line_name}`;
+
+      const avgLat =
+        coordsList.reduce((sum, c) => sum + c.lat, 0) / coordsList.length;
+      const avgLon =
+        coordsList.reduce((sum, c) => sum + c.lon, 0) / coordsList.length;
+
+      const map = L.map("map", { zoomControl: false }).setView(
+        [avgLat, avgLon],
+        13
+      );
 
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         attribution: "© OpenStreetMap contributors",
@@ -184,11 +234,14 @@
         const marker = L.marker([stop.lat, stop.lon], { icon }).addTo(map);
 
         const popupContent = document.createElement("div");
-        popupContent.style.fontFamily = "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
+        popupContent.style.fontFamily =
+          "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
         popupContent.style.fontSize = "14px";
         popupContent.style.color = "#222";
         popupContent.style.textAlign = "center";
-        popupContent.innerHTML = `<p style="margin:0 0 8px 0; font-weight: 600; font-size: 16px;">📍(${stop.id}) - ${stop.name || "Parada"}</p>`;
+        popupContent.innerHTML = `<p style="margin:0 0 8px 0; font-weight: 600; font-size: 16px;">📍(${
+          stop.id
+        }) - ${stop.name || "Parada"}</p>`;
 
         const btn = document.createElement("button");
         btn.textContent = "Seleccionar parada";
@@ -210,7 +263,7 @@
           if (window.Telegram?.WebApp) {
             window.Telegram.WebApp.sendData(
               JSON.stringify({
-                stop_id: id,
+                stop_id: stop.id,
                 line_id: line_id,
                 lat: stop.lat,
                 lon: stop.lon,
@@ -221,21 +274,22 @@
             marker.closePopup();
             window.Telegram.WebApp.close();
           } else {
-            alert("Esta función solo funciona dentro de la WebApp de Telegram.");
+            alert(
+              "Esta función solo funciona dentro de la WebApp de Telegram."
+            );
           }
         });
 
         popupContent.appendChild(btn);
         marker.bindPopup(popupContent);
         markers.push(marker);
-
         bounds.push([stop.lat, stop.lon]);
 
         if (prevStop) {
           L.polyline(
             [
               [prevStop.lat, prevStop.lon],
-              [stop.lat, stop.lon]
+              [stop.lat, stop.lon],
             ],
             {
               color: `#${prevStop.color}`,
@@ -252,104 +306,117 @@
         map.fitBounds(bounds);
       }
 
-      // Sidebar toggle
-      const sidebar = document.getElementById('sidebar');
-      const toggleBtn = document.getElementById('sidebarToggle');
-      const stopsList = document.getElementById('stopsList');
-      const mapDiv = document.getElementById('map');
+      // Sidebar logic
+      const sidebar = document.getElementById("sidebar");
+      const toggleBtn = document.getElementById("sidebarToggle");
+      const stopsList = document.getElementById("stopsList");
+      const directionSelect = document.getElementById("directionSelect");
 
-      toggleBtn.addEventListener('click', () => {
-        sidebar.classList.toggle('open');
-        mapDiv.classList.toggle('sidebar-open');
+      // Llenar select con direcciones únicas y seleccionar la primera por defecto
+      directionSelect.innerHTML = ""; // Limpiar contenido
+
+      destinations.forEach((direction, index) => {
+        const option = document.createElement("option");
+        option.value = direction;
+        option.textContent = direction;
+        if (index === 0) option.selected = true;
+        directionSelect.appendChild(option);
+      });
+
+      // Renderizar lista filtrada según dirección seleccionada (por defecto la primera)
+      function renderStopsList(selectedDirection = "") {
+        stopsList.innerHTML = "";
+
+        // Crear contenedor para la línea lateral
+        stopsList.style.position = "relative";
+        stopsList.style.paddingLeft = "30px"; // espacio para línea + círculos
+
+        // Crear la línea vertical que recorre todas las paradas
+        const line = document.createElement("div");
+        line.style.position = "absolute";
+        line.style.top = "0";
+        line.style.left = "15px"; // centrado con los círculos (que serán de 14px)
+        line.style.width = "2px";
+        line.style.height = "100%";
+        line.style.backgroundColor = "#ccc"; // color línea, lo puedes cambiar
+        stopsList.appendChild(line);
+
+        let filteredStops = coordsList.filter(
+          (stop) => stop.direction === selectedDirection
+        );
+
+        filteredStops.forEach((stop, index) => {
+          const li = document.createElement("li");
+          li.textContent = stop.name || `Parada ${stop.id}`;
+          li.tabIndex = 0;
+          li.setAttribute("role", "button");
+          li.setAttribute("aria-label", `Centrar mapa en parada ${stop.name}`);
+
+          // Estilo para dejar espacio al círculo
+          li.style.position = "relative";
+          li.style.paddingLeft = "30px";
+
+          // Crear el círculo de color a la izquierda
+          const circle = document.createElement("span");
+          circle.style.position = "absolute";
+          circle.style.left = "6px"; // dentro del padding-left
+          circle.style.top = "50%";
+          circle.style.transform = "translateY(-50%)";
+          circle.style.width = "14px";
+          circle.style.height = "14px";
+          circle.style.borderRadius = "50%";
+          circle.style.backgroundColor = `#${stop.color}`;
+          circle.style.border = "2px solid white";
+          circle.style.boxSizing = "border-box";
+          circle.style.boxShadow = "0 0 2px rgba(0,0,0,0.3)";
+
+          li.prepend(circle);
+
+li.addEventListener("click", () => {
+  // Centrar mapa en la parada con animación
+  map.flyTo([stop.lat, stop.lon], 16, { animate: true });
+
+  // Abrir popup del marcador correspondiente
+  markers[coordsList.indexOf(stop)].openPopup();
+
+  // Cerrar sidebar y ajustar botón
+  sidebar.classList.remove("open");
+  toggleBtn.style.left = "15px";
+});
+
+          li.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              li.click();
+            }
+          });
+
+          stopsList.appendChild(li);
+        });
+      }
+
+      // Inicializa lista con la primera dirección
+      renderStopsList(destinations[0]);
+
+      // Manejar cambio de dirección
+      directionSelect.addEventListener("change", (e) => {
+        renderStopsList(e.target.value);
       });
 
       toggleBtn.addEventListener("click", () => {
-        if (sidebar.style.display === "none" || sidebar.style.display === "") {
-          sidebar.style.display = "block";
+        sidebar.classList.toggle("open");
+
+        // Toggle left position of the button
+        if (sidebar.classList.contains("open")) {
+          toggleBtn.style.left = "280px";
         } else {
-          sidebar.style.display = "none";
+          toggleBtn.style.left = "15px";
         }
       });
 
-      // Llenar lista de paradas en sidebar
-      coordsList.forEach((stop, index) => {
-        const li = document.createElement('li');
-        li.textContent = stop.name || `Parada ${stop.id}`;
-        li.tabIndex = 0;
-        li.setAttribute('role', 'button');
-        li.setAttribute('aria-label', `Centrar mapa en parada ${stop.name}`);
+      // Leyenda
+      L.control.zoom({ position: "topright" }).addTo(map);
 
-        li.addEventListener('click', () => {
-          map.setView([stop.lat, stop.lon], 16, { animate: true });
-          markers[index].openPopup();
-
-          // Opcional: cerrar sidebar al seleccionar
-          sidebar.classList.remove('open');
-          mapDiv.classList.remove('sidebar-open');
-          sidebar.style.display = "none";
-        });
-
-        li.addEventListener('keydown', e => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            li.click();
-          }
-        });
-
-        stopsList.appendChild(li);
-      });
-
-      // Leyenda igual que antes
-      const legend = L.control({ position: "bottomright" });
-      L.control.zoom({ position: 'topright' }).addTo(map);
-
-      legend.onAdd = function () {
-        const div = L.DomUtil.create("div", "info legend");
-        div.style.background = "rgba(255, 255, 255, 0.9)";
-        div.style.padding = "12px 15px";
-        div.style.borderRadius = "12px";
-        div.style.boxShadow = "0 2px 6px rgba(0,0,0,0.3)";
-        div.style.font = "14px Arial, sans-serif";
-        div.style.color = "#333";
-
-        div.innerHTML = `<h4 style="
-                margin: 0 0 8px 0;
-                font-size: 15px;
-                font-weight: bold;
-                text-align: center;
-                color: #222;
-                border-bottom: 1px solid #ccc;
-                padding-bottom: 4px;
-            ">Direcciones</h4>`;
-
-        const uniqueDirections = {};
-        coordsList.forEach(stop => {
-          if (!uniqueDirections[stop.direction]) {
-            uniqueDirections[stop.direction] = `#${stop.color}`;
-          }
-        });
-
-        for (const [direction, color] of Object.entries(uniqueDirections)) {
-          div.innerHTML += `
-                    <div style="display:flex; align-items:center; margin:6px 0;">
-                        <span style="
-                            width:16px;
-                            height:16px;
-                            border-radius:50%;
-                            background:${color};
-                            border:1px solid #444;
-                            display:inline-block;
-                            margin-right:10px;
-                        "></span>
-                        <span style="flex:1;">${direction}</span>
-                    </div>
-                `;
-        }
-
-        return div;
-      };
-
-      legend.addTo(map);
     </script>
   </body>
 </html>

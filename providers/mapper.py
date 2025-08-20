@@ -24,10 +24,11 @@ class Mapper:
         compressed = lz.compressToEncodedURIComponent(json_str)
         return compressed
     
-    def map_bus_stops(self, stops: List[BusStop], line_id):        
+    def map_bus_stops(self, stops: List[BusStop], line_id, line_name):        
         lz = lzstring.LZString()        
         data = {
             "line_id": line_id,
+            "line_name": line_name,
             "stops": [
                 {
                     "lat": stop.coordinates[1],

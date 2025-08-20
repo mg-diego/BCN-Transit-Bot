@@ -48,9 +48,11 @@ class BusHandler:
         self.message_service.set_bot_instance(context.bot)
         _, line_id, line_name = self.message_service.get_callback_data(update)
 
+        line = await self.bus_service.get_line_by_id(line_id)
         stops = await self.bus_service.get_stops_by_line(line_id)
-        encoded = self.mapper.map_bus_stops(stops, line_id)
 
+        encoded = self.mapper.map_bus_stops(stops, line_id, line.ORIGINAL_NOM_LINIA)
+        
         await self.message_service.send_new_message_from_callback(
             update = update,
             text = self.language_manager.t('bus.line.stops', line_name=line_name),

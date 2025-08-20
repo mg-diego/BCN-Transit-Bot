@@ -1,0 +1,7 @@
+<h2 style="margin-bottom: 10px;">Paradas</h2>
+<label for="directionSelect" style="font-size: 14px; font-weight: 600; display: block; margin-bottom: 4px;">
+  Seleccione un destino:
+</label>
+<select id="directionSelect" style="width: 100%; padding: 6px; font-size: 14px;">
+  <option value="">Todas las direcciones</option>
+</select>

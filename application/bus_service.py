@@ -1,6 +1,8 @@
+from typing import List
 from providers.transport_api_service import TransportApiService
 from application.cache_service import CacheService
 
+from domain.bus.bus_line import BusLine
 from domain.bus.bus_stop import BusStop
 
 class BusService:
@@ -12,7 +14,7 @@ class BusService:
         self.transport_api_service = transport_api_service
         self.cache_service = cache_service
 
-    async def get_all_lines(self):
+    async def get_all_lines(self) -> List[BusLine]:
         """
         Devuelve todas las líneas de bus disponibles.
         Si hay cache_service, primero intenta recuperar de cache.
@@ -31,6 +33,11 @@ class BusService:
             await self.cache_service.set(cache_key, lines, ttl=3600)  # Cache por 1 hora
 
         return lines
+    
+    async def get_line_by_id(self, line_id) -> BusLine:
+        lines = await self.get_all_lines()
+        line = next((l for l in lines if str(l.CODI_LINIA) == str(line_id)), None)
+        return line
 
     async def get_stops_by_line(self, line_id):
         """
