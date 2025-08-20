@@ -18,7 +18,7 @@
 
   "metro.loading": "⏳ Carregant línies de Metro...",
   "metro.select.line": "Trieu una línia de Metro:",
-  "metro.line.stations": "Estacions de la línia '{line_id}':",
+  "metro.line.stations": "<b><u>Línia '{line_id}'</u></b>\n\nPots seleccionar una estació de la llista o explorar el mapa interactiu per triar una estació específica.",
   "metro.station.name": "🚏 <b>ESTACIÓ '{station_name}'</b> 🚏\n\nSeleccioneu una entrada de metro per a més detalls:",
   "metro.station.loading": "⏳ Carregant informació de l'estació...",
   "metro.station.next": "<u>Propers Metros:</u>",

@@ -18,7 +18,7 @@
 
   "metro.loading": "⏳ Loading Metro lines...",
   "metro.select.line": "Choose a Metro line:",
-  "metro.line.stations": "'{line_id}' stations:",
+  "metro.line.stations": "<b><u>Line '{line_id}'</u></b>\n\nYou can select a station from the list or explore the interactive map to choose a specific station.",
   "metro.station.name": "🚏 <b>'{station_name}' STATION</b> 🚏\n\nSelect a metro entrance for more details:",
   "metro.station.loading": "⏳ Loading station information...",
   "metro.station.next": "<u>Next Metros:</u>",

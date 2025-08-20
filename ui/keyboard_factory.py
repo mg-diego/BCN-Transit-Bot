@@ -72,6 +72,7 @@ class KeyboardFactory:
             for tram_stop in tram_stops
         ]
         rows = self._chunk_buttons(buttons, 2)
+        rows.append([InlineKeyboardButton(self.language_manager.t('keyboard.map'), callback_data=f"tram_map:{line_id}")])
         rows.append(self._back_button(self.BACK_TO_MENU_CALLBACK))
         return InlineKeyboardMarkup(rows)
     

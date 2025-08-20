@@ -5,6 +5,7 @@ from providers.language_manager import LanguageManager
 
 from domain.tram.tram_line import TramLine
 from domain.tram.tram_stop import TramStop
+from domain.tram.tram_connection import TramConnection
 
 class TramService:
 
@@ -33,6 +34,11 @@ class TramService:
 
         return lines
     
+    async def get_line_by_id(self, line_id) -> TramLine:
+        lines = await self.get_all_lines()
+        line = next((l for l in lines if str(l.code) == str(line_id)), None)
+        return line
+    
     async def get_stops_by_line(self, line_id: str) -> List[TramStop]:
         """
         Devuelve las paradas de una línea de tram específica.
@@ -57,7 +63,7 @@ class TramService:
         stop = next((s for s in stops if str(s.id) == str(stop_id)), None)
         return stop
     
-    async def get_tram_stop_connections(self, stop_id):
+    async def get_tram_stop_connections(self, stop_id) -> List[TramConnection]:
         """
         Devuelve la lista de conexiones de una parada de tram.
         """

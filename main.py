@@ -1,8 +1,10 @@
+from providers.proto_decoder import ProtoDecoder
 from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, MessageHandler, filters
 
 from ui import MenuHandler, MetroHandler, BusHandler, TramHandler, FavoritesHandler, HelpHandler, LanguageHandler, KeyboardFactory, WebAppHandler
 from application import MessageService, MetroService, BusService, TramService, CacheService, UpdateManager
 from providers import SecretsManager, TransportApiService, TramApiService, UserDataManager, LanguageManager, logger
+
 
 def main():
     language_manager = LanguageManager()
@@ -15,7 +17,7 @@ def main():
     keyboard_factory = KeyboardFactory(language_manager)
 
     transport_api_service = TransportApiService(app_id=secrets_manager.get('TMB_APP_ID') , app_key=secrets_manager.get('TMB_APP_KEY'))
-    tram_api_service = TramApiService(client_id=secrets_manager.get('TRAM_CLIENT_ID'), client_secret=secrets_manager.get('TRAM_CLIENT_SECRET'))
+    tram_api_service = TramApiService(client_id=secrets_manager.get('TRAM_CLIENT_ID'), client_secret=secrets_manager.get('TRAM_CLIENT_SECRET'))    
     
     metro_service = MetroService(transport_api_service, language_manager, cache_service)
     bus_service = BusService(transport_api_service, cache_service)
@@ -55,13 +57,14 @@ def main():
     application.add_handler(CallbackQueryHandler(bus_handler.show_lines, pattern=r"^bus$"))
 
     # TRAM
+    application.add_handler(CallbackQueryHandler(tram_handler.show_map, pattern=r"^tram_map"))
     application.add_handler(CallbackQueryHandler(tram_handler.show_stop, pattern=r"^tram_stop"))    
     application.add_handler(CallbackQueryHandler(tram_handler.show_line_stops, pattern=r"^tram_line"))
     application.add_handler(CallbackQueryHandler(tram_handler.show_lines, pattern=r"^tram$"))
     
     # FAVORITES
     application.add_handler(CallbackQueryHandler(favorites_handler.add_favorite, pattern=r"^add_fav"))
-    application.add_handler(CallbackQueryHandler(favorites_handler.remove_favorite, pattern=r"^remove_fav"))    
+    application.add_handler(CallbackQueryHandler(favorites_handler.remove_favorite, pattern=r"^remove_fav"))
     application.add_handler(CallbackQueryHandler(favorites_handler.show_favorites, pattern=r"^favorites$"))
 
     # LANGUAGES
@@ -73,5 +76,5 @@ def main():
     application.run_polling()
 
 if __name__ == "__main__":
-    logger.info('Starting bot...')    
+    logger.info('Starting bot...')
     main()

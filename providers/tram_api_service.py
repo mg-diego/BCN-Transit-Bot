@@ -80,7 +80,7 @@ class TramApiService:
             page: int = 1,
             page_size: int = 100,
             sort: str = ""
-        ):
+        ) -> List[TramLine]:
             params: Dict[str, Any] = {
                 "name": name,
                 "description": description,
@@ -109,7 +109,7 @@ class TramApiService:
 
             return tram_lines
     
-    async def get_line_by_id(self, line_id: int):
+    async def get_line_by_id(self, line_id: int) -> TramLine:
         """
         Obtains information for a specific line by its ID.
         """
@@ -129,7 +129,7 @@ class TramApiService:
         page: int = 1,
         page_size: int = 100,
         sort: str = ""
-    ):
+    ) -> List[TramStop]:
         """
         Obtains stops associated with a specific line by line ID.
         """
@@ -168,7 +168,7 @@ class TramApiService:
         page: int = 1,
         page_size: int = 100,
         sort: str = ""
-    ):
+    ) -> List[TramConnection]:
         """
         Obtains connections associated with a specific stop by stop ID.
         """
@@ -221,3 +221,24 @@ class TramApiService:
         )
         
         return tram_line_route
+
+    async def get_gtfs_realtime_proto(self, network_id: int) -> bytes:
+        """
+        Gets GTFS Real-Time feed in Protocol Buffer format for a specific network.
+        This method returns raw bytes.
+
+        :param network_id: The TRAM network ID.
+        :return: Byte stream containing GTFS-RT Protocol Buffer data.
+        """
+        token = await self._get_valid_token()
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "Accept": "application/x-protobuf"
+        }
+
+        url = f"{self.BASE_URL}{self.API_VERSION}/gtfsrealtime?networkId={network_id}"
+
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, headers=headers) as response:
+                response.raise_for_status()
+                return await response.read()  # return raw protobuf data

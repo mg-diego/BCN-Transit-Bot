@@ -1,5 +1,6 @@
 import asyncio
 import logging
+from providers.mapper import Mapper
 from telegram import Update
 from telegram.ext import ContextTypes
 
@@ -31,6 +32,8 @@ class TramHandler:
         self.message_service = message_service
         self.language_manager = language_manager
 
+        self.mapper = Mapper()
+
     async def show_lines(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Muestra el menú con todas las líneas de tram."""
         await self.message_service.edit_inline_message(update, self.language_manager.t('tram.loading'))
@@ -49,6 +52,19 @@ class TramHandler:
 
         await self.message_service.edit_inline_message(update, self.language_manager.t("tram.line.stops", line_id=line_name), reply_markup=reply_markup)
 
+    async def show_map(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        _, line_id = self.message_service.get_callback_data(update)
+
+        line = await self.tram_service.get_line_by_id(line_id)
+        stops = await self.tram_service.get_stops_by_line(line_id)
+
+        encoded = self.mapper.map_tram_stops(stops, line_id, line.original_name)
+        
+        await self.message_service.send_new_message_from_callback(
+            update = update,
+            text = self.language_manager.t('bus.line.stops', line_name=line.original_name),
+            reply_markup = self.keyboard_factory.bus_stops_map_menu(encoded),
+        )
 
     async def show_stop(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Muestra la información de una parada de una línea."""

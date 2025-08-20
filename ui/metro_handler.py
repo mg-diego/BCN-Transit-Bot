@@ -84,7 +84,7 @@ class MetroHandler:
         station = await self.metro_service.get_station_by_id(metro_station_id, line_id)
         station_accesses = await self.metro_service.get_station_accesses(station.CODI_GRUP_ESTACIO)
 
-        await self.message_service.edit_inline_message(update, self.language_manager.t('metro.station.name', station_name=station.NOM_ESTACIO.upper()))
+        await self.message_service.handle_interaction(update, self.language_manager.t('metro.station.name', station_name=station.NOM_ESTACIO.upper()))
 
         await self.message_service.send_location(
             update,

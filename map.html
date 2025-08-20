@@ -150,23 +150,38 @@
         return params.get(name);
       }
 
+      function escapeForSVG(text) {
+          return text
+              .replace(/&/g, "&amp;")
+              .replace(/</g, "&lt;")
+              .replace(/>/g, "&gt;")
+              .replace(/"/g, "&quot;")
+              .replace(/'/g, "&#39;");
+      }
+
       function createNumberedIcon(id, hexColor, showText = true) {
+        const estimatedCharWidth = 6.5; // ancho promedio por carácter
+        const padding = 10; // padding extra
+        const textLength = id.length * estimatedCharWidth + padding;
+        const svgWidth = Math.max(28, textLength); // mínimo 28 para los ID cortos
+        const centerX = svgWidth / 2;
+
         const textElement = showText
-          ? `<text x="14" y="10"
-                  text-anchor="middle"
-                  font-size="10"
-                  font-weight="bold"
-                  fill="#333"
-                  font-family="Segoe UI, Roboto, Helvetica Neue, sans-serif"
-                  stroke="white" stroke-width="2" paint-order="stroke">
-              ${id}
-            </text>`
-          : "";
+            ? `<text x="${centerX}" y="10"
+                    text-anchor="middle"
+                    font-size="10"
+                    font-weight="bold"
+                    fill="#333"
+                    font-family="Segoe UI, Roboto, Helvetica Neue, sans-serif"
+                    stroke="white" stroke-width="2" paint-order="stroke">
+                ${escapeForSVG(id)}
+              </text>`
+            : "";
 
         const svg = `
-          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="36" viewBox="0 0 28 36">
+          <svg xmlns="http://www.w3.org/2000/svg" width="${svgWidth}" height="36" viewBox="0 0 ${svgWidth} 36">
             ${textElement}
-            <circle cx="14" cy="26" r="6" fill="white" stroke="${hexColor}" stroke-width="2"/>
+            <circle cx="${centerX}" cy="26" r="6" fill="white" stroke="${hexColor}" stroke-width="2"/>
           </svg>
         `;
 
@@ -174,8 +189,8 @@
 
         return new L.Icon({
           iconUrl: svgUrl,
-          iconSize: [28, 36],
-          iconAnchor: [14, 26],
+          iconSize: [svgWidth, 36],
+          iconAnchor: [centerX, 26],
           popupAnchor: [0, -28],
         });
       }
@@ -204,6 +219,7 @@
           }));
         }
       }
+      console.log(type)
 
       const destinations = [...new Set(coordsList.map(stop => stop.direction))]; // Direcciones únicas
       const sidebarTitle = document.getElementById("sidebarTitle");
@@ -232,7 +248,7 @@
       const markers = [];
 
       coordsList.forEach((stop) => {
-        const icon = createNumberedIcon(stop.id, `#${stop.color}`);
+        const icon = createNumberedIcon(type === "bus" ? stop.id : stop.name, `#${stop.color}`);
         const marker = L.marker([stop.lat, stop.lon], { icon }).addTo(map);
 
         const popupContent = document.createElement("div");
