@@ -184,12 +184,14 @@
       let coordsList = [];
       let line_id = "";
       let line_name = "";
+      let type = ""
 
       if (compressed) {
         const decompressed =
           LZString.decompressFromEncodedURIComponent(compressed);
         const jsonData = JSON.parse(decompressed);
         if (jsonData && jsonData.stops) {
+          type = jsonData.type;
           line_id = jsonData.line_id;
           line_name = jsonData.line_name;
           coordsList = jsonData.stops.map((stop) => ({
@@ -263,6 +265,7 @@
           if (window.Telegram?.WebApp) {
             window.Telegram.WebApp.sendData(
               JSON.stringify({
+                type: type,
                 stop_id: stop.id,
                 line_id: line_id,
                 lat: stop.lat,

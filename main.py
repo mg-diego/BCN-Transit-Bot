@@ -1,18 +1,8 @@
 from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, MessageHandler, filters
 
-import logging
-import asyncio
-
-from ui import MenuHandler, MetroHandler, BusHandler, TramHandler, FavoritesHandler, HelpHandler, LanguageHandler, KeyboardFactory
+from ui import MenuHandler, MetroHandler, BusHandler, TramHandler, FavoritesHandler, HelpHandler, LanguageHandler, KeyboardFactory, WebAppHandler
 from application import MessageService, MetroService, BusService, TramService, CacheService, UpdateManager
-from providers import SecretsManager, TransportApiService, TramApiService, UserDataManager, LanguageManager
-
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
-console_handler = logging.StreamHandler()
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-console_handler.setFormatter(formatter)
-logger.addHandler(console_handler)
+from providers import SecretsManager, TransportApiService, TramApiService, UserDataManager, LanguageManager, logger
 
 def main():
     language_manager = LanguageManager()
@@ -39,6 +29,8 @@ def main():
     help_handler = HelpHandler(message_service, keyboard_factory, language_manager)
     language_handler = LanguageHandler(keyboard_factory, user_data_manager, message_service, language_manager)
 
+    web_app_handler = WebAppHandler(metro_handler, bus_handler, tram_handler)
+
     application = ApplicationBuilder().token(secrets_manager.get('TELEGRAM_TOKEN')).build()
 
     # START / MENU
@@ -51,12 +43,13 @@ def main():
     application.add_handler(CallbackQueryHandler(help_handler.show_help, pattern=r"^help$"))
     
     # METRO
+    application.add_handler(CallbackQueryHandler(metro_handler.show_map, pattern=r"^metro_map"))
     application.add_handler(CallbackQueryHandler(metro_handler.show_station, pattern=r"^metro_station"))
     application.add_handler(CallbackQueryHandler(metro_handler.show_line_stations, pattern=r"^metro_line"))
     application.add_handler(CallbackQueryHandler(metro_handler.show_lines, pattern=r"^metro$"))
 
     # BUS
-    application.add_handler(MessageHandler(filters.StatusUpdate.WEB_APP_DATA, bus_handler.show_stop))    
+    application.add_handler(MessageHandler(filters.StatusUpdate.WEB_APP_DATA, web_app_handler.web_app_data_router))    
     application.add_handler(CallbackQueryHandler(bus_handler.show_stop, pattern=r"^bus_stop"))
     application.add_handler(CallbackQueryHandler(bus_handler.show_line_stops, pattern=r"^bus_line"))
     application.add_handler(CallbackQueryHandler(bus_handler.show_lines, pattern=r"^bus$"))
@@ -80,6 +73,5 @@ def main():
     application.run_polling()
 
 if __name__ == "__main__":
-    logger.info('Starting bot...')
-    
+    logger.info('Starting bot...')    
     main()

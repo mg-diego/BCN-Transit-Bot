@@ -1,4 +1,5 @@
 import asyncio
+import json
 import logging
 from telegram import Update
 from telegram.ext import ContextTypes
@@ -33,6 +34,8 @@ class MetroHandler:
         self.message_service = message_service
         self.language_manager = language_manager
 
+        self.mapper = Mapper()
+
     async def show_lines(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Muestra el menú con todas las líneas de metro."""
         await self.message_service.edit_inline_message(update, self.language_manager.t('metro.loading'))
@@ -50,12 +53,33 @@ class MetroHandler:
 
         await self.message_service.edit_inline_message(update, self.language_manager.t("metro.line.stations", line_id=line.NOM_LINIA), reply_markup=reply_markup)
 
+    async def show_map(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        _, line_id = self.message_service.get_callback_data(update)
+
+        line = await self.metro_service.get_line_by_id(line_id)
+        stations = await self.metro_service.get_stations_by_line(line_id)
+
+        encoded = self.mapper.map_metro_stations(stations, line_id, line.ORIGINAL_NOM_LINIA)
+        
+        await self.message_service.send_new_message_from_callback(
+            update = update,
+            text = self.language_manager.t('bus.line.stops', line_name=line.ORIGINAL_NOM_LINIA),
+            reply_markup = self.keyboard_factory.bus_stops_map_menu(encoded),
+        )
+
     async def show_station(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Muestra la información de una estación de una línea."""
+
+        if update.message and update.message.web_app_data:
+            data_str = update.message.web_app_data.data
+            data = json.loads(data_str)
+            metro_station_id = data.get("stop_id").strip()
+            line_id = data.get("line_id").strip()
+        else:                
+            _, line_id, metro_station_id = self.message_service.get_callback_data(update)
         
         self.message_service.set_bot_instance(context.bot)
         user_id = self.message_service.get_user_id(update)
-        _, line_id, metro_station_id = self.message_service.get_callback_data(update)
 
         station = await self.metro_service.get_station_by_id(metro_station_id, line_id)
         station_accesses = await self.metro_service.get_station_accesses(station.CODI_GRUP_ESTACIO)
