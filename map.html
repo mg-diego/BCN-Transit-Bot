@@ -22,6 +22,7 @@
       }
       /* Lateral menu */
       #sidebar {
+        display: none;
         position: fixed;
         top: 0;
         left: 0;
@@ -259,6 +260,14 @@
       toggleBtn.addEventListener('click', () => {
         sidebar.classList.toggle('open');
         mapDiv.classList.toggle('sidebar-open');
+      });
+
+      toggleBtn.addEventListener("click", () => {
+        if (sidebar.style.display === "none" || sidebar.style.display === "") {
+          sidebar.style.display = "block";
+        } else {
+          sidebar.style.display = "none";
+        }
       });
 
       // Llenar lista de paradas en sidebar
