@@ -210,10 +210,11 @@
           if (window.Telegram?.WebApp) {
             window.Telegram.WebApp.sendData(
               JSON.stringify({
+                stop_id: id,
                 line_id: line_id,
                 lat: stop.lat,
                 lon: stop.lon,
-                name: stop.name,
+                stop_name: stop.name,
                 color: stop.color,
               })
             );

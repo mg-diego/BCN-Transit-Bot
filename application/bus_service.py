@@ -1,6 +1,8 @@
 from providers.transport_api_service import TransportApiService
 from application.cache_service import CacheService
 
+from domain.bus.bus_stop import BusStop
+
 class BusService:
     def __init__(self, transport_api_service: TransportApiService, cache_service: CacheService = None):
         """
@@ -49,7 +51,7 @@ class BusService:
 
         return stops
     
-    async def get_stop_by_id(self, stop_id, line_id):
+    async def get_stop_by_id(self, stop_id, line_id) -> BusStop:
         """
         Devuelve una parada en base a su CODI_PARADA
         """

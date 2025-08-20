@@ -61,7 +61,7 @@ class BusHandler:
         if update.message and update.message.web_app_data:
             data_str = update.message.web_app_data.data
             data = json.loads(data_str)
-            bus_stop_id = data.get("name").split("-")[0].strip()
+            bus_stop_id = data.get("stop_id").strip()
             line_id = data.get("line_id").strip()
         else:                
             _, line_id, bus_stop_id = self.message_service.get_callback_data(update)
