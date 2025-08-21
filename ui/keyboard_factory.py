@@ -16,6 +16,7 @@ class KeyboardFactory:
     MENU_METRO_CALLBACK = "metro"
     MENU_BUS_CALLBACK = "bus"
     MENU_TRAM_CALLBACK = "tram"
+    MENU_FGC_CALLBACK = "fgc"
     MENU_FAVORITES_CALLBACK = "favorites"
     MENU_LANGUAGE_CALLBACK = "language"
     MENU_HELP_CALLBACK = "help"
@@ -34,12 +35,12 @@ class KeyboardFactory:
             InlineKeyboardButton(self.language_manager.t('main.menu.metro'), callback_data=self.MENU_METRO_CALLBACK),
             InlineKeyboardButton(self.language_manager.t('main.menu.bus'), callback_data=self.MENU_BUS_CALLBACK),
             InlineKeyboardButton(self.language_manager.t('main.menu.tram'), callback_data=self.MENU_TRAM_CALLBACK),
+            InlineKeyboardButton(self.language_manager.t('main.menu.fgc'), callback_data=self.MENU_TRAM_CALLBACK),
             InlineKeyboardButton(self.language_manager.t('main.menu.favorites'), callback_data=self.MENU_FAVORITES_CALLBACK),
-            InlineKeyboardButton(self.language_manager.t('main.menu.language'), callback_data=self.MENU_LANGUAGE_CALLBACK),
-            InlineKeyboardButton(self.language_manager.t('main.menu.help'),callback_data=self.MENU_HELP_CALLBACK)
+            InlineKeyboardButton(self.language_manager.t('main.menu.language'), callback_data=self.MENU_LANGUAGE_CALLBACK)
         ]
         rows = self._chunk_buttons(keyboard, 2)
-        #rows.append([InlineKeyboardButton(self.language_manager.t('main.menu.help'),callback_data=self.MENU_HELP_CALLBACK)])
+        rows.append([InlineKeyboardButton(self.language_manager.t('main.menu.help'),callback_data=self.MENU_HELP_CALLBACK)])
         return InlineKeyboardMarkup(rows)
     
     def metro_lines_menu(self, metro_lines: List[MetroLine]) -> InlineKeyboardMarkup:
