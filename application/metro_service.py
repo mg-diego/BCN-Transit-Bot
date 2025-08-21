@@ -140,5 +140,16 @@ class MetroService:
         return formatted_alerts
     
     async def get_station_routes(self, metro_station_id):
-        routes = await self.transport_api_service.get_next_metro_at_station(metro_station_id)
+        cache_key = f"metro_station_{metro_station_id}_routes"
+        if self.cache_service:
+            routes = await self.cache_service.get(cache_key)
+            if routes:
+                print("get cache: routes")
+            else:
+                print("set cache routes")
+                routes = await self.transport_api_service.get_next_metro_at_station(metro_station_id)
+                await self.cache_service.set(cache_key, routes, ttl=10)
+        else:
+            routes = await self.transport_api_service.get_next_metro_at_station(metro_station_id)
+            
         return "\n\n".join(str(route) for route in routes)

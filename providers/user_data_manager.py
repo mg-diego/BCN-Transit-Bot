@@ -73,11 +73,11 @@ class UserDataManager:
                 [
                     user_id,
                     type.lower(),
-                    item.get('CODI_ESTACIO'),
-                    item.get('NOM_ESTACIO'),
-                    item.get('CODI_GRUP_ESTACIO'),
-                    item.get('NOM_LINIA'),
-                    item.get('CODI_LINIA'),
+                    item.get('STATION_CODE'),
+                    item.get('STATION_NAME'),
+                    item.get('STATION_GROUP_CODE'),
+                    item.get('LINE_NAME'),
+                    item.get('LINE_CODE'),
                     coordinates[1],
                     coordinates[0]
                 ]
@@ -87,11 +87,25 @@ class UserDataManager:
                 [
                     user_id,
                     type.lower(),
-                    item.get('CODI_PARADA'),
-                    item.get('NOM_PARADA'),
+                    item.get('STOP_CODE'),
+                    item.get('STOP_NAME'),
                     '',
                     '',
-                    item.get('CODI_LINIA'),
+                    item.get('LINE_CODE'),
+                    coordinates[1],
+                    coordinates[0]
+                ]
+            )
+        elif type.lower() == "tram":
+            self.favorites_ws.append_row(
+                [
+                    user_id,
+                    type.lower(),
+                    item.get('STOP_CODE'),
+                    item.get('STOP_NAME'),
+                    '',
+                    item.get('LINE_NAME'),
+                    item.get('LINE_CODE'),
                     coordinates[1],
                     coordinates[0]
                 ]

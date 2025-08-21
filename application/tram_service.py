@@ -6,6 +6,7 @@ from providers.language_manager import LanguageManager
 from domain.tram.tram_line import TramLine
 from domain.tram.tram_stop import TramStop
 from domain.tram.tram_connection import TramConnection
+from domain.tram.next_tram import TramLineRoute
 
 class TramService:
 
@@ -86,14 +87,20 @@ class TramService:
 
         return formatted_connections
     
-    async def get_stop_routes(self, outbound_id, return_id):
-        routes = []
-        tram_line_outbound_routes = await self.tram_api_service.get_next_trams_at_stop(outbound_id)
-        tram_line_return_routes = await self.tram_api_service.get_next_trams_at_stop(return_id)
-        routes.append(tram_line_outbound_routes)
-        routes.append(tram_line_return_routes)
+    async def get_stop_routes(
+        self, network_id: int, outbound_id: int, return_id: int
+    ) -> str:
+        cache_key = f"tram_routes_{outbound_id}_{return_id}"
 
-        return "\n\n".join(
-            str(route)
-            for route in routes
-        )
+        if self.cache_service:
+            routes = await self.cache_service.get(cache_key)
+            if routes:
+                print("get cache: routes")
+            else:
+                print("set cache: routes")
+                routes = await self.tram_api_service.get_next_trams_at_stop(outbound_id, return_id)
+                await self.cache_service.set(cache_key, routes, ttl=10)
+        else:
+            routes = await self.tram_api_service.get_next_trams_at_stop(network_id)
+
+        return "\n\n".join(str(route) for route in routes)

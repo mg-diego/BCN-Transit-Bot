@@ -46,7 +46,6 @@ class Mapper:
 
         json_str = json.dumps(data)
         compressed = lz.compressToEncodedURIComponent(json_str)
-        print(html.escape(compressed))
         return compressed
     
     def map_bus_stops(self, stops: List[BusStop], line_id, line_name):        
@@ -69,7 +68,6 @@ class Mapper:
 
         json_str = json.dumps(data)
         compressed = lz.compressToEncodedURIComponent(json_str)
-        print(compressed)
         return compressed
     
     def map_tram_stops(self, stops: List[TramStop], line_id, line_name):
@@ -104,5 +102,4 @@ class Mapper:
 
         json_str = json.dumps(data)
         compressed = lz.compressToEncodedURIComponent(json_str)
-        print(compressed)
         return compressed

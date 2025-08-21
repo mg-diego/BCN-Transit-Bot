@@ -8,6 +8,8 @@ from domain.bus.bus_line import BusLine
 from domain.tram.tram_line import TramLine
 from domain.tram.tram_stop import TramStop
 
+from providers.language_manager import LanguageManager
+
 class KeyboardFactory:
 
     MENU_CALLBACK = "menu"
@@ -20,7 +22,7 @@ class KeyboardFactory:
 
     BACK_TO_MENU_CALLBACK = "back_to_menu"    
 
-    def __init__(self, language_manager):
+    def __init__(self, language_manager: LanguageManager):
         self.language_manager = language_manager
     
     def _chunk_buttons(self, buttons, n=2):
@@ -43,7 +45,7 @@ class KeyboardFactory:
     def metro_lines_menu(self, metro_lines: List[MetroLine]) -> InlineKeyboardMarkup:
         keyboard = []
         for line in metro_lines:
-            keyboard.append([InlineKeyboardButton(f"{line.NOM_LINIA} - {line.DESC_LINIA}", callback_data=f"metro_line:{line.CODI_LINIA}")])
+            keyboard.append([InlineKeyboardButton(f"{line.NOM_LINIA} - {line.DESC_LINIA}  ", callback_data=f"metro_line:{line.CODI_LINIA}")])
         keyboard.append(self._back_button(self.BACK_TO_MENU_CALLBACK))
         return InlineKeyboardMarkup(keyboard)
     
@@ -52,13 +54,13 @@ class KeyboardFactory:
             InlineKeyboardButton(line.name, callback_data=f"tram_line:{line.id}:{line.name}")
             for line in tram_lines
         ]
-        rows = self._chunk_buttons(buttons, 2)
+        rows = self._chunk_buttons(buttons, 3)
         rows.append(self._back_button(self.BACK_TO_MENU_CALLBACK))
         return InlineKeyboardMarkup(rows)
     
     def metro_stations_menu(self, metro_stations: List[MetroStation], line_id):
         buttons = [
-            InlineKeyboardButton(f"{metro_station.ORDRE_ESTACIO}. {metro_station.NOM_ESTACIO}", callback_data=f"metro_station:{line_id}:{metro_station.CODI_ESTACIO}")
+            InlineKeyboardButton(f"{metro_station.ORDRE_ESTACIO}. {metro_station.NOM_ESTACIO}  ", callback_data=f"metro_station:{line_id}:{metro_station.CODI_ESTACIO}")
             for metro_station in metro_stations
         ]
         rows = self._chunk_buttons(buttons, 2)
@@ -68,7 +70,7 @@ class KeyboardFactory:
     
     def tram_stops_menu(self, tram_stops: List[TramStop], line_id):
         buttons = [
-            InlineKeyboardButton(f"{tram_stop.order}. {tram_stop.name}", callback_data=f"tram_stop:{line_id}:{tram_stop.id}")
+            InlineKeyboardButton(f"{tram_stop.order}. {tram_stop.name}  ", callback_data=f"tram_stop:{line_id}:{tram_stop.id}")
             for tram_stop in tram_stops
         ]
         rows = self._chunk_buttons(buttons, 2)
@@ -104,11 +106,11 @@ class KeyboardFactory:
         navigation_buttons = []
         if page > 0:
             navigation_buttons.append(
-                InlineKeyboardButton("⬅️ Anterior", callback_data=f"bus_page:{page - 1}")
+                InlineKeyboardButton(self.language_manager.t('keyboard.previous'), callback_data=f"bus_page:{page - 1}")
             )
         if end < len(bus_lines):
             navigation_buttons.append(
-                InlineKeyboardButton("Siguiente ➡️", callback_data=f"bus_page:{page + 1}")
+                InlineKeyboardButton(self.language_manager.t('keyboard.next'), callback_data=f"bus_page:{page + 1}")
             )
         if navigation_buttons:
             rows.append(navigation_buttons)
@@ -161,14 +163,19 @@ class KeyboardFactory:
 
         for item in favs:
             if item['type'] == "metro":
-                name = f"{item.get('nom_linia', 'Sin nombre')} - {item.get('name', '')}"
+                name = f"{item.get('nom_linia', 'Sin nombre')} - {item.get('name', '')}  "
                 fav_keyboard.append([
                     InlineKeyboardButton(f"🚇 {name}", callback_data=f"metro_station:{item.get('codi_linia')}:{item.get('code')}")
                 ])
             elif item['type'] == "bus":
-                name = f"({item.get('code', '')})  {item.get('name', '')}"
+                name = f"({item.get('code', '')})  {item.get('name', '')}  "
                 fav_keyboard.append([
                     InlineKeyboardButton(f"🚌 {name}", callback_data=f"bus_stop:{item.get('codi_linia')}:{item.get('code')}")
+                ])
+            elif item['type'] == "tram":
+                name = f"{item.get('nom_linia', 'Sin nombre')} - {item.get('name', '')}  "
+                fav_keyboard.append([
+                    InlineKeyboardButton(f"🚋 {name}", callback_data=f"tram_stop:{item.get('codi_linia')}:{item.get('code')}")
                 ])
 
         fav_keyboard.append(self._back_button(self.BACK_TO_MENU_CALLBACK))

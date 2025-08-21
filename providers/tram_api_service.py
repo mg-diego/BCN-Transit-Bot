@@ -1,3 +1,4 @@
+from datetime import datetime
 import aiohttp
 import time
 
@@ -47,19 +48,21 @@ class TramApiService:
             await self._fetch_access_token()
         return self.ACCESS_TOKEN
 
-    async def _request(self, method: str, endpoint: str, **kwargs) -> Any:
+    async def _request(self, method: str, endpoint: str, use_base_url: bool = True, **kwargs) -> Any:
         """Método común para todas las llamadas HTTP."""
         token = await self._get_valid_token()
         headers = kwargs.pop("headers", {})
         headers["Authorization"] = f"Bearer {token}"
         headers["Accept"] = "application/json"
 
+        endpoint = f"{self.BASE_URL}{self.API_VERSION}{endpoint}" if use_base_url else endpoint
+
         async with aiohttp.ClientSession() as session:
-            async with session.request(method, f"{self.BASE_URL}{self.API_VERSION}{endpoint}", headers=headers, **kwargs) as response:
-                if response.status == 401:  # token expirado o inválido
+            async with session.request(method, endpoint, headers=headers, **kwargs) as response:
+                if response.status == 401:
                     await self._fetch_access_token()
                     headers["Authorization"] = f"Bearer {self.ACCESS_TOKEN}"
-                    async with session.request(method, f"{self.BASE_URL}{endpoint}", headers=headers, **kwargs) as retry_response:
+                    async with session.request(method, endpoint, headers=headers, **kwargs) as retry_response:
                         retry_response.raise_for_status()
                         return await retry_response.json()
                 response.raise_for_status()
@@ -201,44 +204,34 @@ class TramApiService:
 
         return tram_connections
     
-    async def get_next_trams_at_stop(self, code: int):
+    async def get_next_trams_at_stop(self, outbound_code: int, return_code: int):
         """
         Get the arrival times and destinations of the next scheduled TRAMs at a stop.
 
         :param code: The stop code (each stop has two codes depending on travel direction).
         :return: JSON with arrival times and destinations.
         """
-        routes = await self._request("GET", f"/stopTimes/{code}")
-
-        next_trams: List[NextTram] = [
-            NextTram(**route)
-            for route in routes
-        ]
-        tram_line_route = TramLineRoute(
-            line_name = next_trams[0].lineName,
-            destination = next_trams[0].destination,
-            next_trams = next_trams
-        )
+        next_trams = await self._request("GET", f"https://tram-web-service.tram.cat/api/opendata/stopTimes?outboundCode={outbound_code}&returnCode={return_code}", use_base_url=False)
         
-        return tram_line_route
+        routes_dict = {}
+        for item in next_trams:
+            key = (item["lineName"], item["code"], item["stopName"], item["destination"])
 
-    async def get_gtfs_realtime_proto(self, network_id: int) -> bytes:
-        """
-        Gets GTFS Real-Time feed in Protocol Buffer format for a specific network.
-        This method returns raw bytes.
+            next_tram = NextTram(
+                vehicle_id=item["vehicleId"],
+                occupancy=item["occupancy"],
+                arrival_time=datetime.fromisoformat(item["arrivalTime"])
+            )
 
-        :param network_id: The TRAM network ID.
-        :return: Byte stream containing GTFS-RT Protocol Buffer data.
-        """
-        token = await self._get_valid_token()
-        headers = {
-            "Authorization": f"Bearer {token}",
-            "Accept": "application/x-protobuf"
-        }
+            if key not in routes_dict:
+                routes_dict[key] = TramLineRoute(
+                    line_name=item["lineName"],
+                    code=item["code"],
+                    stop_name=item["stopName"],
+                    destination=item["destination"],
+                    next_trams=[next_tram]
+                )
+            else:
+                routes_dict[key].next_trams.append(next_tram)
 
-        url = f"{self.BASE_URL}{self.API_VERSION}/gtfsrealtime?networkId={network_id}"
-
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url, headers=headers) as response:
-                response.raise_for_status()
-                return await response.read()  # return raw protobuf data
+        return list(routes_dict.values())

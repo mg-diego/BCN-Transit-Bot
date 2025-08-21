@@ -29,13 +29,13 @@
 ## 📍 Overview
 
 <code>BCN Transit Bot</code> is a Telegram bot that helps you explore and navigate Barcelona’s public transportation system.
-It provides real-time information about metro and bus stops, interactive maps, and lets you save your favorite stations for quick access.
+It provides real-time information about metro, bus and tram stops, interactive maps, and lets you save your favorite stations for quick access.
 
 
 
 ## 👾 Features
 
-- 🗺️ <b>Interactive Map:</b> Select bus or metro stops directly from a map.
+- 🗺️ <b>Interactive Map:</b> Select bus, metro or tram stops directly from a map.
 
 - 🚏 <b>Stop Information:</b> Get detailed info about stops and lines in real time.
 
@@ -67,69 +67,95 @@ https://github.com/user-attachments/assets/824458b8-456d-4c1b-a00f-a180094d11cd
 
 ```mermaid
 graph TD
+    %% Actors
+    U["👤 User"]
+    B["💻 Telegram Bot"]
 
-    10["💻 Telegram Bot"]
-    7["👤 User"]
-    8["🌐 External Transport API"]
-    9["⭐ Favorites Data"]
-    99["👤 User Profile Data"]
-
-    subgraph 1["User Interface CLI"]
-        31["🚇 Metro Handler"]
-        32["🚌 Bus Handler"]
-        33["⭐ Favorites Handler"]
-        34["🌐 Language Handler"]
-        35["❓ Help Handler"]
-        36["⌨️ Keyboard Factory"]
-        37["📋 Menu Handler"]
+    %% User Interface CLI Handlers
+    subgraph CLI["User Interface CLI"]
+        MH["🚇 Metro Handler"]
+        BH["🚌 Bus Handler"]
+        TH["🚋 Tram Handler"]
+        FH["⭐ Favorites Handler"]
+        LH["🌐 Language Handler"]
+        HH["❓ Help Handler"]
+        KF["⌨️ Keyboard Factory"]
+        MHN["📋 Menu Handler"]
     end
 
-    subgraph 2["Internal Providers"]
-        27["📝 Logger"]
-        28["🗺️ Mapper"]
-        29["🔒 Secrets Manager"]
-        38["🌐 Language Manager"]
+    %% Application Services
+    subgraph Services["Application Services"]
+        MS["🚇 Metro Service"]
+        BS["🚌 Bus Service"]
+        TS["🚋 Tram Service"]
+        CS["💾 Cache Service"]
+        MSGS["💬 Message Service"]
+        UM["🔄 Update Manager"]
     end
 
-    subgraph 98["External Providers"]
-        26["💾 User Data Manager"]
-        30["🌐 Transport API Service"]
-    end
-
-    subgraph 3["Domain Models Data Classes"]
-        subgraph 4["Metro Domain Models"]
-            20["🚇 Metro Access"]
-            21["🔗 Metro Connection"]
-            22["🛤️ Metro Line"]
-            23["🚉 Metro Station"]
-            24["⏱️ Next Metro"]
-            25["📅 Next Scheduled Metro"]
+    %% Domain Models
+    subgraph Domain["Domain Models Data Classes"]
+        subgraph Metro["Metro Domain"]
+            MA["🚇 Metro Access"]
+            MC["🔗 Metro Connection"]
+            ML["🛤️ Metro Line"]
+            MSN["🚉 Metro Station"]
+            NM["⏱️ Next Metro"]
+            NSM["📅 Next Scheduled Metro"]
         end
-        subgraph 5["Bus Domain Models"]
-            17["🚌 Bus Line"]
-            18["🛑 Bus Stop"]
-            19["⏱️ Next Bus"]
+        subgraph Bus["Bus Domain"]
+            BL["🚌 Bus Line"]
+            BSN["🛑 Bus Stop"]
+            NB["⏱️ Next Bus"]
+        end
+        subgraph Tram["Tram Domain"]
+            TL["🚋 TramLine"]
+            TSN["🛑 TramStop"]
+            NT["⏱️ NextTram"]
         end
     end
 
-    subgraph 6["Application Services"]
-        11["🚇 Metro Service"]
-        12["🚌 Bus Service"]
-        13["💾 Cache Service"]
-        14["💬 Message Service"]
-        15["🔄 Update Manager"]
+    %% Providers
+    subgraph Internal["Internal Providers"]
+        L["📝 Logger"]
+        M["🗺️ Mapper"]
+        SM["🔒 Secrets Manager"]
+        LM["🌐 Language Manager"]
     end
 
-    %% Edges
-    10 -->|Drives| 1
-    6 -->|Uses| 2
-    6 -->|Uses| 98
-    6 -->|Uses| 3
-    1 -->|Invokes| 6
-    30 -->|Connects to| 8
-    26 -->|Manages| 9
-    26 -->|Manages| 99
-    7 -->|Interacts with| 10
+    subgraph External["External Providers"]
+        UDM["💾 User Data Manager"]
+        TAS["🌐 Transport API Service"]
+    end
+
+    %% External API and data
+    EXT["🌐 External Transport API"]
+    FD["⭐ Favorites Data"]
+    UPD["👤 User Profile Data"]
+
+    %% Flow edges
+    U -->|Interacts with| B
+    B -->|Drives| CLI
+
+    %% Handlers -> Services
+    MH -->|Invokes| MS
+    BH -->|Invokes| BS
+    TH -->|Invokes| TS
+    FH -->|Uses| UDM
+
+    %% Services -> Domain
+    MS -->|Uses| Metro
+    BS -->|Uses| Bus
+    TS -->|Uses| Tram
+
+    %% External connections
+    UDM -->|Manages| FD
+    UDM -->|Manages| UPD
+    TAS -->|Connects to| EXT
+
+    Services -->|Uses| Internal
+    Services -->|Uses| External
+    Services -->|Uses| Domain
 
     %% Classes & Colors
     classDef ui fill:#2196f3,color:#fff,stroke:#1a237e,stroke-width:2px;
@@ -140,14 +166,14 @@ graph TD
     classDef cli fill:#607d8b,color:#fff,stroke:#263238,stroke-width:2px;
     classDef actor fill:#f44336,color:#fff,stroke:#b71c1c,stroke-width:2px;
 
-    %% Assign classes ONLY to internal boxes
-    class 31,32,33,34,35,36,37 ui;
-    class 26,27,28,29,30,38 providers;
-    class 20,21,22,23,24,25,17,18,19 domain;
-    class 11,12,13,14,15 services;
-    class 8,9,99 external;
-    class 10 cli;
-    class 7 actor;
+    %% Assign classes
+    class MH,BH,TH,FH,LH,HH,KF,MHN ui;
+    class L,M,SM,LM providers;
+    class MA,MC,ML,MSN,NM,NSM,BL,BSN,NB,TL,TSN,NT domain;
+    class MS,BS,TS,CS,MSGS,UM services;
+    class UDM,TAS external;
+    class B cli;
+    class U actor;
 
 ```
 

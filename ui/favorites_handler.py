@@ -1,13 +1,18 @@
 from telegram import Update
 from telegram.ext import ContextTypes
 
+from application import MetroService, BusService, TramService
+from providers import UserDataManager, LanguageManager
+from ui.keyboard_factory import KeyboardFactory
+
 class FavoritesHandler:
 
-    def __init__(self, user_data_manager, keyboard_factory, metro_service, bus_service, language_manager):
+    def __init__(self, user_data_manager: UserDataManager, keyboard_factory: KeyboardFactory, metro_service: MetroService, bus_service: BusService, tram_service: TramService, language_manager: LanguageManager):
         self.user_data_manager = user_data_manager
         self.keyboard_factory = keyboard_factory
         self.metro_service = metro_service
         self.bus_service = bus_service
+        self.tram_service = tram_service
         self.language_manager = language_manager
 
     async def show_favorites(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -42,21 +47,32 @@ class FavoritesHandler:
             item = await self.metro_service.get_station_by_id(item_id, line_id)
             
             new_fav_item = {
-                "CODI_ESTACIO": item_id,
-                "NOM_ESTACIO": item.NOM_ESTACIO,
-                "CODI_GRUP_ESTACIO": item.CODI_GRUP_ESTACIO,
-                "NOM_LINIA": item.EMOJI_NOM_LINIA,
-                "CODI_LINIA": line_id,
+                "STATION_CODE": item_id,
+                "STATION_NAME": item.NOM_ESTACIO,
+                "STATION_GROUP_CODE": item.CODI_GRUP_ESTACIO,
+                "LINE_NAME": item.EMOJI_NOM_LINIA,
+                "LINE_CODE": line_id,
                 "coordinates": item.coordinates
             }
         elif item_type == "bus":
             item = await self.bus_service.get_stop_by_id(item_id, line_id)
 
             new_fav_item = {
-                "CODI_PARADA": item_id,
-                "NOM_PARADA": item.NOM_PARADA,
-                "CODI_LINIA": line_id,
+                "STOP_CODE": item_id,
+                "STOP_NAME": item.NOM_PARADA,
+                "LINE_CODE": line_id,
                 "coordinates": item.coordinates
+            }
+        elif item_type == "tram":
+            item = await self.tram_service.get_stop_by_id(item_id, line_id)
+            line = await self.tram_service.get_line_by_id(line_id)
+
+            new_fav_item = {
+                "STOP_CODE": item.id,
+                "STOP_NAME": item.name,
+                "LINE_NAME": line.name,
+                "LINE_CODE": line_id,
+                "coordinates": [item.latitude, item.longitude]
             }
 
         self.user_data_manager.add_favorite(user_id, item_type, new_fav_item)

@@ -1,4 +1,3 @@
-from providers.proto_decoder import ProtoDecoder
 from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, MessageHandler, filters
 
 from ui import MenuHandler, MetroHandler, BusHandler, TramHandler, FavoritesHandler, HelpHandler, LanguageHandler, KeyboardFactory, WebAppHandler
@@ -27,7 +26,7 @@ def main():
     metro_handler = MetroHandler(keyboard_factory, metro_service, update_manager, user_data_manager, message_service, language_manager)
     bus_handler = BusHandler(keyboard_factory, bus_service, update_manager, user_data_manager, message_service, language_manager)
     tram_handler = TramHandler(keyboard_factory, tram_service, update_manager, user_data_manager, message_service, language_manager)
-    favorites_handler = FavoritesHandler(user_data_manager, keyboard_factory, metro_service, bus_service, language_manager)
+    favorites_handler = FavoritesHandler(user_data_manager, keyboard_factory, metro_service, bus_service, tram_service, language_manager)
     help_handler = HelpHandler(message_service, keyboard_factory, language_manager)
     language_handler = LanguageHandler(keyboard_factory, user_data_manager, message_service, language_manager)
 

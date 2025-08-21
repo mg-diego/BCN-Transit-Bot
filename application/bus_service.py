@@ -66,6 +66,28 @@ class BusService:
         stop = next((s for s in stops if str(s.CODI_PARADA) == str(stop_id)), None)
         return stop
     
-    async def get_stop_routes(self, stop_id):
-        routes = await self.transport_api_service.get_next_bus_at_stop(stop_id)
+    async def get_stop_routes(self, stop_id: str) -> str:
+        """
+        Obtiene las rutas de un paradero, usando cache si está disponible.
+        """
+        cache_key = f"bus_top_{stop_id}_routes"
+
+        routes = None
+        if self.cache_service:
+            routes = await self.cache_service.get(cache_key)
+            if routes:
+                print("Cache hit: routes")
+            else:
+                print("Cache miss: fetching routes")
+        
+        if not routes:
+            try:
+                routes = await self.transport_api_service.get_next_bus_at_stop(stop_id)
+                if self.cache_service:
+                    await self.cache_service.set(cache_key, routes, ttl=10)
+            except Exception as e:
+                # Manejo de errores simple
+                print(f"Error fetching routes: {e}")
+                routes = []
+
         return "\n\n".join(str(route) for route in routes)

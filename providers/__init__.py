@@ -4,5 +4,6 @@ from .tram_api_service import TramApiService
 from .user_data_manager import UserDataManager
 from .language_manager import LanguageManager
 from .logger import logger
+from .gtfs_parser import GTFSParser
 
-__all__ = ["SecretsManager", "TransportApiService", "TramApiService", "UserDataManager", "LanguageManager", "logger"]
+__all__ = ["SecretsManager", "TransportApiService", "TramApiService", "UserDataManager", "LanguageManager", "logger", "GTFSParser"]

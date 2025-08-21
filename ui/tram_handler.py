@@ -71,8 +71,10 @@ class TramHandler:
         
         self.message_service.set_bot_instance(context.bot)
         user_id = self.message_service.get_user_id(update)
+        chat_id = self.message_service.get_chat_id(update)
         _, line_id, stop_id = self.message_service.get_callback_data(update)
 
+        line = await self.tram_service.get_line_by_id(line_id)
         stop = await self.tram_service.get_stop_by_id(stop_id, line_id)
 
         await self.message_service.edit_inline_message(update, self.language_manager.t('tram.stop.name', tram_stop_name=stop.name.upper()))
@@ -87,20 +89,15 @@ class TramHandler:
         
         self.user_data_manager.register_search("tram", line_id, stop_id, stop.name)
         
-        chat_id = self.message_service.get_chat_id(update)
-
-        
-        stop_connections = await self.tram_service.get_tram_stop_connections(stop_id)        
-        stop_alerts =  "" #await self.metro_service.get_metro_station_alerts(line_id, metro_station_id)
+        stop_alerts =  "TBD" #await self.metro_service.get_metro_station_alerts(line_id, metro_station_id)
         
         async def update_loop():
             while True:
                 try:
-                    routes = await self.tram_service.get_stop_routes(stop.outboundCode, stop.returnCode)
+                    routes = await self.tram_service.get_stop_routes(line.network.id, stop.outboundCode, stop.returnCode)
 
                     text = (
                         f"🚉 {self.language_manager.t('tram.stop.next')}\n{routes} \n\n"
-                        f"🔛 {self.language_manager.t('tram.stop.connections')}\n{stop_connections}\n\n"
                         f"🚨 {self.language_manager.t('tram.stop.alerts')}\n{stop_alerts}"
                     )
 
