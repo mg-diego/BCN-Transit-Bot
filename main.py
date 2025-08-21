@@ -54,6 +54,7 @@ def main():
     application.add_handler(MessageHandler(filters.StatusUpdate.WEB_APP_DATA, web_app_handler.web_app_data_router))    
     application.add_handler(CallbackQueryHandler(bus_handler.show_stop, pattern=r"^bus_stop"))
     application.add_handler(CallbackQueryHandler(bus_handler.show_line_stops, pattern=r"^bus_line"))
+    application.add_handler(CallbackQueryHandler(bus_handler.show_lines, pattern=r"^bus_page"))
     application.add_handler(CallbackQueryHandler(bus_handler.show_lines, pattern=r"^bus$"))
 
     # TRAM

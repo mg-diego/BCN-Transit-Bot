@@ -18,7 +18,7 @@ class KeyboardFactory:
     MENU_LANGUAGE_CALLBACK = "language"
     MENU_HELP_CALLBACK = "help"
 
-    BACK_TO_MENU_CALLBACK = "back_to_menu"
+    BACK_TO_MENU_CALLBACK = "back_to_menu"    
 
     def __init__(self, language_manager):
         self.language_manager = language_manager
@@ -84,12 +84,35 @@ class KeyboardFactory:
         rows = self._chunk_buttons(buttons, 2)
         return InlineKeyboardMarkup(rows)
     
-    def bus_lines_menu(self, bus_lines: List[BusLine]):
+    def bus_lines_paginated_menu(self, bus_lines: List[BusLine], page: int = 0):
+        BUTTONS_PER_PAGE = 20
+        BUTTONS_PER_ROW = 4
+
+        start = page * BUTTONS_PER_PAGE
+        end = start + BUTTONS_PER_PAGE
+        current_lines = bus_lines[start:end]
+
         buttons = [
-            InlineKeyboardButton(f"{line.NOM_LINIA}", callback_data=f"bus_line:{line.CODI_LINIA}:{line.NOM_LINIA}")
-            for line in bus_lines
+            InlineKeyboardButton(
+                f"{line.NOM_LINIA}  ",
+                callback_data=f"bus_line:{line.CODI_LINIA}:{line.NOM_LINIA}"
+            )
+            for line in current_lines
         ]
-        rows = self._chunk_buttons(buttons, 5)
+        rows = self._chunk_buttons(buttons, BUTTONS_PER_ROW)
+
+        navigation_buttons = []
+        if page > 0:
+            navigation_buttons.append(
+                InlineKeyboardButton("⬅️ Anterior", callback_data=f"bus_page:{page - 1}")
+            )
+        if end < len(bus_lines):
+            navigation_buttons.append(
+                InlineKeyboardButton("Siguiente ➡️", callback_data=f"bus_page:{page + 1}")
+            )
+        if navigation_buttons:
+            rows.append(navigation_buttons)
+
         rows.append(self._back_button(self.BACK_TO_MENU_CALLBACK))
         return InlineKeyboardMarkup(rows)
     

@@ -37,10 +37,17 @@ class BusHandler:
         self.mapper = Mapper()
 
     async def show_lines(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Muestra el menú con todas las líneas de bus."""
-        await self.message_service.edit_inline_message(update, self.language_manager.t("bus.loading"))
+        """Muestra el menú con todas las líneas de bus."""        
         bus_lines = await self.bus_service.get_all_lines()
-        reply_markup = self.keyboard_factory.bus_lines_menu(bus_lines)
+        page = 0  
+
+        if self.message_service.check_query_callback(update, "bus_page:"):
+            _, page = self.message_service.get_callback_data(update)
+
+        else:
+            await self.message_service.edit_inline_message(update, self.language_manager.t("bus.loading"))
+
+        reply_markup = self.keyboard_factory.bus_lines_paginated_menu(bus_lines, int(page))
         await self.message_service.edit_inline_message(update, self.language_manager.t("bus.select.line"), reply_markup=reply_markup)
 
     async def show_line_stops(self, update: Update, context: ContextTypes.DEFAULT_TYPE):

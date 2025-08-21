@@ -69,6 +69,9 @@ class MessageService:
             parse_mode=parse_mode
         )
 
+    def check_query_callback(self, update, expected_callback):
+        return update.callback_query.data.startswith(expected_callback)
+
     def get_callback_data(self, update):
         return update.callback_query.data.split(":")
     
