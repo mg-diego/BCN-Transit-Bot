@@ -8,7 +8,7 @@ from ui.keyboard_factory import KeyboardFactory
 from application import TramService, UpdateManager, MessageService
 
 from providers.manager import UserDataManager, LanguageManager
-from providers.helpers import Mapper, logger
+from providers.helpers import TransportDataCompressor, logger
 
 from ui.transport.handler_base import HandlerBase
 
@@ -31,7 +31,7 @@ class TramHandler(HandlerBase):
         self.tram_service = tram_service
         self.user_data_manager = user_data_manager
         self.language_manager = language_manager
-        self.mapper = Mapper()
+        self.mapper = TransportDataCompressor()
         logger.info(f"[{self.__class__.__name__}] TramHandler initialized")
 
     async def show_lines(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -54,7 +54,7 @@ class TramHandler(HandlerBase):
         reply_markup = self.keyboard_factory.tram_stops_menu(stops, line_id)
         await self.message_service.edit_inline_message(
             update,
-            self.language_manager.t("tram.line.stops", line_id=line_name),
+            self.language_manager.t("common.line.stops.or.map", line=line_name),
             reply_markup=reply_markup
         )
 

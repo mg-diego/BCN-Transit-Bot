@@ -4,7 +4,7 @@ from telegram.ext import ContextTypes
 from ui.keyboard_factory import KeyboardFactory
 from application import BusService, MessageService, UpdateManager
 from providers.manager import UserDataManager, LanguageManager
-from providers.helpers import Mapper, logger
+from providers.helpers import TransportDataCompressor, logger
 from domain.transport_type import TransportType
 
 from .handler_base import HandlerBase
@@ -22,7 +22,7 @@ class BusHandler(HandlerBase):
         super().__init__(message_service, update_manager, language_manager, user_data_manager)
         self.keyboard_factory = keyboard_factory
         self.bus_service = bus_service
-        self.mapper = Mapper()
+        self.mapper = TransportDataCompressor()
 
     async def show_lines(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Display all bus lines (paginated menu)."""
@@ -49,7 +49,7 @@ class BusHandler(HandlerBase):
 
         await self.message_service.send_new_message_from_callback(
             update,
-            text=self.language_manager.t('bus.line.stops', line_name=line_name),
+            text=self.language_manager.t('common.line.only.map', line=line_name),
             reply_markup=self.keyboard_factory.bus_stops_map_menu(encoded)
         )
 

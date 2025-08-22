@@ -7,7 +7,7 @@ from .favorites_handler import FavoritesHandler
 from .help_handler import HelpHandler
 from .language_handler import LanguageHandler
 from .keyboard_factory import KeyboardFactory
-from .web_app_handler import WebAppHandler
+from .transport.web_app_handler import WebAppHandler
 from .transport.handler_base import HandlerBase
 
 __all__ = ["MenuHandler", "MetroHandler", "BusHandler", "TramHandler", "RodaliesHandler", "FavoritesHandler", "HelpHandler", "LanguageHandler", "KeyboardFactory", "WebAppHandler", "HandlerBase"]

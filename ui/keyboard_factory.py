@@ -189,6 +189,11 @@ class KeyboardFactory:
                 fav_keyboard.append([
                     InlineKeyboardButton(f"🚋 {name}", callback_data=f"tram_stop:{item.get('codi_linia')}:{item.get('code')}")
                 ])
+            elif item['type'] == TransportType.RODALIES.value:
+                name = f"{item.get('nom_linia', 'Sin nombre')} - {item.get('name', '')}  "
+                fav_keyboard.append([
+                    InlineKeyboardButton(f"🚆 {name}", callback_data=f"rodalies_station:{item.get('codi_linia')}:{item.get('code')}")
+                ])
 
         fav_keyboard.append(self._back_button(self.BACK_TO_MENU_CALLBACK))
         return InlineKeyboardMarkup(fav_keyboard)

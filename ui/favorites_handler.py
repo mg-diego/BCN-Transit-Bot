@@ -2,18 +2,19 @@ from domain.transport_type import TransportType
 from telegram import Update
 from telegram.ext import ContextTypes
 
-from application import MetroService, BusService, TramService
+from application import MetroService, BusService, TramService, RodaliesService
 from providers.manager import UserDataManager, LanguageManager
 from ui.keyboard_factory import KeyboardFactory
 
 class FavoritesHandler:
 
-    def __init__(self, user_data_manager: UserDataManager, keyboard_factory: KeyboardFactory, metro_service: MetroService, bus_service: BusService, tram_service: TramService, language_manager: LanguageManager):
+    def __init__(self, user_data_manager: UserDataManager, keyboard_factory: KeyboardFactory, metro_service: MetroService, bus_service: BusService, tram_service: TramService, rodalies_service: RodaliesService, language_manager: LanguageManager):
         self.user_data_manager = user_data_manager
         self.keyboard_factory = keyboard_factory
         self.metro_service = metro_service
         self.bus_service = bus_service
         self.tram_service = tram_service
+        self.rodalies_servie = rodalies_service
         self.language_manager = language_manager
 
     async def show_favorites(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -67,6 +68,17 @@ class FavoritesHandler:
         elif item_type == TransportType.TRAM.value:
             item = await self.tram_service.get_stop_by_id(item_id, line_id)
             line = await self.tram_service.get_line_by_id(line_id)
+
+            new_fav_item = {
+                "STOP_CODE": item.id,
+                "STOP_NAME": item.name,
+                "LINE_NAME": line.name,
+                "LINE_CODE": line_id,
+                "coordinates": [item.latitude, item.longitude]
+            }        
+        elif item_type == TransportType.RODALIES.value:
+            item = await self.rodalies_servie.get_station_by_id(item_id, line_id)
+            line = await self.rodalies_servie.get_line_by_id(line_id)
 
             new_fav_item = {
                 "STOP_CODE": item.id,

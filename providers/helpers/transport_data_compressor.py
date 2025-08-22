@@ -7,14 +7,14 @@ from typing import List, Dict, Any
 
 from domain.bus import BusStop
 from domain.metro import MetroStation
-from domain.rodalies import RodaliesStation
+from domain.rodalies import RodaliesLine, RodaliesStation
 from domain.tram import TramStop
 from domain.transport_type import TransportType
 
 from .logger import logger
 
 
-class Mapper:
+class TransportDataCompressor:
     """
     Mapper is responsible for converting transport stop data (metro, bus, tram)
     into a compressed JSON format that can be easily shared or stored.
@@ -225,7 +225,7 @@ class Mapper:
         self._log_mapping_end(TransportType.TRAM.value, line_id)
         return compressed
     
-    def map_rodalies_stations(self, stations: List[RodaliesStation], line_id: str, line_name: str, line_color: str):
+    def map_rodalies_stations(self, stations: List[RodaliesStation], line: RodaliesLine):
         """
         Maps a list of rodalies stations into a compressed JSON format.
 
@@ -237,24 +237,31 @@ class Mapper:
         Returns:
             str: Compressed JSON string representing mapped rodalies stations.
         """
-        self._log_mapping_start(TransportType.RODALIES.value, len(stations), line_id, line_name)
+        self._log_mapping_start(TransportType.RODALIES.value, len(stations), line.id, line.name)
+
+        stops_base = [
+            {
+                "lat": station.latitude,
+                "lon": station.longitude,
+                "name": f"{station.id} - {self._normalize_name(station.name)}",
+                "color": line.color,
+            }
+            for station in stations
+        ]
+
+        stops = self._map_stops_bidirectional(
+            stops_base,
+            direction_forward=line.origin_station_name,
+            direction_reverse=line.destination_station_name
+        )
 
         data = {
             "type": TransportType.RODALIES.value,
-            "line_id": line_id,
-            "line_name": html.escape(line_name),
-            "stops": [
-                {
-                    "lat": stop.latitude,
-                    "lon": stop.longitude,
-                    "name": f"{stop.id} - {self._normalize_name(stop.name)}",
-                    "color": line_color,
-                    "direction": 1
-                }
-                for stop in stations
-            ]
+            "line_id": line.id,
+            "line_name": html.escape(line.name),
+            "stops": stops
         }
 
         compressed = self._compress_data(data)
-        self._log_mapping_end(TransportType.BUS.value, line_id)
+        self._log_mapping_end(TransportType.RODALIES.value, line.id)
         return compressed

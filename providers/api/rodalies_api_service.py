@@ -5,7 +5,7 @@ from datetime import datetime
 from typing import Any, Dict, List
 
 from providers.helpers import logger
-from domain.rodalies import RodaliesLine, RodaliesStation, create_rodalies_line, create_rodalies_station
+from domain.rodalies import RodaliesLine, RodaliesStation, RodaliesLineRoute, NextRodalies, create_rodalies_line, create_rodalies_station
 
 
 class RodaliesApiService:
@@ -61,40 +61,50 @@ class RodaliesApiService:
         return create_rodalies_line(line_data, stations)
 
     # ==== Stations ====
-    async def get_stations_on_line(self, line_id: int) -> List[RodaliesStation]:
+    async def get_next_trains_at_station(self, station_id: int, line_id: str) -> List[RodaliesStation]:
         """Fetch all stations for a given line."""
-        data = await self._request("GET", f"/linies/{line_id}/estacions")
-        return [create_rodalies_station(station) for station in data.get("features", [])]
+        next_rodalies = await self._request("GET", f"/departures?stationId={station_id}&minute=90&fullResponse=true&lang=ca")
+        
+        routes_dict = {}
+        for item in next_rodalies["trains"]:
+            line = item["line"]
+            if str(line["id"]) == str(line_id):
+                key = (line["name"], line["id"], item["destinationStation"]["name"])
+
+                next_rodalies = NextRodalies(
+                        id=item["technicalNumber"],
+                        arrival_time=datetime.fromisoformat(item["departureDateHourSelectedStation"]),
+                        platform=item["platformSelectedStation"],
+                        delay_in_minutes=item["delay"]
+                    )
+                
+                if key not in routes_dict:
+                    routes_dict[key] = RodaliesLineRoute(
+                        code=line_id,
+                        destination=item["destinationStation"]["name"],
+                        line_name=line_id,
+                        next_rodalies=[next_rodalies]
+                    )
+                else:
+                    routes_dict[key].next_rodalies.append(next_rodalies)
+
+        return list(routes_dict.values())
+
+
+
 '''
-    async def get_station_by_id(self, station_id: int) -> RodaliesStation:
-        """Fetch detailed info for a specific station."""
-        data = await self._request("GET", f"/estacions/{station_id}")
-        return create_rodalies_station(data)
+        trains = []
+        for train in next_rodalies["trains"]:
+            if str(train["line"]["id"]) == str(line_id):
+                trains.append(NextRodalies(
+                    id=train["technicalNumber"],
+                    arrival_time=datetime.fromisoformat(train["departureDateHourSelectedStation"])
+                ))
 
-    # ==== Next trains ====
-    async def get_next_trains_at_station(self, line_id: int, station_id: int) -> List[RodaliesLineRoute]:
-        """Get next trains for a line at a specific station."""
-        data = await self._request("GET", f"/linies/{line_id}/estacions/{station_id}/horaris")
-        routes = []
-        for route_data in data.get("linies_trajectes", []):
-            next_trains = [NextTrain(**t) for t in route_data.get("propers_trens", [])]
-            routes.append(RodaliesLineRoute(
-                codi_linia=route_data["codi_linia"],
-                nom_linia=route_data["nom_linia"],
-                color_linia=route_data.get("color_linia", ""),
-                codi_trajecte=route_data.get("codi_trajecte", ""),
-                desti_trajecte=route_data.get("desti_trajecte", ""),
-                propers_trens=next_trains
-            ))
-        return routes
-
-    # ==== Alerts ====
-    async def get_alerts(self) -> Dict[str, Any]:
-        """Fetch current service alerts."""
-        return await self._request("GET", "/alerts")
-
-    '''
-
-
-api = RodaliesApiService()
-api.get_lines()
+        return [RodaliesLineRoute(
+            code=line_id,
+            destination="test",
+            line_name=line_id,
+            next_rodalies=trains
+        )]
+'''

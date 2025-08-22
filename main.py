@@ -57,10 +57,10 @@ def main():
     bus_handler = BusHandler(keyboard_factory, bus_service, update_manager, user_data_manager, message_service, language_manager)
     tram_handler = TramHandler(keyboard_factory, tram_service, update_manager, user_data_manager, message_service, language_manager)
     rodalies_handler = RodaliesHandler(keyboard_factory, rodalies_service, update_manager, user_data_manager, message_service, language_manager)
-    favorites_handler = FavoritesHandler(user_data_manager, keyboard_factory, metro_service, bus_service, tram_service, language_manager)
+    favorites_handler = FavoritesHandler(user_data_manager, keyboard_factory, metro_service, bus_service, tram_service, rodalies_service, language_manager)
     help_handler = HelpHandler(message_service, keyboard_factory, language_manager)
     language_handler = LanguageHandler(keyboard_factory, user_data_manager, message_service, language_manager)
-    web_app_handler = WebAppHandler(metro_handler, bus_handler, tram_handler)
+    web_app_handler = WebAppHandler(metro_handler, bus_handler, tram_handler, rodalies_handler)
 
     logger.info("Handlers initialized")
 
@@ -96,9 +96,10 @@ def main():
     application.add_handler(CallbackQueryHandler(tram_handler.show_line_stops, pattern=r"^tram_line"))
     application.add_handler(CallbackQueryHandler(tram_handler.show_lines, pattern=r"^tram$"))
 
-    # RODALIES    
-    application.add_handler(CallbackQueryHandler(rodalies_handler.show_lines, pattern=r"^rodalies$"))
+    # RODALIES
+    application.add_handler(CallbackQueryHandler(rodalies_handler.show_station, pattern=r"^rodalies_station"))  
     application.add_handler(CallbackQueryHandler(rodalies_handler.show_line_stops, pattern=r"^rodalies_line"))
+    application.add_handler(CallbackQueryHandler(rodalies_handler.show_lines, pattern=r"^rodalies$"))
 
     # FAVORITES
     application.add_handler(CallbackQueryHandler(favorites_handler.add_favorite, pattern=r"^add_fav"))

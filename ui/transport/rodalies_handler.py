@@ -5,7 +5,7 @@ from telegram.ext import ContextTypes
 from application import RodaliesService, MessageService, UpdateManager
 
 from providers.manager import UserDataManager, LanguageManager
-from providers.helpers import Mapper, logger
+from providers.helpers import TransportDataCompressor, logger
 
 from ui.keyboard_factory import KeyboardFactory
 from .handler_base import HandlerBase
@@ -28,7 +28,8 @@ class RodaliesHandler(HandlerBase):
         super().__init__(message_service, update_manager, language_manager, user_data_manager)
         self.keyboard_factory = keyboard_factory
         self.rodalies_service = rodalies_service
-        self.mapper = Mapper()
+        self.mapper = TransportDataCompressor()
+        self.transport_type = TransportType.RODALIES.value
         logger.info(f"[{self.__class__.__name__}] RodaliesHandler initialized")
 
     async def show_lines(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -49,11 +50,30 @@ class RodaliesHandler(HandlerBase):
         _, line_id = self.message_service.get_callback_data(update)
 
         line = await self.rodalies_service.get_line_by_id(line_id)
-        stops = await self.rodalies_service.get_stops_by_line(line_id)
-        encoded = self.mapper.map_rodalies_stations(stops, line_id, line.name, line.color)
+        stops = await self.rodalies_service.get_stations_by_line(line_id)
+        encoded = self.mapper.map_rodalies_stations(stops, line)
 
         await self.message_service.send_new_message_from_callback(
             update,
-            text=self.language_manager.t('bus.line.stops', line_name=line.name),
+            text=self.language_manager.t('common.line.only.map', line=line.name),
             reply_markup=self.keyboard_factory.bus_stops_map_menu(encoded)
         )
+
+    async def show_station(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Display a specific rodalies station with next arrivals."""
+        user_id, chat_id, line_id, rodalies_station_id = self.extract_context(update, context)
+        logger.info(f"Showing station info for user {user_id}, line {line_id}, stop {rodalies_station_id}")
+
+        rodalies_station = await self.rodalies_service.get_station_by_id(rodalies_station_id, line_id)
+        message = await self.show_stop_intro(update, self.transport_type, line_id, rodalies_station_id, rodalies_station.latitude, rodalies_station.longitude, rodalies_station.name)
+        
+        async def update_text():
+            next_rodalies = await self.rodalies_service.get_station_routes(rodalies_station_id, line_id)
+            is_fav = self.user_data_manager.has_favorite(user_id, self.transport_type, rodalies_station_id)
+            text = f"🚉 {self.language_manager.t(f'{self.transport_type}.station.next')}\n{next_rodalies}"
+            keyboard = self.keyboard_factory.update_menu(is_fav, self.transport_type, rodalies_station_id, line_id, user_id)
+            return text, keyboard
+
+        self.start_update_loop(user_id, chat_id, message.message_id, get_text_callable=update_text)
+        logger.info(f"Started update loop task for user {user_id}, station {rodalies_station_id}")
+        

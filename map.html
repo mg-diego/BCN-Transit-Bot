@@ -391,17 +391,17 @@
 
           li.prepend(circle);
 
-li.addEventListener("click", () => {
-  // Centrar mapa en la parada con animación
-  map.flyTo([stop.lat, stop.lon], 16, { animate: true });
+          li.addEventListener("click", () => {
+            // Centrar mapa en la parada con animación
+            map.flyTo([stop.lat, stop.lon], 16, { animate: true });
 
-  // Abrir popup del marcador correspondiente
-  markers[coordsList.indexOf(stop)].openPopup();
+            // Abrir popup del marcador correspondiente
+            markers[coordsList.indexOf(stop)].openPopup();
 
-  // Cerrar sidebar y ajustar botón
-  sidebar.classList.remove("open");
-  toggleBtn.style.left = "15px";
-});
+            // Cerrar sidebar y ajustar botón
+            sidebar.classList.remove("open");
+            toggleBtn.style.left = "15px";
+          });
 
           li.addEventListener("keydown", (e) => {
             if (e.key === "Enter" || e.key === " ") {

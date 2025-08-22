@@ -126,6 +126,18 @@ class UserDataManager:
                     coordinates[1],
                     coordinates[0]
                 ])
+            elif type.lower() == TransportType.RODALIES.value:
+                self.favorites_ws.append_row([
+                    user_id,
+                    type.lower(),
+                    item.get('STOP_CODE'),
+                    item.get('STOP_NAME'),
+                    '',
+                    item.get('LINE_NAME'),
+                    item.get('LINE_CODE'),
+                    coordinates[1],
+                    coordinates[0]
+                ])
             logger.info(f"Added {type} favorite for user_id={user_id}")
         except Exception as e:
             logger.error(f"Failed to add favorite for user_id={user_id}: {e}")

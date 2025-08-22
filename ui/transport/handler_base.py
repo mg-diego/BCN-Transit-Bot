@@ -37,11 +37,11 @@ class HandlerBase:
         return user_id, chat_id, line_id, stop_id
     
     async def show_stop_intro(self, update: Update, transport_type: str, line_id, stop_id, stop_lat, stop_lon, stop_name, keyboard_reply = None):
-        sub_key = "station" if transport_type == TransportType.METRO.value else "stop"
+        sub_key = "station" if transport_type in [TransportType.METRO.value, TransportType.RODALIES.value] else "stop"
         await self.message_service.handle_interaction(update, self.language_manager.t(f"{transport_type}.{sub_key}.name", name=stop_name.upper()))
         await self.message_service.send_location(update, stop_lat, stop_lon, reply_markup=keyboard_reply)
 
-        message = await self.message_service.send_new_message_from_callback(update, text=self.language_manager.t(f"{transport_type}.{sub_key}.loading"))
+        message = await self.message_service.send_new_message_from_callback(update, text=self.language_manager.t("common.stop.loading"))
 
         self.user_data_manager.register_search(transport_type, line_id, stop_id, stop_name)
 

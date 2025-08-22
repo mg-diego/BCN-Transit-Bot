@@ -61,7 +61,7 @@ class MetroService(ServiceBase):
 
         formatted_connections = (
             "\n".join(str(c) for c in connections)
-            or self.language_manager.t('metro.station.no.connections')
+            or self.language_manager.t('common.no.connections')
         )
         return formatted_connections
 
@@ -75,7 +75,7 @@ class MetroService(ServiceBase):
 
         formatted_alerts = (
             "\n".join(f"<pre>{c}</pre>" for c in alerts)
-            or self.language_manager.t('metro.station.no.alerts')
+            or self.language_manager.t('common.no.alerts')
         )
         return formatted_alerts
 

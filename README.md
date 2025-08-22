@@ -119,7 +119,7 @@ graph TD
     %% Providers
     subgraph Internal["Internal Providers"]
         L["📝 Logger"]
-        M["🗺️ Mapper"]
+        M["🗺️ Transport Data Compressor"]
         SM["🔒 Secrets Manager"]
         LM["🌐 Language Manager"]
     end

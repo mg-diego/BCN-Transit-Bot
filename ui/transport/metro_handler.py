@@ -9,7 +9,7 @@ from application import MetroService, UpdateManager, MessageService
 
 from providers.manager import UserDataManager
 from providers.manager import LanguageManager
-from providers.helpers import Mapper
+from providers.helpers import TransportDataCompressor
 
 from .handler_base import HandlerBase
 
@@ -30,7 +30,7 @@ class MetroHandler(HandlerBase):
         super().__init__(message_service, update_manager, language_manager, user_data_manager)
         self.keyboard_factory = keyboard_factory
         self.metro_service = metro_service
-        self.mapper = Mapper()
+        self.mapper = TransportDataCompressor()
         logger.info(f"[{self.__class__.__name__}] MetroHandler initialized")
 
     async def show_lines(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -53,7 +53,7 @@ class MetroHandler(HandlerBase):
         reply_markup = self.keyboard_factory.metro_stations_menu(stations, line_id)
         await self.message_service.edit_inline_message(
             update,
-            self.language_manager.t("metro.line.stations", line_id=line.NOM_LINIA),
+            self.language_manager.t("common.line.stops.or.map", line=line.NOM_LINIA),
             reply_markup=reply_markup
         )
 
@@ -80,7 +80,6 @@ class MetroHandler(HandlerBase):
         station_connections = await self.metro_service.get_metro_station_connections(metro_station_id)
         station_alerts = await self.metro_service.get_metro_station_alerts(line_id, metro_station_id)
 
-        # Define the async update function for HandlerBase
         async def update_text():
             routes = await self.metro_service.get_station_routes(metro_station_id)
             text = (
@@ -92,7 +91,6 @@ class MetroHandler(HandlerBase):
             keyboard = self.keyboard_factory.update_menu(is_fav, TransportType.METRO.value, metro_station_id, line_id, user_id)
             return text, keyboard
 
-        # Start periodic update loop using HandlerBase
         self.start_update_loop(user_id, chat_id, message.message_id, update_text)
         logger.info(f"Started update loop task for user {user_id}, station {metro_station_id}")
 
