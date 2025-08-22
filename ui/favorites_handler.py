@@ -3,7 +3,7 @@ from telegram import Update
 from telegram.ext import ContextTypes
 
 from application import MetroService, BusService, TramService
-from providers import UserDataManager, LanguageManager
+from providers.manager import UserDataManager, LanguageManager
 from ui.keyboard_factory import KeyboardFactory
 
 class FavoritesHandler:

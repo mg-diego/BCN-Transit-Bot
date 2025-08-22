@@ -1,14 +1,17 @@
 import json
 import html
-from typing import List, Dict, Any
-from domain.bus.bus_stop import BusStop
-from domain.metro.metro_station import MetroStation
-from domain.tram.tram_stop import TramStop
-from domain.transport_type import TransportType
 import lzstring
 import unicodedata
 
-from providers.logger import logger
+from typing import List, Dict, Any
+
+from domain.bus import BusStop
+from domain.metro import MetroStation
+from domain.rodalies import RodaliesStation
+from domain.tram import TramStop
+from domain.transport_type import TransportType
+
+from .logger import logger
 
 
 class Mapper:
@@ -220,4 +223,38 @@ class Mapper:
 
         compressed = self._compress_data(data)
         self._log_mapping_end(TransportType.TRAM.value, line_id)
+        return compressed
+    
+    def map_rodalies_stations(self, stations: List[RodaliesStation], line_id: str, line_name: str, line_color: str):
+        """
+        Maps a list of rodalies stations into a compressed JSON format.
+
+        Args:
+            stations (list): List of RodaliesStation objects.
+            line_id (str): Rodalies line ID.
+            line_name (str): Rodalies line name.
+
+        Returns:
+            str: Compressed JSON string representing mapped rodalies stations.
+        """
+        self._log_mapping_start(TransportType.RODALIES.value, len(stations), line_id, line_name)
+
+        data = {
+            "type": TransportType.RODALIES.value,
+            "line_id": line_id,
+            "line_name": html.escape(line_name),
+            "stops": [
+                {
+                    "lat": stop.latitude,
+                    "lon": stop.longitude,
+                    "name": f"{stop.id} - {self._normalize_name(stop.name)}",
+                    "color": line_color,
+                    "direction": 1
+                }
+                for stop in stations
+            ]
+        }
+
+        compressed = self._compress_data(data)
+        self._log_mapping_end(TransportType.BUS.value, line_id)
         return compressed

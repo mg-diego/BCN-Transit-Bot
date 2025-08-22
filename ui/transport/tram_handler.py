@@ -1,19 +1,16 @@
-import asyncio
-import json
 from domain.transport_type import TransportType
-from providers.mapper import Mapper
+
 from telegram import Update
 from telegram.ext import ContextTypes
-from providers import logger
 
 from ui.keyboard_factory import KeyboardFactory
-from application.tram_service import TramService
-from application.update_manager import UpdateManager
-from application.message_service import MessageService
-from providers.user_data_manager import UserDataManager
-from providers.language_manager import LanguageManager
 
-from ui.handler_base import HandlerBase
+from application import TramService, UpdateManager, MessageService
+
+from providers.manager import UserDataManager, LanguageManager
+from providers.helpers import Mapper, logger
+
+from ui.transport.handler_base import HandlerBase
 
 class TramHandler(HandlerBase):
     """
@@ -39,12 +36,13 @@ class TramHandler(HandlerBase):
 
     async def show_lines(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         logger.info("Showing tram lines menu")
-        await self.message_service.edit_inline_message(update, self.language_manager.t('tram.loading'))
+        type=TransportType.TRAM.value.capitalize()
+        await self.message_service.edit_inline_message(update, self.language_manager.t('common.loading', type=type))
         tram_lines = await self.tram_service.get_all_lines()
         reply_markup = self.keyboard_factory.tram_lines_menu(tram_lines)
         await self.message_service.edit_inline_message(
             update,
-            self.language_manager.t('tram.select.line'),
+            self.language_manager.t('common.select.line', type=type),
             reply_markup=reply_markup
         )
 

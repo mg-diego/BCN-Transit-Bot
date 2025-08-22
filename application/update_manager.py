@@ -1,6 +1,6 @@
 import asyncio
 from typing import Callable, Awaitable
-from providers import logger
+from providers.helpers import logger
 
 class UpdateManager:
     """

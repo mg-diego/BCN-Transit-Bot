@@ -4,7 +4,9 @@ from domain.transport_type import TransportType
 from telegram import Update
 from telegram.ext import ContextTypes
 from application import MessageService, UpdateManager
-from providers import LanguageManager, UserDataManager, logger
+from providers.manager.language_manager import LanguageManager
+from providers.manager.user_data_manager import UserDataManager
+from providers.helpers import logger
 
 class HandlerBase:
     """

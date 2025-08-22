@@ -2,20 +2,13 @@ import aiohttp
 import re
 import inspect
 
-from domain.metro.metro_line import MetroLine
-from domain.metro.metro_station import create_metro_station
-from domain.metro.next_metro import MetroLineRoute, NextMetro
-from domain.metro.metro_access import create_metro_access
-from domain.metro.metro_connection import MetroConnection
+from domain.metro import MetroLine, MetroLineRoute, NextMetro, MetroConnection, create_metro_station, create_metro_access
+from domain.bus import BusStop, BusLine, create_bus_stop, BusLineRoute, NextBus
 
-from domain.bus.bus_stop import BusStop, create_bus_stop
-from domain.bus.bus_line import BusLine
-from domain.bus.next_bus import BusLineRoute, NextBus
-
-from providers.logger import logger
+from providers.helpers import logger
 
 
-class TransportApiService:
+class TmbApiService:
     """Servicio para interactuar con la API de transporte (Metro y Bus)."""
 
     def __init__(self, app_key: str = None, app_id: str = None):

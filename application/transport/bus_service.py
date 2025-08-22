@@ -1,17 +1,18 @@
-from typing import List, Callable, Any
-from providers.transport_api_service import TransportApiService
-from application.cache_service import CacheService
-from domain.bus.bus_line import BusLine
-from domain.bus.bus_stop import BusStop
-from providers import logger
+from typing import List
+from providers.api.tmb_api_service import TmbApiService
+
+from domain.bus import BusLine, BusStop
+from providers.helpers import logger
+
 from .service_base import ServiceBase
+from application.cache_service import CacheService
 
 class BusService(ServiceBase):
     """
-    Service to interact with Bus data via TransportApiService, with optional caching.
+    Service to interact with Bus data via TmbApiService, with optional caching.
     """
 
-    def __init__(self, transport_api_service: TransportApiService, cache_service: CacheService = None):
+    def __init__(self, transport_api_service: TmbApiService, cache_service: CacheService = None):
         super().__init__(cache_service)
         self.transport_api_service = transport_api_service        
         logger.info(f"[{self.__class__.__name__}] BusService initialized")

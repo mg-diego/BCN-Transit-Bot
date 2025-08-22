@@ -1,8 +1,9 @@
 from .message_service import MessageService
-from .metro_service import MetroService
-from .bus_service import BusService
-from .tram_service import TramService
+from .transport.metro_service import MetroService
+from .transport.bus_service import BusService
+from .transport.tram_service import TramService
+from .transport.rodalies_service import RodaliesService
 from .cache_service import CacheService
 from .update_manager import UpdateManager
 
-__all__ = ["MessageService", "MetroService", "BusService", "TramService", "CacheService", "UpdateManager"]
+__all__ = ["MessageService", "MetroService", "BusService", "TramService", "RodaliesService", "CacheService", "UpdateManager"]

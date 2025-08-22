@@ -4,13 +4,9 @@ import inspect
 from datetime import datetime
 from typing import Any, Dict, List
 
-from domain.tram.tram_line import TramLine
-from domain.tram.tram_network import TramNetwork
-from domain.tram.tram_stop import TramStop
-from domain.tram.tram_connection import TramConnection, TramStopConnection
-from domain.tram.next_tram import TramLineRoute, NextTram
+from domain.tram import TramLine, TramNetwork, TramStop, TramConnection, TramStopConnection, TramLineRoute, NextTram
 
-from providers.logger import logger
+from providers.helpers import logger
 
 
 class TramApiService:

@@ -1,5 +1,5 @@
 from typing import Callable, Any
-from providers import logger
+from providers.helpers import logger
 from application.cache_service import CacheService
 
 class ServiceBase:

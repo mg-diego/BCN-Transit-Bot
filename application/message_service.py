@@ -2,7 +2,7 @@ from collections import defaultdict
 from telegram.constants import ParseMode
 from telegram import Update, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
-from providers import logger
+from providers.helpers import logger
 
 class MessageService:
     """

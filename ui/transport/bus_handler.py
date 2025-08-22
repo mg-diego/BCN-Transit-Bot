@@ -3,7 +3,8 @@ from telegram.ext import ContextTypes
 
 from ui.keyboard_factory import KeyboardFactory
 from application import BusService, MessageService, UpdateManager
-from providers import UserDataManager, LanguageManager, UserDataManager, Mapper, logger
+from providers.manager import UserDataManager, LanguageManager
+from providers.helpers import Mapper, logger
 from domain.transport_type import TransportType
 
 from .handler_base import HandlerBase
@@ -27,14 +28,15 @@ class BusHandler(HandlerBase):
         """Display all bus lines (paginated menu)."""
         bus_lines = await self.bus_service.get_all_lines()
         page = 0
+        type = TransportType.BUS.value.capitalize()
 
         if self.message_service.check_query_callback(update, "bus_page:"):
             _, page = self.message_service.get_callback_data(update)
         else:
-            await self.message_service.handle_interaction(update, self.language_manager.t("bus.loading"))
+            await self.message_service.handle_interaction(update, self.language_manager.t("common.loading", type=type))
 
         reply_markup = self.keyboard_factory.bus_lines_paginated_menu(bus_lines, int(page))
-        await self.message_service.handle_interaction(update, self.language_manager.t("bus.select.line"), reply_markup)
+        await self.message_service.handle_interaction(update, self.language_manager.t("common.select.line", type=type), reply_markup)
 
     async def show_line_stops(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Display stops of a bus line."""

@@ -1,7 +1,7 @@
 import time
 import asyncio
 from typing import Any, Optional
-from providers import logger
+from providers.helpers import logger
 
 class CacheService:
     """In-memory cache service with optional expiration and logging."""

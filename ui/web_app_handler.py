@@ -2,7 +2,7 @@ import json
 from domain.transport_type import TransportType
 from telegram import Update
 from telegram.ext import ContextTypes
-from providers import logger
+from providers.helpers import logger
 
 from ui import MetroHandler, BusHandler, TramHandler
 

@@ -1,14 +1,12 @@
 from typing import List
-from providers.tram_api_service import TramApiService
+
+from providers.api import TramApiService
+from providers.manager import LanguageManager
+from providers.helpers import logger
+
+from domain.tram import TramLine, TramStop, TramConnection, TramLineRoute, NextTram
+
 from application.cache_service import CacheService
-from providers.language_manager import LanguageManager
-from providers import logger
-
-from domain.tram.tram_line import TramLine
-from domain.tram.tram_stop import TramStop
-from domain.tram.tram_connection import TramConnection
-from domain.tram.next_tram import TramLineRoute, NextTram
-
 from .service_base import ServiceBase
 
 class TramService(ServiceBase):

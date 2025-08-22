@@ -2,7 +2,7 @@ from domain.transport_type import TransportType
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 from datetime import datetime
-from providers.logger import logger
+from providers.helpers import logger
 
 
 class UserDataManager:    

@@ -1,6 +1,6 @@
 from pathlib import Path
 import os
-from providers.logger import logger
+from providers.helpers import logger
 
 
 class SecretsManager:

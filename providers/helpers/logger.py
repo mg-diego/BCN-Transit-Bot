@@ -1,6 +1,4 @@
-# logger.py
 import logging
-import sys
 
 # Configuración global del logger
 logger = logging.getLogger("BCN-Transit-Bot")
@@ -10,7 +8,6 @@ logger.setLevel(logging.INFO)  # Nivel global: DEBUG, INFO, WARNING, ERROR, CRIT
 formatter = logging.Formatter(
     "%(asctime)s - %(levelname)s - [%(module)s.%(funcName)s] - %(message)s"
 )
-
 
 # Handler de consola
 console_handler = logging.StreamHandler()

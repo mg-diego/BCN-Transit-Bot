@@ -1,18 +1,17 @@
-import json
 from domain.transport_type import TransportType
 from telegram import Update
 from telegram.ext import ContextTypes
-from providers import logger
+from providers.helpers import logger
 
 from ui.keyboard_factory import KeyboardFactory
-from application.metro_service import MetroService
-from application.update_manager import UpdateManager
-from application.message_service import MessageService
-from providers.user_data_manager import UserDataManager
-from providers.language_manager import LanguageManager
-from providers.mapper import Mapper
 
-from ui.handler_base import HandlerBase  # <-- hereda el update loop
+from application import MetroService, UpdateManager, MessageService
+
+from providers.manager import UserDataManager
+from providers.manager import LanguageManager
+from providers.helpers import Mapper
+
+from .handler_base import HandlerBase
 
 class MetroHandler(HandlerBase):
     """
@@ -36,12 +35,13 @@ class MetroHandler(HandlerBase):
 
     async def show_lines(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         logger.info("Showing metro lines menu")
-        await self.message_service.edit_inline_message(update, self.language_manager.t('metro.loading'))
+        type=TransportType.METRO.value.capitalize()
+        await self.message_service.edit_inline_message(update, self.language_manager.t('common.loading', type=type))
         metro_lines = await self.metro_service.get_all_lines()
         reply_markup = self.keyboard_factory.metro_lines_menu(metro_lines)
         await self.message_service.edit_inline_message(
             update,
-            self.language_manager.t('metro.select.line'),
+            self.language_manager.t('common.select.line', type=type),
             reply_markup=reply_markup
         )
 
@@ -85,8 +85,8 @@ class MetroHandler(HandlerBase):
             routes = await self.metro_service.get_station_routes(metro_station_id)
             text = (
                 f"🚉 {self.language_manager.t('metro.station.next')}\n{routes} \n\n"
-                f"🔛 {self.language_manager.t('metro.station.connections')}\n{station_connections}\n\n"
-                f"🚨 {self.language_manager.t('metro.station.alerts')}\n{station_alerts}"
+                f"🔛 {self.language_manager.t('common.connections')}\n{station_connections}\n\n"
+                f"🚨 {self.language_manager.t('common.alerts')}\n{station_alerts}"
             )
             is_fav = self.user_data_manager.has_favorite(user_id, TransportType.METRO.value, metro_station_id)
             keyboard = self.keyboard_factory.update_menu(is_fav, TransportType.METRO.value, metro_station_id, line_id, user_id)
