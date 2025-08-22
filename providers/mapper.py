@@ -1,57 +1,165 @@
 import json
 import html
-from typing import List
+from typing import List, Dict, Any
 from domain.bus.bus_stop import BusStop
 from domain.metro.metro_station import MetroStation
 from domain.tram.tram_stop import TramStop
+from domain.transport_type import TransportType
 import lzstring
 import unicodedata
 
+from providers.logger import logger
+
+
 class Mapper:
+    """
+    Mapper is responsible for converting transport stop data (metro, bus, tram)
+    into a compressed JSON format that can be easily shared or stored.
+    """
+
+    def __init__(self):
+        self.lz = lzstring.LZString()
 
     def _normalize_name(self, name: str) -> str:
-    # Elimina acentos y normaliza caracteres especiales
-        return ''.join(
+        """
+        Removes accents and normalizes special characters from station or stop names.
+
+        Args:
+            name (str): Original name.
+
+        Returns:
+            str: Normalized name without accents.
+        """
+        normalized = ''.join(
             c for c in unicodedata.normalize('NFKD', name)
             if not unicodedata.combining(c)
         )
+        logger.debug(f"[{self.__class__.__name__}] Normalized name '{name}' -> '{normalized}'")
+        return normalized
 
-    def map_metro_stations(self, stations: List[MetroStation], line_id, line_name):
-        lz = lzstring.LZString()
+    def _compress_data(self, data: Dict[str, Any]) -> str:
+        """
+        Serializes the provided data into JSON and compresses it using LZString.
 
-        stops = []
-        for station in stations:
-            stops.append({
+        Args:
+            data (dict): Data to compress.
+
+        Returns:
+            str: Compressed JSON string.
+        """
+        json_str = json.dumps(data)
+        compressed = self.lz.compressToEncodedURIComponent(json_str)
+        logger.debug(f"[{self.__class__.__name__}] Compressed data: \n{compressed}")
+        return compressed
+
+    def _log_mapping_start(self, transport_type: str, count: int, line_id: str, line_name: str):
+        """
+        Logs the start of the mapping process for a given transport type.
+
+        Args:
+            transport_type (str): Type of transport ("metro", "bus", "tram").
+            count (int): Number of stops or stations.
+            line_id (str): ID of the transport line.
+            line_name (str): Name of the transport line.
+        """
+        logger.info(
+            f"[{self.__class__.__name__}] Mapping {count} {transport_type} stops for line {line_id} ({line_name})..."
+        )
+
+    def _log_mapping_end(self, transport_type: str, line_id: str):
+        """
+        Logs the successful completion of the mapping process.
+
+        Args:
+            transport_type (str): Type of transport ("metro", "bus", "tram").
+            line_id (str): ID of the transport line.
+        """
+        logger.info(
+            f"[{self.__class__.__name__}] {transport_type.capitalize()} stops mapped and compressed successfully for line {line_id}."
+        )
+
+    def _map_stops_bidirectional(
+        self,
+        stops: List[Dict[str, Any]],
+        direction_forward: str,
+        direction_reverse: str
+    ) -> List[Dict[str, Any]]:
+        """
+        Creates a list of stops in both forward and reverse directions.
+
+        Args:
+            stops (list): Base stop data without direction.
+            direction_forward (str): Destination direction for the forward route.
+            direction_reverse (str): Origin direction for the reverse route.
+
+        Returns:
+            list: Stops duplicated for both directions.
+        """
+        forward = [
+            {**stop, "direction": direction_forward} for stop in stops
+        ]
+        reverse = [
+            {**stop, "direction": direction_reverse} for stop in reversed(stops)
+        ]
+        return forward + reverse
+
+    def map_metro_stations(self, stations: List[MetroStation], line_id: str, line_name: str) -> str:
+        """
+        Maps a list of metro stations into a compressed JSON format.
+
+        Args:
+            stations (list): List of MetroStation objects.
+            line_id (str): Metro line ID.
+            line_name (str): Metro line name.
+
+        Returns:
+            str: Compressed JSON string representing mapped metro stations.
+        """
+        self._log_mapping_start(TransportType.METRO.value, len(stations), line_id, line_name)
+
+        stops_base = [
+            {
                 "lat": station.coordinates[1],
                 "lon": station.coordinates[0],
                 "name": f"{station.CODI_ESTACIO} - {self._normalize_name(station.NOM_ESTACIO)}",
                 "color": station.COLOR_LINIA,
-                "direction": station.DESTI_SERVEI
-            })
-        for station in reversed(stations):
-            stops.append({
-                "lat": station.coordinates[1],
-                "lon": station.coordinates[0],
-                "name": f"{station.CODI_ESTACIO} - {self._normalize_name(station.NOM_ESTACIO)}",
-                "color": station.COLOR_LINIA,
-                "direction": station.ORIGEN_SERVEI
-            })
+            }
+            for station in stations
+        ]
+
+        stops = self._map_stops_bidirectional(
+            stops_base,
+            direction_forward=stations[0].DESTI_SERVEI,
+            direction_reverse=stations[0].ORIGEN_SERVEI
+        )
 
         data = {
-            "type": "metro",
+            "type": TransportType.METRO.value,
             "line_id": line_id,
             "line_name": html.escape(line_name),
             "stops": stops
         }
 
-        json_str = json.dumps(data)
-        compressed = lz.compressToEncodedURIComponent(json_str)
+        compressed = self._compress_data(data)
+        self._log_mapping_end(TransportType.METRO.value, line_id)
         return compressed
-    
-    def map_bus_stops(self, stops: List[BusStop], line_id, line_name):        
-        lz = lzstring.LZString()
+
+    def map_bus_stops(self, stops: List[BusStop], line_id: str, line_name: str) -> str:
+        """
+        Maps a list of bus stops into a compressed JSON format.
+
+        Args:
+            stops (list): List of BusStop objects.
+            line_id (str): Bus line ID.
+            line_name (str): Bus line name.
+
+        Returns:
+            str: Compressed JSON string representing mapped bus stops.
+        """
+        self._log_mapping_start(TransportType.BUS.value, len(stops), line_id, line_name)
+
         data = {
-            "type": "bus",
+            "type": TransportType.BUS.value,
             "line_id": line_id,
             "line_name": html.escape(line_name),
             "stops": [
@@ -66,40 +174,50 @@ class Mapper:
             ]
         }
 
-        json_str = json.dumps(data)
-        compressed = lz.compressToEncodedURIComponent(json_str)
+        compressed = self._compress_data(data)
+        self._log_mapping_end(TransportType.BUS.value, line_id)
         return compressed
-    
-    def map_tram_stops(self, stops: List[TramStop], line_id, line_name):
-        lz = lzstring.LZString()
+
+    def map_tram_stops(self, stops: List[TramStop], line_id: str, line_name: str) -> str:
+        """
+        Maps a list of tram stops into a compressed JSON format.
+
+        Args:
+            stops (list): List of TramStop objects.
+            line_id (str): Tram line ID.
+            line_name (str): Tram line name.
+
+        Returns:
+            str: Compressed JSON string representing mapped tram stops.
+        """
+        self._log_mapping_start(TransportType.TRAM.value, len(stops), line_id, line_name)
+
         origin = stops[0].name
         destination = stops[-1].name
 
-        tram_stops = []
-        for stop in stops:
-            tram_stops.append({
+        stops_base = [
+            {
                 "lat": stop.latitude,
                 "lon": stop.longitude,
                 "name": f"{stop.id} - {self._normalize_name(stop.name)}",
                 "color": "008E78",
-                "direction": destination
-            })
-        for stop in reversed(stops):
-            tram_stops.append({
-                "lat": stop.latitude,
-                "lon": stop.longitude,
-                "name": f"{stop.id} - {self._normalize_name(stop.name)}",
-                "color": "008E78",
-                "direction": origin
-            })
+            }
+            for stop in stops
+        ]
+
+        tram_stops = self._map_stops_bidirectional(
+            stops_base,
+            direction_forward=destination,
+            direction_reverse=origin
+        )
 
         data = {
-            "type": "metro",
+            "type": TransportType.TRAM.value,
             "line_id": line_id,
             "line_name": html.escape(line_name),
             "stops": tram_stops
         }
 
-        json_str = json.dumps(data)
-        compressed = lz.compressToEncodedURIComponent(json_str)
+        compressed = self._compress_data(data)
+        self._log_mapping_end(TransportType.TRAM.value, line_id)
         return compressed

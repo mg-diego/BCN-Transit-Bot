@@ -51,14 +51,11 @@ class MetroLineRoute:
     def __str__(self):
         header = f"     <b>{self.nom_linia} → {html.escape(self.desti_trajecte)}</b>"
 
-        number_emojis = [
-            "1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", 
-            "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟"
-        ]
+        number_emojis = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣"]
 
         tren_info = "\n".join(
             f"           <i>{number_emojis[i] if i < len(number_emojis) else f'{i+1}.'} {tren.arrival_time_str()}</i>"
-            for i, tren in enumerate(self.propers_trens)
+            for i, tren in enumerate(self.propers_trens[:5])
         )
         
         return f"{header}\n{tren_info}"

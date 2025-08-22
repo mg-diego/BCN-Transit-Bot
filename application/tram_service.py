@@ -2,105 +2,69 @@ from typing import List
 from providers.tram_api_service import TramApiService
 from application.cache_service import CacheService
 from providers.language_manager import LanguageManager
+from providers import logger
 
 from domain.tram.tram_line import TramLine
 from domain.tram.tram_stop import TramStop
 from domain.tram.tram_connection import TramConnection
-from domain.tram.next_tram import TramLineRoute
+from domain.tram.next_tram import TramLineRoute, NextTram
 
-class TramService:
+from .service_base import ServiceBase
 
-    def __init__(self, tram_api_service: TramApiService, language_manager: LanguageManager ,cache_service: CacheService):
+class TramService(ServiceBase):
+    """
+    Service to interact with Tram data via TramApiService, with optional caching.
+    """
+
+    def __init__(self, tram_api_service: TramApiService, language_manager: LanguageManager, cache_service: CacheService = None):
+        super().__init__(cache_service)        
         self.tram_api_service = tram_api_service
-        self.language_manager = language_manager
-        self.cache_service = cache_service
+        self.language_manager = language_manager        
+        logger.info(f"[{self.__class__.__name__}] TramService initialized")
 
     async def get_all_lines(self) -> List[TramLine]:
-        """
-        Devuelve todas las líneas de tram disponibles.
-        Si hay cache_service, primero intenta recuperar de cache.
-        """
-        cache_key = "tram_lines"
-        if self.cache_service:
-            lines = await self.cache_service.get(cache_key)
-            if lines:
-                print(f"get cache: lines")
-                return lines
+        return await self._get_from_cache_or_api(
+            "tram_lines",
+            self.tram_api_service.get_lines,
+            cache_ttl=3600
+        )
 
-        lines = await self.tram_api_service.get_lines()
-
-        if self.cache_service:            
-            print(f"set cache: lines")
-            await self.cache_service.set(cache_key, lines, ttl=3600)  # Cache por 1 hora
-
-        return lines
-    
     async def get_line_by_id(self, line_id) -> TramLine:
         lines = await self.get_all_lines()
         line = next((l for l in lines if str(l.code) == str(line_id)), None)
+        logger.debug(f"[{self.__class__.__name__}] get_line_by_id({line_id}) -> {line}")
         return line
-    
+
     async def get_stops_by_line(self, line_id: str) -> List[TramStop]:
-        """
-        Devuelve las paradas de una línea de tram específica.
-        """
-        cache_key = f"tram_line_{line_id}_stops"
-        if self.cache_service:
-            stops = await self.cache_service.get(cache_key)
-            if stops:                
-                print(f"get cache: stops")
-                return stops
+        return await self._get_from_cache_or_api(
+            f"tram_line_{line_id}_stops",
+            lambda: self.tram_api_service.get_stops_on_line(line_id),
+            cache_ttl=3600
+        )
 
-        stops = await self.tram_api_service.get_stops_on_line(line_id)
-
-        if self.cache_service:
-            print(f"set cache: stops")
-            await self.cache_service.set(cache_key, stops, ttl=3600)
-
-        return stops
-    
     async def get_stop_by_id(self, stop_id, line_id) -> TramStop:
         stops = await self.get_stops_by_line(line_id)
         stop = next((s for s in stops if str(s.id) == str(stop_id)), None)
+        logger.debug(f"[{self.__class__.__name__}] get_stop_by_id({stop_id}, line {line_id}) -> {stop}")
         return stop
-    
+
     async def get_tram_stop_connections(self, stop_id) -> List[TramConnection]:
-        """
-        Devuelve la lista de conexiones de una parada de tram.
-        """
-        cache_key = f"tram_stop_connections_{stop_id}"
-        if self.cache_service:
-            connections = await self.cache_service.get(cache_key)
-            if connections:                
-                print(f"get cache: _connections")
-            else:                
-                print(f"set cache: _connections")
-                connections = await self.tram_api_service.get_connections_at_stop(stop_id)
-                await self.cache_service.set(cache_key, connections, ttl=3600)
-        else:
-            connections = await self.tram_api_service.get_connections_at_stop(stop_id)
+        connections = await self._get_from_cache_or_api(
+            f"tram_stop_connections_{stop_id}",
+            lambda: self.tram_api_service.get_connections_at_stop(stop_id),
+            cache_ttl=3600
+        )
 
         formatted_connections = (
             "\n".join(str(c) for c in connections)
             or self.language_manager.t('tram.stop.no.connections')
         )
-
         return formatted_connections
-    
-    async def get_stop_routes(
-        self, network_id: int, outbound_id: int, return_id: int
-    ) -> str:
-        cache_key = f"tram_routes_{outbound_id}_{return_id}"
 
-        if self.cache_service:
-            routes = await self.cache_service.get(cache_key)
-            if routes:
-                print("get cache: routes")
-            else:
-                print("set cache: routes")
-                routes = await self.tram_api_service.get_next_trams_at_stop(outbound_id, return_id)
-                await self.cache_service.set(cache_key, routes, ttl=10)
-        else:
-            routes = await self.tram_api_service.get_next_trams_at_stop(network_id)
-
+    async def get_stop_routes(self, outbound_code: int, return_code: int) -> str:
+        routes = await self._get_from_cache_or_api(
+            f"tram_routes_{outbound_code}_{return_code}",
+            lambda: self.tram_api_service.get_next_trams_at_stop(outbound_code, return_code),
+            cache_ttl=10
+        )
         return "\n\n".join(str(route) for route in routes)

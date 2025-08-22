@@ -18,4 +18,4 @@ class TramLine:
         self.name = f"🟩 {self.original_name}"
 
     def __str__(self):
-        return f"TramLine {self.name} (code: {self.code}) in network {self.network['name']}"
+        return f"TramLine {self.name} (code: {self.code}) in network {self.network.name}"

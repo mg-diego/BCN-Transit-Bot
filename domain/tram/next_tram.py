@@ -53,14 +53,11 @@ class TramLineRoute:
     def __str__(self):
         header = f"     <b>🟩  {self.line_name} → {html.escape(self.destination)}</b>"
 
-        number_emojis = [
-            "1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", 
-            "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟"
-        ]
+        number_emojis = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣"]
 
         tram_info = "\n".join(
             f"           <i>{number_emojis[i] if i < len(number_emojis) else f'{i+1}.'} {tram.remaining_from_now()}</i>"
-            for i, tram in enumerate(self.next_trams)
+            for i, tram in enumerate(self.next_trams[:5])
         )
         
         return f"{header}\n{tram_info}"
