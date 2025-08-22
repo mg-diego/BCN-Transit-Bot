@@ -6,6 +6,7 @@
 	<img src="https://img.shields.io/badge/python-3.13.3%2B-blue" alt="repo-language">
     <img src="https://img.shields.io/github/license/saltstack/salt" alt="license">
 	<img src="https://img.shields.io/github/last-commit/mg-diego/BCN-Transit-Bot" alt="last-commit">
+	<img src="https://img.shields.io/badge/version-1.2-blue" alt="version">
 </p>
 <p align="center"><!-- default option, no dependency badges. -->
 </p>
