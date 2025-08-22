@@ -1,5 +1,6 @@
 import aiohttp
 import re
+import inspect
 
 from domain.metro.metro_line import MetroLine
 from domain.metro.metro_station import create_metro_station
@@ -11,11 +12,14 @@ from domain.bus.bus_stop import BusStop, create_bus_stop
 from domain.bus.bus_line import BusLine
 from domain.bus.next_bus import BusLineRoute, NextBus
 
+from providers.logger import logger
+
 
 class TransportApiService:
     """Servicio para interactuar con la API de transporte (Metro y Bus)."""
 
     def __init__(self, app_key: str = None, app_id: str = None):
+        self.logger = logger.getChild(self.__class__.__name__)
         self.BASE_URL_TRANSIT = 'https://api.tmb.cat/v1/transit'
         self.BASE_URL_ITRANSIT = "https://api.tmb.cat/v1/itransit"
         self.app_key = app_key
@@ -47,7 +51,8 @@ class TransportApiService:
         if params:
             merged_params.update(params)
 
-        print(endpoint)
+        current_method = inspect.currentframe().f_code.co_name
+        self.logger.info(f"[{current_method}] GET → {endpoint}")
 
         async with aiohttp.ClientSession() as session:
             async with session.get(endpoint, params=merged_params) as resp:

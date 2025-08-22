@@ -1,52 +1,63 @@
 import time
 import asyncio
 from typing import Any, Optional
-
+from providers import logger
 
 class CacheService:
-    """Servicio de caché en memoria con expiración opcional."""
+    """In-memory cache service with optional expiration and logging."""
 
     def __init__(self):
-        # Diccionario: clave -> (valor, timestamp_expiración)
+        # Dictionary: key -> (value, expiration_timestamp)
         self._cache = {}
         self._lock = asyncio.Lock()
+        logger.info("[CacheService] Initialized")
 
     async def set(self, key: str, value: Any, ttl: Optional[int] = None):
         """
-        Guarda un valor en caché.
+        Store a value in the cache.
 
-        :param key: Clave de la caché.
-        :param value: Valor a guardar.
-        :param ttl: Tiempo de vida en segundos (opcional).
+        :param key: Cache key.
+        :param value: Value to store.
+        :param ttl: Optional time-to-live in seconds.
         """
         expire_at = time.time() + ttl if ttl else None
         async with self._lock:
             self._cache[key] = (value, expire_at)
+        logger.info(f"[CacheService] Set key '{key}' with ttl={ttl}")
 
     async def get(self, key: str) -> Optional[Any]:
         """
-        Recupera un valor de la caché si no ha expirado.
+        Retrieve a value from cache if not expired.
         """
         async with self._lock:
             if key in self._cache:
                 value, expire_at = self._cache[key]
                 if expire_at is None or expire_at > time.time():
+                    logger.info(f"[CacheService] Cache hit for key '{key}'")
                     return value
                 else:
-                    # Expirado: eliminar
+                    # Expired: remove
                     del self._cache[key]
+                    logger.info(f"[CacheService] Cache expired for key '{key}'")
+            else:
+                logger.info(f"[CacheService] Cache miss for key '{key}'")
         return None
 
     async def delete(self, key: str):
         """
-        Elimina una clave de la caché.
+        Delete a key from the cache.
         """
         async with self._lock:
-            self._cache.pop(key, None)
+            existed = self._cache.pop(key, None)
+        if existed:
+            logger.info(f"[CacheService] Deleted key '{key}' from cache")
+        else:
+            logger.info(f"[CacheService] Key '{key}' not found in cache for deletion")
 
     async def clear(self):
         """
-        Limpia toda la caché.
+        Clear the entire cache.
         """
         async with self._lock:
             self._cache.clear()
+        logger.info("[CacheService] Cleared entire cache")

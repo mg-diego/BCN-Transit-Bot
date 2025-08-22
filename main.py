@@ -5,23 +5,44 @@ from application import MessageService, MetroService, BusService, TramService, C
 from providers import SecretsManager, TransportApiService, TramApiService, UserDataManager, LanguageManager, logger
 
 
-def main():
+def main():    
+    logger.info("Starting BCN Transit Bot (v1.2)")
+    logger.info("Initializing services...")
+
+    # Managers y servicios base
     language_manager = LanguageManager()
     secrets_manager = SecretsManager()
     message_service = MessageService()
     update_manager = UpdateManager()
     user_data_manager = UserDataManager()
     cache_service = CacheService()
-
     keyboard_factory = KeyboardFactory(language_manager)
 
-    transport_api_service = TransportApiService(app_id=secrets_manager.get('TMB_APP_ID') , app_key=secrets_manager.get('TMB_APP_KEY'))
-    tram_api_service = TramApiService(client_id=secrets_manager.get('TRAM_CLIENT_ID'), client_secret=secrets_manager.get('TRAM_CLIENT_SECRET'))    
-    
+    # Tokens y credenciales
+    try:
+        telegram_token = secrets_manager.get('TELEGRAM_TOKEN')
+        tmb_app_id = secrets_manager.get('TMB_APP_ID')
+        tmb_app_key = secrets_manager.get('TMB_APP_KEY')
+        tram_client_id = secrets_manager.get('TRAM_CLIENT_ID')
+        tram_client_secret = secrets_manager.get('TRAM_CLIENT_SECRET')
+
+        logger.info("Secrets loaded successfully")
+    except Exception as e:
+        logger.critical(f"Error loading secrets: {e}")
+        raise
+
+    # APIs externas
+    transport_api_service = TransportApiService(app_id=tmb_app_id, app_key=tmb_app_key)
+    tram_api_service = TramApiService(client_id=tram_client_id, client_secret=tram_client_secret)
+
+    # Servicios del dominio
     metro_service = MetroService(transport_api_service, language_manager, cache_service)
     bus_service = BusService(transport_api_service, cache_service)
     tram_service = TramService(tram_api_service, language_manager, cache_service)
-    
+
+    logger.info("Transport services initialized")
+
+    # Handlers
     menu_handler = MenuHandler(keyboard_factory, message_service, user_data_manager, language_manager)
     metro_handler = MetroHandler(keyboard_factory, metro_service, update_manager, user_data_manager, message_service, language_manager)
     bus_handler = BusHandler(keyboard_factory, bus_service, update_manager, user_data_manager, message_service, language_manager)
@@ -29,10 +50,13 @@ def main():
     favorites_handler = FavoritesHandler(user_data_manager, keyboard_factory, metro_service, bus_service, tram_service, language_manager)
     help_handler = HelpHandler(message_service, keyboard_factory, language_manager)
     language_handler = LanguageHandler(keyboard_factory, user_data_manager, message_service, language_manager)
-
     web_app_handler = WebAppHandler(metro_handler, bus_handler, tram_handler)
 
-    application = ApplicationBuilder().token(secrets_manager.get('TELEGRAM_TOKEN')).build()
+    logger.info("Handlers initialized")
+
+    # Telegram app
+    application = ApplicationBuilder().token(telegram_token).build()
+    logger.info("Telegram application created")
 
     # START / MENU
     application.add_handler(CommandHandler("start", menu_handler.show_menu))    
@@ -42,7 +66,7 @@ def main():
     # HELP
     application.add_handler(CommandHandler("help", help_handler.show_help))    
     application.add_handler(CallbackQueryHandler(help_handler.show_help, pattern=r"^help$"))
-    
+
     # METRO
     application.add_handler(CallbackQueryHandler(metro_handler.show_map, pattern=r"^metro_map"))
     application.add_handler(CallbackQueryHandler(metro_handler.show_station, pattern=r"^metro_station"))
@@ -61,7 +85,7 @@ def main():
     application.add_handler(CallbackQueryHandler(tram_handler.show_stop, pattern=r"^tram_stop"))    
     application.add_handler(CallbackQueryHandler(tram_handler.show_line_stops, pattern=r"^tram_line"))
     application.add_handler(CallbackQueryHandler(tram_handler.show_lines, pattern=r"^tram$"))
-    
+
     # FAVORITES
     application.add_handler(CallbackQueryHandler(favorites_handler.add_favorite, pattern=r"^add_fav"))
     application.add_handler(CallbackQueryHandler(favorites_handler.remove_favorite, pattern=r"^remove_fav"))
@@ -73,8 +97,15 @@ def main():
 
     application.add_handler(CallbackQueryHandler(metro_handler.close_updates, pattern=r"^close_updates:"))
 
-    application.run_polling()
+    logger.info("Handlers registered successfully")
+    logger.info("Starting Telegram polling loop...")
+
+    try:
+        application.run_polling()
+    except Exception as e:
+        logger.critical(f"Application crashed: {e}")
+        raise
+
 
 if __name__ == "__main__":
-    logger.info('Starting bot...')
     main()

@@ -1,3 +1,4 @@
+from domain.transport_type import TransportType
 from telegram import Update
 from telegram.ext import ContextTypes
 
@@ -43,7 +44,7 @@ class FavoritesHandler:
         _, item_type, line_id, item_id = data.split(":")
 
         # Añadir favorito
-        if item_type == "metro":
+        if item_type == TransportType.METRO.value:
             item = await self.metro_service.get_station_by_id(item_id, line_id)
             
             new_fav_item = {
@@ -54,7 +55,7 @@ class FavoritesHandler:
                 "LINE_CODE": line_id,
                 "coordinates": item.coordinates
             }
-        elif item_type == "bus":
+        elif item_type == TransportType.BUS.value:
             item = await self.bus_service.get_stop_by_id(item_id, line_id)
 
             new_fav_item = {
@@ -63,7 +64,7 @@ class FavoritesHandler:
                 "LINE_CODE": line_id,
                 "coordinates": item.coordinates
             }
-        elif item_type == "tram":
+        elif item_type == TransportType.TRAM.value:
             item = await self.tram_service.get_stop_by_id(item_id, line_id)
             line = await self.tram_service.get_line_by_id(line_id)
 

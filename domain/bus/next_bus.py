@@ -60,14 +60,11 @@ class BusLineRoute:
     def __str__(self):
         header = f"     <b>{self.nom_linia} → {html.escape(self.desti_trajecte)}</b>"
 
-        number_emojis = [
-            "1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", 
-            "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟"
-        ]
+        number_emojis = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣"]
 
         bus_info = "\n".join(
             f"           <i>{number_emojis[i] if i < len(number_emojis) else f'{i+1}.'} {bus.arrival_time_str()}</i>"
-            for i, bus in enumerate(self.propers_busos)
+            for i, bus in enumerate(self.propers_busos[:5])
         )
         
         return f"{header}\n{bus_info}"
