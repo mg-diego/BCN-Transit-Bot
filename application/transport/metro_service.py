@@ -26,6 +26,21 @@ class MetroService(ServiceBase):
             cache_ttl=3600
         )
 
+    async def get_stations_by_name(self, station_name) -> List[MetroStation]:
+        stations = await self._get_from_cache_or_api(
+            "metro_stations",
+            self.tmb_api_service.get_metro_stations,
+            cache_ttl=3600
+        )
+
+        filtered_stations = [
+            station
+            for station in stations
+            if station_name.lower() in station.NOM_ESTACIO.lower()
+        ]
+
+        return filtered_stations
+
     async def get_line_by_id(self, line_id) -> MetroLine:
         lines = await self.get_all_lines()
         line = next((l for l in lines if str(l.CODI_LINIA) == str(line_id)), None)
@@ -61,7 +76,7 @@ class MetroService(ServiceBase):
 
         formatted_connections = (
             "\n".join(str(c) for c in connections)
-            or self.language_manager.t('common.no.connections')
+            or self.language_manager.t('common.no.connections', type="metro")
         )
         return formatted_connections
 

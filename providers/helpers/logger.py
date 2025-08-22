@@ -2,7 +2,7 @@ import logging
 
 # Configuración global del logger
 logger = logging.getLogger("BCN-Transit-Bot")
-logger.setLevel(logging.INFO)  # Nivel global: DEBUG, INFO, WARNING, ERROR, CRITICAL
+logger.setLevel(logging.DEBUG)  # Nivel global: DEBUG, INFO, WARNING, ERROR, CRITICAL
 
 # Formato de salida
 formatter = logging.Formatter(
@@ -11,7 +11,7 @@ formatter = logging.Formatter(
 
 # Handler de consola
 console_handler = logging.StreamHandler()
-console_handler.setLevel(logging.INFO)
+console_handler.setLevel(logging.DEBUG)
 console_handler.setFormatter(formatter)
 
 # Handler de fichero

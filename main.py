@@ -1,6 +1,6 @@
 from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, MessageHandler, filters
 
-from ui import MenuHandler, MetroHandler, BusHandler, TramHandler, FavoritesHandler, HelpHandler, LanguageHandler, KeyboardFactory, WebAppHandler, RodaliesHandler
+from ui import MenuHandler, MetroHandler, BusHandler, TramHandler, FavoritesHandler, HelpHandler, LanguageHandler, KeyboardFactory, WebAppHandler, RodaliesHandler, ReplyHandler
 
 from application import MessageService, MetroService, BusService, TramService, RodaliesService, CacheService, UpdateManager
 
@@ -61,6 +61,7 @@ def main():
     help_handler = HelpHandler(message_service, keyboard_factory, language_manager)
     language_handler = LanguageHandler(keyboard_factory, user_data_manager, message_service, language_manager)
     web_app_handler = WebAppHandler(metro_handler, bus_handler, tram_handler, rodalies_handler)
+    reply_handler = ReplyHandler(message_service, keyboard_factory, metro_service)
 
     logger.info("Handlers initialized")
 
@@ -111,6 +112,7 @@ def main():
     application.add_handler(CallbackQueryHandler(language_handler.update_language, pattern=r"^set_language"))    
 
     application.add_handler(CallbackQueryHandler(metro_handler.close_updates, pattern=r"^close_updates:"))
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, reply_handler.reply_to_user))
 
     logger.info("Handlers registered successfully")
     logger.info("Starting Telegram polling loop...")

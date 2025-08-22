@@ -3,9 +3,6 @@ from typing import Tuple
 
 @dataclass
 class MetroStation:
-    ID_ESTACIO_LINIA: int
-    CODI_ESTACIO_LINIA: int
-    ID_GRUP_ESTACIO: int
     CODI_GRUP_ESTACIO: int
     ID_ESTACIO: int
     CODI_ESTACIO: int
@@ -15,15 +12,9 @@ class MetroStation:
     CODI_LINIA: int
     NOM_LINIA: str
     ORDRE_LINIA: int
-    ID_TIPUS_SERVEI: int
     DESC_SERVEI: str
     ORIGEN_SERVEI: str
     DESTI_SERVEI: str
-    ID_TIPUS_ACCESSIBILITAT: int
-    NOM_TIPUS_ACCESSIBILITAT: str
-    ID_TIPUS_ESTAT: int
-    NOM_TIPUS_ESTAT: str
-    DATA_INAUGURACIO: str
     DATA: str
     COLOR_LINIA: str
     PICTO: str
@@ -39,33 +30,24 @@ def create_metro_station(feature: dict) -> MetroStation:
     props = feature['properties']
     coords = feature['geometry']['coordinates']
     return MetroStation(
-        ID_ESTACIO_LINIA=props['ID_ESTACIO_LINIA'],
-        CODI_ESTACIO_LINIA=props['CODI_ESTACIO_LINIA'],
-        ID_GRUP_ESTACIO=props['ID_GRUP_ESTACIO'],
-        CODI_GRUP_ESTACIO=props['CODI_GRUP_ESTACIO'],
-        ID_ESTACIO=props['ID_ESTACIO'],
-        CODI_ESTACIO=props['CODI_ESTACIO'],
-        NOM_ESTACIO=props['NOM_ESTACIO'],
-        ORDRE_ESTACIO=props['ORDRE_ESTACIO'],
-        ID_LINIA=props['ID_LINIA'],
-        CODI_LINIA=props['CODI_LINIA'],
-        NOM_LINIA=props['NOM_LINIA'],
-        ORDRE_LINIA=props['ORDRE_LINIA'],
-        ID_TIPUS_SERVEI=props['ID_TIPUS_SERVEI'],
-        DESC_SERVEI=props['DESC_SERVEI'],
-        ORIGEN_SERVEI=props['ORIGEN_SERVEI'],
-        DESTI_SERVEI=props['DESTI_SERVEI'],
-        ID_TIPUS_ACCESSIBILITAT=props['ID_TIPUS_ACCESSIBILITAT'],
-        NOM_TIPUS_ACCESSIBILITAT=props['NOM_TIPUS_ACCESSIBILITAT'],
-        ID_TIPUS_ESTAT=props['ID_TIPUS_ESTAT'],
-        NOM_TIPUS_ESTAT=props['NOM_TIPUS_ESTAT'],
-        DATA_INAUGURACIO=props['DATA_INAUGURACIO'],
-        DATA=props['DATA'],
-        COLOR_LINIA=props['COLOR_LINIA'],
-        PICTO=props['PICTO'],
-        PICTO_GRUP=props['PICTO_GRUP'],
+        CODI_GRUP_ESTACIO=props.get('CODI_GRUP_ESTACIO',''),
+        ID_ESTACIO=props.get('ID_ESTACIO', ''),
+        CODI_ESTACIO=props.get('CODI_ESTACIO', props.get('ID_ESTACIO', '')),
+        NOM_ESTACIO=props.get('NOM_ESTACIO', ''),
+        ORDRE_ESTACIO=props.get('ORDRE_ESTACIO', ''),
+        ID_LINIA=props.get('ID_LINIA', ''),
+        CODI_LINIA=props.get('CODI_LINIA', ''),
+        NOM_LINIA=props.get('NOM_LINIA', ''),
+        ORDRE_LINIA=props.get('ORDRE_LINIA', ''),
+        DESC_SERVEI=props.get('DESC_SERVEI', ''),
+        ORIGEN_SERVEI=props.get('ORIGEN_SERVEI', ''),
+        DESTI_SERVEI=props.get('DESTI_SERVEI', ''),
+        DATA=props.get('DATA', ''),
+        COLOR_LINIA=props.get('COLOR_LINIA', ''),
+        PICTO=props.get('PICTO', ''),
+        PICTO_GRUP=props.get('PICTO_GRUP', ''),
         coordinates=(coords[0], coords[1]),
-        EMOJI_NOM_LINIA=_set_emoji_at_name(props['NOM_LINIA'])
+        EMOJI_NOM_LINIA=_set_emoji_at_name(props.get('NOM_LINIA', ''))
     )
 
 

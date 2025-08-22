@@ -96,11 +96,23 @@ class TmbApiService:
 
         return from_origin + from_destination
 
-
     async def get_metro_lines(self):
         url = f'{self.BASE_URL_TRANSIT}/linies/metro'
         items, _ = await self.fetch_transit_items(url, MetroLine, sort_key=lambda x: x.NOM_LINIA)
         return items
+    
+    async def get_metro_stations(self):
+        url = f'{self.BASE_URL_TRANSIT}/estacions'
+        data = await self._get(url)
+        
+        features = data['features']
+
+        stations = []
+        for feature in features:
+            stations.append(create_metro_station(feature))
+
+        stations.sort(key=lambda x: x.ORDRE_ESTACIO)
+        return stations
 
     async def get_stations_by_metro_line(self, line):
         url = f'{self.BASE_URL_TRANSIT}/linies/metro/{line}/estacions'

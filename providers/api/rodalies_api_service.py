@@ -89,22 +89,4 @@ class RodaliesApiService:
                     routes_dict[key].next_rodalies.append(next_rodalies)
 
         return list(routes_dict.values())
-
-
-
-'''
-        trains = []
-        for train in next_rodalies["trains"]:
-            if str(train["line"]["id"]) == str(line_id):
-                trains.append(NextRodalies(
-                    id=train["technicalNumber"],
-                    arrival_time=datetime.fromisoformat(train["departureDateHourSelectedStation"])
-                ))
-
-        return [RodaliesLineRoute(
-            code=line_id,
-            destination="test",
-            line_name=line_id,
-            next_rodalies=trains
-        )]
-'''
+        

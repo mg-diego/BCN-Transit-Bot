@@ -9,5 +9,6 @@ from .language_handler import LanguageHandler
 from .keyboard_factory import KeyboardFactory
 from .transport.web_app_handler import WebAppHandler
 from .transport.handler_base import HandlerBase
+from .reply_handler import ReplyHandler
 
-__all__ = ["MenuHandler", "MetroHandler", "BusHandler", "TramHandler", "RodaliesHandler", "FavoritesHandler", "HelpHandler", "LanguageHandler", "KeyboardFactory", "WebAppHandler", "HandlerBase"]
+__all__ = ["MenuHandler", "MetroHandler", "BusHandler", "TramHandler", "RodaliesHandler", "FavoritesHandler", "HelpHandler", "LanguageHandler", "KeyboardFactory", "WebAppHandler", "HandlerBase", "ReplyHandler"]

@@ -209,4 +209,13 @@ class KeyboardFactory:
         rows = self._chunk_buttons(buttons, 2)
         rows.append(self._back_button(self.BACK_TO_MENU_CALLBACK))
         return InlineKeyboardMarkup(rows)
+
+    def reply_keyboard_stations_menu(self, metro_stations: List[MetroStation], line_id):
+        buttons = [
+            InlineKeyboardButton(f"{metro_station.PICTO}. {metro_station.NOM_ESTACIO}  ", callback_data=f"metro_station:{line_id}:{metro_station.CODI_ESTACIO}")
+            for metro_station in metro_stations
+        ]
+        rows = self._chunk_buttons(buttons, 2)
+        rows.append(self._back_button(self.BACK_TO_MENU_CALLBACK))
+        return InlineKeyboardMarkup(rows)
     
