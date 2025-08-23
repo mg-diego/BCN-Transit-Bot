@@ -34,6 +34,6 @@ class ReplyHandler:
             await self.message_service.send_new_message(
                 update,
                 f"🔍 He encontrado las siguientes estaciones:'",
-                self.keyboard_factory.reply_keyboard_stations_menu(stations, "1")
+                self.keyboard_factory.reply_keyboard_stations_menu(stations, line.ID_LINIA)
             )
                 
