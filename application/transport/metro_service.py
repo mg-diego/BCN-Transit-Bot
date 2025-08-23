@@ -47,6 +47,12 @@ class MetroService(ServiceBase):
         logger.debug(f"[{self.__class__.__name__}] get_line_by_id({line_id}) -> {line}")
         return line
 
+    async def get_line_by_name(self, line_name):
+        lines = await self.get_all_lines()
+        line = next((l for l in lines if str(l.NOM_LINIA) == str(line_name)), None)
+        logger.debug(f"[{self.__class__.__name__}] get_line_by_name({line_name}) -> {line}")
+        return line
+        
     async def get_stations_by_line(self, line_id) -> List[MetroStation]:
         return await self._get_from_cache_or_api(
             f"metro_line_{line_id}_stations",
@@ -66,6 +72,8 @@ class MetroService(ServiceBase):
         station = next((s for s in stations if str(s.CODI_ESTACIO) == str(station_id)), None)
         logger.debug(f"[{self.__class__.__name__}] get_station_by_id({station_id}, line {line_id}) -> {station}")
         return station
+    
+
 
     async def get_metro_station_connections(self, station_id) -> List[MetroConnection]:
         connections = await self._get_from_cache_or_api(
