@@ -36,9 +36,9 @@ class LanguageManager:
                         self.locales[lang_code] = json.load(f)
                         logger.info(f"[{self.__class__.__name__}] Loaded translations for language '{lang_code}'")
                 except Exception as e:
-                    logger.error(f"[{self.__class__.__name__}] Failed to load '{filename}': {e}")
-
-    def t(self, key, lang=None, **kwargs):
+                    logger.error(f"[{self.__class__.__name__}] Failed to load '{filename}': {e}")   
+    
+    def t(self, key: str, lang: str = None, **kwargs):
         """
         Return translation for the given key and language, with optional interpolation.
 
@@ -51,9 +51,13 @@ class LanguageManager:
             str: Translated and formatted string.
         """
         lang = lang or self.default_lang
-        text = self.locales.get(lang, self.locales.get(self.default_lang, {})).get(key, key)
-        result = text.format(**kwargs)
-        return result
+        template = self.locales.get(lang, {}).get(key) or self.locales[self.default_lang].get(key)
+        if template is None:
+            return key
+        if "{s}" in template:
+            plural_suffix = "s" if kwargs.get("count", 0) != 1 else ""
+            template = template.replace("{s}", plural_suffix)
+        return template.format(**kwargs)
     
     def set_language(self, new_language: str):
         """

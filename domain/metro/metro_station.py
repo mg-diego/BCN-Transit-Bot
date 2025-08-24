@@ -32,7 +32,7 @@ def create_metro_station(feature: dict) -> MetroStation:
     return MetroStation(
         CODI_GRUP_ESTACIO=props.get('CODI_GRUP_ESTACIO',''),
         ID_ESTACIO=props.get('ID_ESTACIO', ''),
-        CODI_ESTACIO=props.get('CODI_ESTACIO', props.get('ID_ESTACIO', '')),
+        CODI_ESTACIO=props.get('CODI_ESTACIO',''),
         NOM_ESTACIO=props.get('NOM_ESTACIO', ''),
         ORDRE_ESTACIO=props.get('ORDRE_ESTACIO', ''),
         ID_LINIA=props.get('ID_LINIA', ''),

@@ -22,8 +22,8 @@
   "common.connections": "<u>Connections:</u>",
   "common.alerts": "<u>Alerts:</u>",
   "common.stop.loading": "⏳ Loading stop information...",
-  "common.line.only.map": "<b><u>Line '{line_id}'</u></b>\n\nExplore the interactive map to choose a specific station.",
-  "common.line.stops.or.map": "<b><u>Line '{line_id}'</u></b>\n\nYou can select a stop from the list or explore the interactive map to choose a specific station.",
+  "common.line.only.map": "<b><u>Line '{line}'</u></b>\n\nExplore the interactive map to choose a specific station.",
+  "common.line.stops.or.map": "<b><u>Line '{line}'</u></b>\n\nYou can select a stop from the list or explore the interactive map to choose a specific station.",
   "common.stop.error": "⚠️ Stop information could not be updated.\n\nPlease click the '❌ Close' button and restart your search.",
   "common.no.connections": "      - This stop has no {type} connections.",
   "common.no.alerts": "      <pre> - This stop has no alerts. </pre>",
@@ -48,5 +48,7 @@
   "language.es": "🇪🇸 Spanish",
   "language.ca": "(ꮯꭺꭲ) Catalan",
 
-    "help.text": "ℹ️ <b>Help for BCN Transit Bot</b> ℹ️\n\nThis bot lets you quickly check updated information about <b>Metro</b> and <b>Bus</b> in the city of Barcelona.\n\n📋 <u>Available commands:</u>\n  • /start – Start a new search\n  • /help – Show this help message\n\n🚇 <u>To check the next metro trains:</u>\n  1. Tap 'Metro' in the menu.\n  2. Select a line.\n  3. Select a station.\n  4. You’ll see updated schedules and more details.\n\n🚌 <u>To check the next buses:</u>\n  1. Tap 'Bus' in the menu.\n  2. Select a line.\n  3. Select a station from the interactive map.\n  4. You’ll see updated schedules and more details.\n\n⭐ <u>To check your favorites:</u>\n  1. Tap 'Favorites' in the menu.\n  2. Select one of your saved favorites.\n  3. You’ll see updated schedules and more details.\n\n🌐 <u>To select the Language:</u>\n 1. Tap 'Language' in the menu.\n 2. Select one of the available languages (English, Spanish or Catalan).\n 3. You will see the application updated to the new language.\n\nDo you have questions or suggestions? I’m here to help!\n\n📬 <b>Contact:</b> <a href='https://github.com/mg-diego/BCN-Transit-Bot'>github.com/mg-diego/BCN-Transit-Bot</a>\n\n 🔖 <b>Version</b>: <code>v1.3</code>"
+  "help.text": "ℹ️ <b>Help for BCN Transit Bot</b> ℹ️\n\nThis bot lets you quickly check updated information about <b>Metro</b> and <b>Bus</b> in the city of Barcelona.\n\n📋 <u>Available commands:</u>\n  • /start – Start a new search\n  • /help – Show this help message\n\n🚇 <u>To check the next metro trains:</u>\n  1. Tap 'Metro' in the menu.\n  2. Select a line.\n  3. Select a station.\n  4. You’ll see updated schedules and more details.\n\n🚌 <u>To check the next buses:</u>\n  1. Tap 'Bus' in the menu.\n  2. Select a line.\n  3. Select a station from the interactive map.\n  4. You’ll see updated schedules and more details.\n\n⭐ <u>To check your favorites:</u>\n  1. Tap 'Favorites' in the menu.\n  2. Select one of your saved favorites.\n  3. You’ll see updated schedules and more details.\n\n🌐 <u>To select the Language:</u>\n 1. Tap 'Language' in the menu.\n 2. Select one of the available languages (English, Spanish or Catalan).\n 3. You will see the application updated to the new language.\n\nDo you have questions or suggestions? I’m here to help!\n\n📬 <b>Contact:</b> <a href='https://github.com/mg-diego/BCN-Transit-Bot'>github.com/mg-diego/BCN-Transit-Bot</a>\n\n 🔖 <b>Version</b>: <code>v1.3</code>",
+
+  "results_found": "🔍 I found {count} result{s} matching your search:"
 }

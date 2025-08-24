@@ -210,12 +210,12 @@ class KeyboardFactory:
         rows.append(self._back_button(self.BACK_TO_MENU_CALLBACK))
         return InlineKeyboardMarkup(rows)
 
-    def reply_keyboard_stations_menu(self, metro_stations: List[MetroStation], line_id):
+    def reply_keyboard_stations_menu(self, metro_stations: List[MetroStation]):
         buttons = [
-            InlineKeyboardButton(f"{metro_station.CODI_LINIA}. {metro_station.NOM_ESTACIO}  ", callback_data=f"metro_station:{line_id}:{metro_station.CODI_ESTACIO}")
+            InlineKeyboardButton(f"{metro_station.NOM_LINIA} - {metro_station.NOM_ESTACIO}  ", callback_data=f"metro_station:{metro_station.CODI_LINIA}:{metro_station.CODI_ESTACIO}")
             for metro_station in metro_stations
         ]
-        rows = self._chunk_buttons(buttons, 2)
-        rows.append(self._back_button(self.BACK_TO_MENU_CALLBACK))
+        rows = self._chunk_buttons(buttons, 1)
+        #rows.append(self._back_button(self.BACK_TO_MENU_CALLBACK))
         return InlineKeyboardMarkup(rows)
     
