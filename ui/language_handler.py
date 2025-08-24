@@ -22,7 +22,7 @@ class LanguageHandler:
                 user_available_new_languages[language] = self.language_manager.t(f'language.{language}')
 
         reply_markup = self.keyboard_factory.language_menu(user_available_new_languages)
-        await self.message_service.edit_inline_message(update, self.language_manager.t('language.choose'), reply_markup=reply_markup)
+        await self.message_service.handle_interaction(update, self.language_manager.t('language.choose'), reply_markup=reply_markup)
 
     async def update_language(self, update: Update, context: ContextTypes.DEFAULT_TYPE):        
         _, new_language = self.message_service.get_callback_data(update)

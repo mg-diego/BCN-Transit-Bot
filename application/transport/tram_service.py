@@ -24,7 +24,7 @@ class TramService(ServiceBase):
         return await self._get_from_cache_or_api(
             "tram_lines",
             self.tram_api_service.get_lines,
-            cache_ttl=3600
+            cache_ttl=3600*24
         )
 
     async def get_line_by_id(self, line_id) -> TramLine:
@@ -37,7 +37,7 @@ class TramService(ServiceBase):
         return await self._get_from_cache_or_api(
             f"tram_line_{line_id}_stops",
             lambda: self.tram_api_service.get_stops_on_line(line_id),
-            cache_ttl=3600
+            cache_ttl=3600*24
         )
 
     async def get_stop_by_id(self, stop_id, line_id) -> TramStop:
@@ -50,7 +50,7 @@ class TramService(ServiceBase):
         connections = await self._get_from_cache_or_api(
             f"tram_stop_connections_{stop_id}",
             lambda: self.tram_api_service.get_connections_at_stop(stop_id),
-            cache_ttl=3600
+            cache_ttl=3600*24
         )
 
         formatted_connections = (

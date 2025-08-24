@@ -24,7 +24,7 @@ class BusService(ServiceBase):
         return await self._get_from_cache_or_api(
             "bus_lines",
             self.transport_api_service.get_bus_lines,
-            cache_ttl=3600
+            cache_ttl=3600*24
         )
 
     async def get_line_by_id(self, line_id) -> BusLine:
@@ -32,6 +32,21 @@ class BusService(ServiceBase):
         line = next((l for l in lines if str(l.CODI_LINIA) == str(line_id)), None)
         logger.debug(f"[{self.__class__.__name__}] get_line_by_id({line_id}) -> {line}")
         return line
+    
+    async def get_lines_by_category(self, bus_category: str):
+        lines = await self.get_all_lines()
+        if "-" in bus_category:
+            start, end = bus_category.split("-")
+            return [
+                line for line in lines
+                if int(start) <= int(line.CODI_LINIA) <= int(end)
+                and line.ORIGINAL_NOM_LINIA.isdigit()
+            ]
+        else:            
+            return [
+                line for line in lines
+                if bus_category == line.NOM_FAMILIA
+            ]
 
     async def get_stops_by_line(self, line_id) -> List[BusStop]:
         """
@@ -40,7 +55,7 @@ class BusService(ServiceBase):
         return await self._get_from_cache_or_api(
             f"bus_line_{line_id}_stops",
             lambda: self.transport_api_service.get_bus_line_stops(line_id),
-            cache_ttl=3600
+            cache_ttl=3600*24
         )
 
     async def get_stop_by_id(self, stop_id, line_id) -> BusStop:

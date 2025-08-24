@@ -3,11 +3,13 @@ from telegram import Update
 from telegram.ext import (
     ContextTypes
 )
+from application import MessageService
+from providers.helpers import logger
 
 from .keyboard_factory import KeyboardFactory
 
 class MenuHandler:
-    def __init__(self, keyboard_factory: KeyboardFactory, message_service, user_data_manager, language_manager, update_manager):
+    def __init__(self, keyboard_factory: KeyboardFactory, message_service: MessageService, user_data_manager, language_manager, update_manager):
         self.keyboard_factory = keyboard_factory
         self.message_service = message_service
         self.user_data_manager = user_data_manager
@@ -27,29 +29,17 @@ class MenuHandler:
             self.language_manager.set_language(user_language)
             await self.update_manager.stop_loading(update, context)
 
-        msg = await self.message_service.send_new_message(update, self.language_manager.t('main.menu.message'), reply_markup=self.keyboard_factory.create_main_menu_replykeyboard())
-        '''
-        self.keyboard_factory
-        if is_first_message:
-            msg = await self.message_service.send_new_message(update, self.language_manager.t('main.menu.loading'), reply_markup=self.keyboard_factory.create_main_menu_replykeyboard())
-            user_id = self.message_service.get_user_id(update)
-            self.message_service.set_bot_instance(context.bot)
-            self.user_data_manager.register_user(self.message_service.get_user_id(update), self.message_service.get_username(update))
+        msg = await self.message_service.send_message_direct(self.message_service.get_chat_id(update), context, self.language_manager.t('main.menu.message'), reply_markup=self.keyboard_factory.create_main_menu_replykeyboard())
+            
 
-            user_language = self.user_data_manager.get_user_language(user_id)
-            self.language_manager.set_language(user_language)
+    async def close_updates(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        _, user_id_str = self.message_service.get_callback_data(update)
+        user_id = int(user_id_str)
+        logger.info(f"Stopping updates for user {user_id}")
 
-            await self.message_service.edit_message_by_id(
-                self.message_service.get_chat_id(update),
-                msg.message_id,
-                self.language_manager.t('main.menu.message'),
-                reply_markup=self.keyboard_factory.create_main_menu()
-            )
-
-        else:
-            await self.message_service.handle_interaction(
-                update,
-                self.language_manager.t('main.menu.message'),
-                reply_markup=self.keyboard_factory.create_main_menu()
-            )
-        '''
+        self.update_manager.cancel_task(user_id)
+        await self.message_service.edit_inline_message(update, self.language_manager.t('search.cleaning'))
+        await self.message_service.clear_user_messages(user_id)
+        #await self.message_service.send_new_message_from_callback(update, self.language_manager.t('search.finish'))
+        logger.info(f"Updates stopped and messages cleared for user {user_id}")
+        await self.back_to_menu(update, context)

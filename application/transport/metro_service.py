@@ -23,14 +23,14 @@ class MetroService(ServiceBase):
         return await self._get_from_cache_or_api(
             "metro_lines",
             self.tmb_api_service.get_metro_lines,
-            cache_ttl=3600
+            cache_ttl=3600*24
         )
 
     async def get_stations_by_name(self, station_name) -> List[MetroStation]:
         stations = await self._get_from_cache_or_api(
             "metro_stations",
             self.tmb_api_service.get_metro_stations,
-            cache_ttl=3600
+            cache_ttl=3600*24
         )
 
         filtered_stations = [
@@ -57,14 +57,14 @@ class MetroService(ServiceBase):
         return await self._get_from_cache_or_api(
             f"metro_line_{line_id}_stations",
             lambda: self.tmb_api_service.get_stations_by_metro_line(line_id),
-            cache_ttl=3600
+            cache_ttl=3600*24
         )
 
     async def get_station_accesses(self, group_code_id) -> List[MetroAccess]:
         return await self._get_from_cache_or_api(
             f"metro_station_{group_code_id}_accesses",
             lambda: self.tmb_api_service.get_metro_station_accesses(group_code_id),
-            cache_ttl=3600
+            cache_ttl=3600*24
         )
 
     async def get_station_by_id(self, station_id, line_id) -> MetroStation:
@@ -78,7 +78,7 @@ class MetroService(ServiceBase):
         connections = await self._get_from_cache_or_api(
             f"metro_station_connections_{station_id}",
             lambda: self.tmb_api_service.get_metro_station_connections(station_id),
-            cache_ttl=3600
+            cache_ttl=3600*24
         )
 
         formatted_connections = (

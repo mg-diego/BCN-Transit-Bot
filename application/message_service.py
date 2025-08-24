@@ -118,6 +118,12 @@ class MessageService:
         self._cache_message(update, msg)
         logger.info(f"[{self.__class__.__name__}] Sent location to user {self.get_user_id(update)}: ({latitude}, {longitude})")
         return msg
+    
+    async def send_map_image(self, update: Update, context: ContextTypes.DEFAULT_TYPE, line_name):
+        await context.bot.send_photo(
+            chat_id=self.get_chat_id(update),
+            photo=f"https://www.tmb.cat/documents/20182/242926/{line_name}+TERMOMETRE+HORZ.jpg",
+        )
 
     def _cache_message(self, update, msg):
         """Store the message_id in the user's cache."""

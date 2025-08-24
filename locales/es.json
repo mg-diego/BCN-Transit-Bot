@@ -8,12 +8,13 @@
   "main.menu.favorites": "⭐ Favoritos",
   "main.menu.language": "🌐 Idioma",
   "main.menu.help": "ℹ️ Ayuda",
+  
 
   "keyboard.back": "🔙 Volver",
   "keyboard.close": "❌ Cerrar",
   "keyboard.favorites.add": "♥️ Añadir a Favoritos",
   "keyboard.favorites.remove": "💔 Quitar de Favoritos",
-  "keyboard.map": "🗺️ Abrir mapa y seleccionar parada",
+  "keyboard.map": "🗺️ Abrir Mapa y seleccionar parada",
   "keyboard.next": "Siguiente ➡️",
   "keyboard.previous": "⬅️ Anterior",
 
@@ -23,10 +24,14 @@
   "common.alerts": "<u>Alertas:</u>",
   "common.stop.loading": "⏳ Cargando información de la parada...",
   "common.line.only.map": "<b><u>Línea '{line}'</u></b>\n\nExplora el mapa interactivo para elegir una estación específica.",
-  "common.line.stops.or.map": "<b><u>Línea '{line}'</u></b>\n\nPuedes seleccionar una parada desde la lista o explorar el mapa interactivo para elegir una estación específica.",
+  "common.line.stops.list": "📄 Estas son todas las paradas de la línea '<b>{line}</b>'",
   "common.stop.error": "⚠️ No se pudo actualizar la información de la parada.\n\n Por favor, haz click en el botón '❌ Cerrar' y reinicia la búsqueda.",
   "common.no.connections": "      - Esta parada no tiene ninguna conexión de {type}.",
   "common.no.alerts": "      <pre> - Esta parada no tiene ninguna alerta. </pre>",
+  "common.map": "🗺️ Mapa",
+  "common.list": " 📋Lista",
+  "common.ask.search": "🧭 ¿Cómo prefieres ver las paradas?",
+  "common.open.map": "¡Pulsa el botón “Abrir Mapa” que está abajo para ver todas las paradas! 👇",
 
   "metro.station.name": "🚏 <b>ESTACIÓN '{name}'</b> 🚏\n\nSelecciona una entrada de metro para más detalles:",
   "metro.station.next": "<u>Próximos Metros:</u>",

@@ -82,11 +82,37 @@ class KeyboardFactory:
     def metro_lines_menu(self, metro_lines: List[MetroLine]) -> InlineKeyboardMarkup:
         sorted_lines = sorted(metro_lines, key=self._custom_sort_key)
         buttons = [
-            InlineKeyboardButton(f"{line.NOM_LINIA}  ", callback_data=f"metro_line:{line.CODI_LINIA}")
+            InlineKeyboardButton(f"{line.NOM_LINIA}  ", callback_data=f"metro_line:{line.CODI_LINIA}:{line.ORIGINAL_NOM_LINIA}")
             for line in sorted_lines
         ]
 
-        rows = self._chunk_buttons(buttons, 4)
+        rows = self._chunk_buttons(buttons, 3)
+        return InlineKeyboardMarkup(rows)
+    
+    def bus_category_menu(self, list):
+        base_callback = "bus_category"
+        keyboard = [
+            InlineKeyboardButton('🟣 D', callback_data=f"{base_callback}:Diagonals"),
+            InlineKeyboardButton('🔵 H', callback_data=f"{base_callback}:Horitzontals"),
+            InlineKeyboardButton('🟢 V', callback_data=f"{base_callback}:Verticals"),
+            InlineKeyboardButton('🔴 M', callback_data=f"{base_callback}:Llançadores"),
+            InlineKeyboardButton('⚫ X', callback_data=f"{base_callback}:XPRESBus"),
+            InlineKeyboardButton('🔴 1-60 ', callback_data=f"{base_callback}:1-60"),
+            InlineKeyboardButton('🔴 61-100 ', callback_data=f"{base_callback}:61-100"),
+            InlineKeyboardButton('🔴 101-120 ', callback_data=f"{base_callback}:101-120"),
+            InlineKeyboardButton('🔴 121-140 ', callback_data=f"{base_callback}:121-140"),
+            InlineKeyboardButton('🔴 141-200 ', callback_data=f"{base_callback}:141-200")
+        ]
+        rows = self._chunk_buttons(keyboard, 2)
+        return InlineKeyboardMarkup(rows)
+    
+    def bus_lines_menu(self, bus_lines: List[BusLine]):
+        buttons = [
+            InlineKeyboardButton(f"{line.NOM_LINIA}  ", callback_data=f"bus_line:{line.CODI_LINIA}:{line.NOM_LINIA}")
+            for line in bus_lines
+        ]
+
+        rows = self._chunk_buttons(buttons, 3)
         return InlineKeyboardMarkup(rows)
     
     def bus_lines_paginated_menu(self, bus_lines: List[BusLine], page: int = 0):
@@ -123,7 +149,7 @@ class KeyboardFactory:
     
     def tram_lines_menu(self, tram_lines: List[TramLine]) -> InlineKeyboardMarkup:
         buttons = [
-            InlineKeyboardButton(line.name, callback_data=f"tram_line:{line.id}:{line.name}")
+            InlineKeyboardButton(line.name, callback_data=f"tram_line:{line.id}:{line.original_name}")
             for line in tram_lines
         ]
         rows = self._chunk_buttons(buttons, 3)
@@ -143,8 +169,6 @@ class KeyboardFactory:
             for metro_station in metro_stations
         ]
         rows = self._chunk_buttons(buttons, 2)
-        rows.append([InlineKeyboardButton(self.language_manager.t('keyboard.map'), callback_data=f"metro_map:{line_id}")])
-
         return InlineKeyboardMarkup(rows)
     
     def tram_stops_menu(self, tram_stops: List[TramStop], line_id):
@@ -153,8 +177,6 @@ class KeyboardFactory:
             for tram_stop in tram_stops
         ]
         rows = self._chunk_buttons(buttons, 2)
-        rows.append([InlineKeyboardButton(self.language_manager.t('keyboard.map'), callback_data=f"tram_map:{line_id}")])
-
         return InlineKeyboardMarkup(rows)
     
     def metro_station_access_menu(self, station_accesses: List[MetroAccess]):
@@ -163,15 +185,22 @@ class KeyboardFactory:
             for access in station_accesses
         ]
         rows = self._chunk_buttons(buttons, 2)
-        return InlineKeyboardMarkup(rows)   
+        return InlineKeyboardMarkup(rows)
     
     
     def bus_stops_map_menu(self, encoded):
-        return ReplyKeyboardMarkup.from_button(
-                KeyboardButton(
-                    text=self.language_manager.t('keyboard.map'),
-                    web_app=WebAppInfo(url=f"https://mg-diego.github.io/BCN-Transit-Bot/map.html?data={encoded}"),
-                )
+        keyboard = [
+            [KeyboardButton(
+                text=self.language_manager.t('keyboard.map'),
+                web_app=WebAppInfo(url=f"https://mg-diego.github.io/BCN-Transit-Bot/map.html?data={encoded}"),
+            )],
+            [KeyboardButton(self.language_manager.t('keyboard.back'))]
+        ]
+
+        return ReplyKeyboardMarkup(
+            keyboard,
+            resize_keyboard=True,
+            one_time_keyboard=False  # el teclado permanece visible
         )
     
     def help_menu(self):
@@ -254,7 +283,15 @@ class KeyboardFactory:
             for code, name in available_languages.items()
         ]
         rows = self._chunk_buttons(buttons, 2)
-        rows.append(self._back_button(self.BACK_TO_MENU_CALLBACK))
+        return InlineKeyboardMarkup(rows)
+    
+    def map_or_list_menu(self, type, line_id, line_name):
+        """Teclado del menú principal."""
+        keyboard = [
+            InlineKeyboardButton(self.language_manager.t('common.map'), callback_data=f"{type}_map:{line_id}:{line_name}"),
+            InlineKeyboardButton(self.language_manager.t('common.list'), callback_data=f"{type}_list:{line_id}:{line_name}")
+        ]
+        rows = self._chunk_buttons(keyboard, 2)
         return InlineKeyboardMarkup(rows)
 
     def reply_keyboard_stations_menu(self, metro_stations: List[MetroStation]):
@@ -265,4 +302,5 @@ class KeyboardFactory:
         rows = self._chunk_buttons(buttons, 1)
         #rows.append(self._back_button(self.BACK_TO_MENU_CALLBACK))
         return InlineKeyboardMarkup(rows)
+    
     

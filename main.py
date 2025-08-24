@@ -73,28 +73,32 @@ def main():
     application.add_handler(CommandHandler("start", menu_handler.show_menu))    
     application.add_handler(CallbackQueryHandler(menu_handler.show_menu, pattern=r"^menu$"))
     application.add_handler(CallbackQueryHandler(menu_handler.back_to_menu, pattern=r"^back_to_menu"))
-    application.add_handler(MessageHandler(filters.StatusUpdate.WEB_APP_DATA, web_app_handler.web_app_data_router)) 
+    application.add_handler(CallbackQueryHandler(menu_handler.close_updates, pattern=r"^close_updates:"))
+    application.add_handler(MessageHandler(filters.StatusUpdate.WEB_APP_DATA, web_app_handler.web_app_data_router))
 
     # HELP
     application.add_handler(CommandHandler("help", help_handler.show_help))    
     application.add_handler(CallbackQueryHandler(help_handler.show_help, pattern=r"^help$"))
 
     # METRO
+    application.add_handler(CallbackQueryHandler(metro_handler.show_list, pattern=r"^metro_list"))
     application.add_handler(CallbackQueryHandler(metro_handler.show_map, pattern=r"^metro_map"))
     application.add_handler(CallbackQueryHandler(metro_handler.show_station, pattern=r"^metro_station"))
-    application.add_handler(CallbackQueryHandler(metro_handler.show_line_stations, pattern=r"^metro_line"))
+    application.add_handler(CallbackQueryHandler(metro_handler.ask_search_method, pattern=r"^metro_line"))    
+    application.add_handler(CallbackQueryHandler(metro_handler.show_list, pattern=r"^metro_page"))
     application.add_handler(CallbackQueryHandler(metro_handler.show_lines, pattern=r"^metro$"))
 
     # BUS   
     application.add_handler(CallbackQueryHandler(bus_handler.show_stop, pattern=r"^bus_stop"))
     application.add_handler(CallbackQueryHandler(bus_handler.show_line_stops, pattern=r"^bus_line"))
-    application.add_handler(CallbackQueryHandler(bus_handler.show_lines, pattern=r"^bus_page"))
+    application.add_handler(CallbackQueryHandler(bus_handler.show_bus_category_lines, pattern=r"^bus_category"))
     application.add_handler(CallbackQueryHandler(bus_handler.show_lines, pattern=r"^bus$"))
 
     # TRAM
+    application.add_handler(CallbackQueryHandler(tram_handler.show_list, pattern=r"^tram_list"))
     application.add_handler(CallbackQueryHandler(tram_handler.show_map, pattern=r"^tram_map"))
     application.add_handler(CallbackQueryHandler(tram_handler.show_stop, pattern=r"^tram_stop"))    
-    application.add_handler(CallbackQueryHandler(tram_handler.show_line_stops, pattern=r"^tram_line"))
+    application.add_handler(CallbackQueryHandler(tram_handler.ask_search_method, pattern=r"^tram_line"))
     application.add_handler(CallbackQueryHandler(tram_handler.show_lines, pattern=r"^tram$"))
 
     # RODALIES
@@ -110,8 +114,6 @@ def main():
     # LANGUAGES
     application.add_handler(CallbackQueryHandler(language_handler.show_languages, pattern=r"^language"))
     application.add_handler(CallbackQueryHandler(language_handler.update_language, pattern=r"^set_language"))    
-
-    application.add_handler(CallbackQueryHandler(metro_handler.close_updates, pattern=r"^close_updates:"))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, reply_handler.reply_router))
 
     logger.info("Handlers registered successfully")

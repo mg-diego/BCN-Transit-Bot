@@ -34,7 +34,7 @@ class BusLine:
             "D": "🟪",
             "V": "🟩",
             "M": "🔴",
-            "X": "🟨"
+            "X": "⚫"
         }
 
         self.ORIGINAL_NOM_LINIA = self.NOM_LINIA

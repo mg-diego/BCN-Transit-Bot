@@ -13,7 +13,7 @@
   "keyboard.close": "❌ Tancar",
   "keyboard.favorites.add": "♥️ Afegir a Favorits",
   "keyboard.favorites.remove": "💔 Treure de Favorits",
-  "keyboard.map": "🗺️ Obrir mapa i seleccionar parada",
+  "keyboard.map": "🗺️ Obrir Mapa i seleccionar parada",
   "keyboard.next": "Següent ➡️",
   "keyboard.previous": "⬅️ Anterior",
 
@@ -23,10 +23,14 @@
   "common.alerts": "<u>Alertes:</u>",
   "common.stop.loading": "⏳ Carregant informació de la parada...",
   "common.line.only.map": "<b><u>Línia '{line}'</u></b>\n\nExplora el mapa interactiu per triar una estació específica.",
-  "common.line.stops.or.map": "<b><u>Línia '{line}'</u></b>\n\nPots seleccionar una estació de la llista o explorar el mapa interactiu per triar una estació específica.",
+  "common.line.stops.list": "📄 Aquestes són totes les parades de la línia '<b>{line}</b>'",
   "common.station.error": "⚠️ No s'ha pogut actualitzar la informació de l'estació.\n\n Si us plau, fes clic al botó '❌ Tancar' i reinicia la cerca.",
   "common.no.connections": "      - Aquesta estació no té cap connexió de {type}..",
   "common.no.alerts": "      <pre> - Aquesta estació no té cap alerta. </pre>",
+  "common.map": "🗺️ Mapa",
+  "common.list": " 📋Llista",
+  "common.ask.search": "🧭 Com prefereixes veure les parades?",
+  "common.open.map": "Prem el botó “Obrir Mapa” que hi ha a baix per veure totes les parades! 👇",
 
 
   "metro.station.name": "🚏 <b>ESTACIÓ '{name}'</b> 🚏\n\nSeleccioneu una entrada de metro per a més detalls:",

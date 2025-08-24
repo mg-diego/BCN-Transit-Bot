@@ -34,39 +34,34 @@ class MetroHandler(HandlerBase):
         logger.info(f"[{self.__class__.__name__}] MetroHandler initialized")
 
     async def show_lines(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        logger.info("Showing metro lines menu")
-        type=TransportType.METRO.value.capitalize()
-        await self.message_service.send_new_message(update, self.language_manager.t('common.loading', type=type), reply_markup=self.keyboard_factory._back_reply_button())
-        metro_lines = await self.metro_service.get_all_lines()
-        reply_markup = self.keyboard_factory.metro_lines_menu(metro_lines)
-        await self.message_service.handle_interaction(
+        await self.show_transport_lines(
             update,
-            self.language_manager.t('common.select.line', type=type),
-            reply_markup=reply_markup
+            context,
+            transport_type=TransportType.METRO,
+            service_get_lines=self.metro_service.get_all_lines,
+            keyboard_menu_builder=self.keyboard_factory.metro_lines_menu
         )
 
-    async def show_line_stations(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        _, line_id = self.message_service.get_callback_data(update)
-        logger.info(f"Showing stations for metro line {line_id}")
-        line = await self.metro_service.get_line_by_id(line_id)
-        stations = await self.metro_service.get_stations_by_line(line_id)
-        reply_markup = self.keyboard_factory.metro_stations_menu(stations, line_id)
-        await self.message_service.edit_inline_message(
+    async def ask_search_method(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        await super().ask_search_method(update, context, transport_type=TransportType.METRO)
+
+    async def show_list(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        await self.show_line_stations_list(
             update,
-            self.language_manager.t("common.line.stops.or.map", line=line.NOM_LINIA),
-            reply_markup=reply_markup
+            context,
+            transport_type=TransportType.METRO,
+            service_get_stations_by_line=self.metro_service.get_stations_by_line,
+            keyboard_menu_builder=self.keyboard_factory.metro_stations_menu
         )
 
     async def show_map(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        _, line_id = self.message_service.get_callback_data(update)
-        line = await self.metro_service.get_line_by_id(line_id)
-        stations = await self.metro_service.get_stations_by_line(line_id)
-        encoded = self.mapper.map_metro_stations(stations, line_id, line.ORIGINAL_NOM_LINIA)
-        logger.info(f"Showing map for metro line {line.ORIGINAL_NOM_LINIA} (ID: {line_id})")
-        await self.message_service.send_new_message_from_callback(
-            update=update,
-            text=self.language_manager.t('bus.line.stops', line_name=line.ORIGINAL_NOM_LINIA),
-            reply_markup=self.keyboard_factory.bus_stops_map_menu(encoded),
+        await self.show_line_map(
+            update,
+            context,
+            transport_type=TransportType.METRO,
+            service_get_stations_by_line=self.metro_service.get_stations_by_line,
+            mapper_method=self.mapper.map_metro_stations,
+            keyboard_menu_builder=self.keyboard_factory.bus_stops_map_menu
         )
 
     async def show_station(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -93,14 +88,3 @@ class MetroHandler(HandlerBase):
 
         self.start_update_loop(user_id, chat_id, message.message_id, update_text)
         logger.info(f"Started update loop task for user {user_id}, station {metro_station_id}")
-
-    async def close_updates(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        _, user_id_str = self.message_service.get_callback_data(update)
-        user_id = int(user_id_str)
-        logger.info(f"Stopping updates for user {user_id}")
-
-        self.update_manager.cancel_task(user_id)
-        await self.message_service.edit_inline_message(update, self.language_manager.t('search.cleaning'))
-        await self.message_service.clear_user_messages(user_id)
-        await self.message_service.send_new_message_from_callback(update, self.language_manager.t('search.finish'))
-        logger.info(f"Updates stopped and messages cleared for user {user_id}")

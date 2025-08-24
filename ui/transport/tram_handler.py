@@ -35,40 +35,34 @@ class TramHandler(HandlerBase):
         logger.info(f"[{self.__class__.__name__}] TramHandler initialized")
 
     async def show_lines(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        logger.info("Showing tram lines menu")
-        type=TransportType.TRAM.value.capitalize()
-        await self.message_service.send_new_message(update, self.language_manager.t('common.loading', type=type), reply_markup=self.keyboard_factory._back_reply_button())
-        tram_lines = await self.tram_service.get_all_lines()
-        reply_markup = self.keyboard_factory.tram_lines_menu(tram_lines)
-        await self.message_service.handle_interaction(
+        await self.show_transport_lines(
             update,
-            self.language_manager.t('common.select.line', type=type),
-            reply_markup=reply_markup
+            context,
+            transport_type=TransportType.TRAM,
+            service_get_lines=self.tram_service.get_all_lines,
+            keyboard_menu_builder=self.keyboard_factory.tram_lines_menu
         )
 
-    async def show_line_stops(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        _, line_id, line_name = self.message_service.get_callback_data(update)
-        logger.info(f"Showing stops for tram line {line_name} (ID: {line_id})")
+    async def ask_search_method(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        await super().ask_search_method(update, context, transport_type=TransportType.TRAM)
 
-        stops = await self.tram_service.get_stops_by_line(line_id)
-        reply_markup = self.keyboard_factory.tram_stops_menu(stops, line_id)
-        await self.message_service.edit_inline_message(
+    async def show_list(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        await self.show_line_stations_list(
             update,
-            self.language_manager.t("common.line.stops.or.map", line=line_name),
-            reply_markup=reply_markup
+            context,
+            transport_type=TransportType.TRAM,
+            service_get_stations_by_line=self.tram_service.get_stops_by_line,
+            keyboard_menu_builder=self.keyboard_factory.tram_stops_menu
         )
 
     async def show_map(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        _, line_id = self.message_service.get_callback_data(update)
-        line = await self.tram_service.get_line_by_id(line_id)
-        stops = await self.tram_service.get_stops_by_line(line_id)
-        logger.info(f"Showing map for tram line {line.original_name} (ID: {line_id})")
-
-        encoded = self.mapper.map_tram_stops(stops, line_id, line.original_name)
-        await self.message_service.send_new_message_from_callback(
-            update=update,
-            text=self.language_manager.t('bus.line.stops', line_name=line.original_name),
-            reply_markup=self.keyboard_factory.bus_stops_map_menu(encoded),
+        await self.show_line_map(
+            update,
+            context,
+            transport_type=TransportType.TRAM,
+            service_get_stations_by_line=self.tram_service.get_stops_by_line,
+            mapper_method=self.mapper.map_tram_stops,
+            keyboard_menu_builder=self.keyboard_factory.bus_stops_map_menu
         )
 
     async def show_stop(self, update: Update, context: ContextTypes.DEFAULT_TYPE):

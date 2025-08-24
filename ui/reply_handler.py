@@ -48,7 +48,6 @@ class ReplyHandler:
 
     async def reply_router(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         btn_text = str(update.message.text)
-        print(btn_text)
 
         if btn_text == "🚇 Metro":
             await self.metro_handler.show_lines(update, context)
@@ -65,7 +64,7 @@ class ReplyHandler:
         elif 'ℹ️' in btn_text:
             await self.help_handler.show_help(update, context)
         elif '🔙' in btn_text:
-            await self.menu_handler.back_to_menu(update, context, is_first_message)
+            await self.menu_handler.back_to_menu(update, context)
         else:
             await self.reply_to_user(update, context)
 
