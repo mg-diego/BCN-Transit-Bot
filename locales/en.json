@@ -1,5 +1,5 @@
 {
-  "main.menu.loading": "⏳ Loading user profile...",
+  "main.menu.loading": "Loading user profile",
   "main.menu.message": "👋 Welcome to the BCN Transit Bot!\n\n Choose an option to get started:",
   "main.menu.metro": "🚇 Metro",
   "main.menu.bus": "🚌 Bus",

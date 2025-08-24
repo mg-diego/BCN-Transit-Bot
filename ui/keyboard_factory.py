@@ -1,3 +1,4 @@
+import re
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton, WebAppInfo
 from typing import List
 
@@ -27,6 +28,19 @@ class KeyboardFactory:
     
     def _chunk_buttons(self, buttons, n=2):
         return [buttons[i:i + n] for i in range(0, len(buttons), n)]
+    
+    def _custom_sort_key(self, line: str):
+        # Buscar número y sufijo opcional
+        match = re.match(r"L(\d+)([A-Z]?)", line.ORIGINAL_NOM_LINIA)
+        if not match:
+            return (999, "")  # Los que no encajan van al final
+
+        num = int(match.group(1))          # Número principal
+        suffix = match.group(2) or ""      # Sufijo opcional
+
+        # Queremos que los que no tienen sufijo vayan después de N/S
+        suffix_order = {"N": 0, "S": 1, "": 2}
+        return (num, suffix_order.get(suffix, 3))
 
     def create_main_menu(self):
         """Teclado del menú principal."""
@@ -42,14 +56,38 @@ class KeyboardFactory:
         rows.append([InlineKeyboardButton(self.language_manager.t('main.menu.help'),callback_data=self.MENU_HELP_CALLBACK)])
         return InlineKeyboardMarkup(rows)
     
+    def create_main_menu_replykeyboard(self):
+        """Teclado principal como ReplyKeyboard."""
+        keyboard = [
+            [KeyboardButton(self.language_manager.t('main.menu.metro')),
+            KeyboardButton(self.language_manager.t('main.menu.bus'))],
+            
+            [KeyboardButton(self.language_manager.t('main.menu.tram')),
+            KeyboardButton(self.language_manager.t('main.menu.rodalies'))],
+            
+            [KeyboardButton(self.language_manager.t('main.menu.favorites')),
+            KeyboardButton(self.language_manager.t('main.menu.language'))],
+            
+            [KeyboardButton(self.language_manager.t('main.menu.help'))]  # botón en fila propia
+        ]
+
+        return ReplyKeyboardMarkup(
+            keyboard,
+            resize_keyboard=True,    # ajusta tamaño automáticamente
+            one_time_keyboard=False  # el teclado permanece visible
+        )
+    
     # === LINES ===
     
     def metro_lines_menu(self, metro_lines: List[MetroLine]) -> InlineKeyboardMarkup:
-        keyboard = []
-        for line in metro_lines:
-            keyboard.append([InlineKeyboardButton(f"{line.NOM_LINIA} - {line.DESC_LINIA}  ", callback_data=f"metro_line:{line.CODI_LINIA}")])
-        keyboard.append(self._back_button(self.BACK_TO_MENU_CALLBACK))
-        return InlineKeyboardMarkup(keyboard)
+        sorted_lines = sorted(metro_lines, key=self._custom_sort_key)
+        buttons = [
+            InlineKeyboardButton(f"{line.NOM_LINIA}  ", callback_data=f"metro_line:{line.CODI_LINIA}")
+            for line in sorted_lines
+        ]
+
+        rows = self._chunk_buttons(buttons, 4)
+        return InlineKeyboardMarkup(rows)
     
     def bus_lines_paginated_menu(self, bus_lines: List[BusLine], page: int = 0):
         BUTTONS_PER_PAGE = 20
@@ -89,14 +127,12 @@ class KeyboardFactory:
             for line in tram_lines
         ]
         rows = self._chunk_buttons(buttons, 3)
-        rows.append(self._back_button(self.BACK_TO_MENU_CALLBACK))
         return InlineKeyboardMarkup(rows)
     
     def rodalies_lines_menu(self, rodalies_lines: List[RodaliesLine])-> InlineKeyboardMarkup:
         keyboard = []
         for line in rodalies_lines:
             keyboard.append([InlineKeyboardButton(f"{line.emoji_name} - {line.description}  ", callback_data=f"rodalies_line:{line.id}")])
-        keyboard.append(self._back_button(self.BACK_TO_MENU_CALLBACK))
         return InlineKeyboardMarkup(keyboard)
 
     # === STATIONS / STOPS ===
@@ -108,7 +144,7 @@ class KeyboardFactory:
         ]
         rows = self._chunk_buttons(buttons, 2)
         rows.append([InlineKeyboardButton(self.language_manager.t('keyboard.map'), callback_data=f"metro_map:{line_id}")])
-        rows.append(self._back_button(self.BACK_TO_MENU_CALLBACK))
+
         return InlineKeyboardMarkup(rows)
     
     def tram_stops_menu(self, tram_stops: List[TramStop], line_id):
@@ -118,7 +154,7 @@ class KeyboardFactory:
         ]
         rows = self._chunk_buttons(buttons, 2)
         rows.append([InlineKeyboardButton(self.language_manager.t('keyboard.map'), callback_data=f"tram_map:{line_id}")])
-        rows.append(self._back_button(self.BACK_TO_MENU_CALLBACK))
+
         return InlineKeyboardMarkup(rows)
     
     def metro_station_access_menu(self, station_accesses: List[MetroAccess]):
@@ -195,11 +231,22 @@ class KeyboardFactory:
                     InlineKeyboardButton(f"🚆 {name}", callback_data=f"rodalies_station:{item.get('codi_linia')}:{item.get('code')}")
                 ])
 
-        fav_keyboard.append(self._back_button(self.BACK_TO_MENU_CALLBACK))
         return InlineKeyboardMarkup(fav_keyboard)
     
     def _back_button(self, callback):
         return [InlineKeyboardButton(self.language_manager.t('keyboard.back'), callback_data=callback)]
+    
+    def _back_reply_button(self):
+        """Teclado principal como ReplyKeyboard."""
+        keyboard = [
+            [KeyboardButton(self.language_manager.t('keyboard.back'))]
+        ]
+
+        return ReplyKeyboardMarkup(
+            keyboard,
+            resize_keyboard=True,    # ajusta tamaño automáticamente
+            one_time_keyboard=False  # el teclado permanece visible
+        )
     
     def language_menu(self, available_languages: dict):
         buttons = [

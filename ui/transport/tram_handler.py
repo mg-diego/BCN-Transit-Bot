@@ -37,10 +37,10 @@ class TramHandler(HandlerBase):
     async def show_lines(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         logger.info("Showing tram lines menu")
         type=TransportType.TRAM.value.capitalize()
-        await self.message_service.edit_inline_message(update, self.language_manager.t('common.loading', type=type))
+        await self.message_service.send_new_message(update, self.language_manager.t('common.loading', type=type), reply_markup=self.keyboard_factory._back_reply_button())
         tram_lines = await self.tram_service.get_all_lines()
         reply_markup = self.keyboard_factory.tram_lines_menu(tram_lines)
-        await self.message_service.edit_inline_message(
+        await self.message_service.handle_interaction(
             update,
             self.language_manager.t('common.select.line', type=type),
             reply_markup=reply_markup

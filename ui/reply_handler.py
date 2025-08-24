@@ -6,19 +6,68 @@ from telegram.ext import (
 )
 
 from application import MetroService, BusService, TramService, RodaliesService, MessageService
-from ui import KeyboardFactory
+from ui import KeyboardFactory, MetroHandler, BusHandler, TramHandler, RodaliesHandler, FavoritesHandler, LanguageHandler, HelpHandler, MenuHandler
 from providers.manager import LanguageManager 
 
 class ReplyHandler:
-    def __init__(self, message_service: MessageService, keyboard_factory: KeyboardFactory, language_manager: LanguageManager, metro_service: MetroService, bus_service: BusService, tram_service: TramService, rodalies_service: RodaliesService):
+    def __init__(
+            self,
+            message_service: MessageService,
+            keyboard_factory: KeyboardFactory,
+            language_manager: LanguageManager,
+            menu_handler: MenuHandler,
+            metro_handler: MetroHandler,
+            bus_handler: BusHandler,
+            tram_handler: TramHandler,
+            rodalies_handler: RodaliesHandler,
+            favorites_handler: FavoritesHandler,
+            language_handler: LanguageHandler,
+            help_handler: HelpHandler,
+            metro_service: MetroService,
+            bus_service: BusService,
+            tram_service: TramService,
+            rodalies_service: RodaliesService
+        ):
         self.message_service = message_service
         self.keyboard_factory = keyboard_factory
         self.language_manager = language_manager
+
+        self.menu_handler = menu_handler
+        self.metro_handler = metro_handler
+        self.bus_handler = bus_handler
+        self.tram_handler = tram_handler
+        self.rodalies_handler = rodalies_handler
+        self.favorites_handler = favorites_handler
+        self.language_handler = language_handler
+        self.help_handler = help_handler
+
         self.metro_service = metro_service
         self.bus_service = bus_service
         self.tram_service = tram_service
         self.rodalies_service = rodalies_service
 
+    async def reply_router(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        btn_text = str(update.message.text)
+        print(btn_text)
+
+        if btn_text == "🚇 Metro":
+            await self.metro_handler.show_lines(update, context)
+        elif btn_text == "🚌 Bus":
+            await self.bus_handler.show_lines(update, context)
+        elif btn_text == "🚋 Tram":
+            await self.tram_handler.show_lines(update, context)
+        elif btn_text == "🚆 Rodalies":
+            await self.rodalies_handler.show_lines(update, context)
+        elif '⭐' in btn_text:
+            await self.favorites_handler.show_favorites(update, context)
+        elif '🌐' in btn_text:
+            await self.language_handler.show_languages(update, context)
+        elif 'ℹ️' in btn_text:
+            await self.help_handler.show_help(update, context)
+        elif '🔙' in btn_text:
+            await self.menu_handler.back_to_menu(update, context)
+        else:
+            await self.reply_to_user(update, context)
 
     async def reply_to_user(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         search_text = str(update.message.text)
@@ -34,7 +83,7 @@ class ReplyHandler:
         chat_id = self.message_service.get_chat_id(update)
 
         if search_text.isdigit(): # BUS STATIONS
-            
+
             pass
 
         else: # METRO STATIONS

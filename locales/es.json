@@ -1,5 +1,5 @@
 {
-  "main.menu.loading": "⏳ Cargando tu perfil de usuario...",
+  "main.menu.loading": "Cargando tu perfil de usuario",
   "main.menu.message": "👋 ¡Bienvenido al BCN Transit Bot!\n\n Elige una opción para comenzar:",
   "main.menu.metro": "🚇 Metro",
   "main.menu.bus": "🚌 Bus",

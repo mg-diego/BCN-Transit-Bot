@@ -2,13 +2,14 @@ from domain.transport_type import TransportType
 from telegram import Update
 from telegram.ext import ContextTypes
 
-from application import MetroService, BusService, TramService, RodaliesService
+from application import MetroService, BusService, TramService, RodaliesService, MessageService
 from providers.manager import UserDataManager, LanguageManager
 from ui.keyboard_factory import KeyboardFactory
 
 class FavoritesHandler:
 
-    def __init__(self, user_data_manager: UserDataManager, keyboard_factory: KeyboardFactory, metro_service: MetroService, bus_service: BusService, tram_service: TramService, rodalies_service: RodaliesService, language_manager: LanguageManager):
+    def __init__(self, message_service: MessageService, user_data_manager: UserDataManager, keyboard_factory: KeyboardFactory, metro_service: MetroService, bus_service: BusService, tram_service: TramService, rodalies_service: RodaliesService, language_manager: LanguageManager):
+        self.message_service = message_service
         self.user_data_manager = user_data_manager
         self.keyboard_factory = keyboard_factory
         self.metro_service = metro_service
@@ -18,20 +19,25 @@ class FavoritesHandler:
         self.language_manager = language_manager
 
     async def show_favorites(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        query = update.callback_query
-        await query.answer()
-
-        user_id = query.from_user.id
+        user_id = self.message_service.get_user_id(update)
         favs = self.user_data_manager.get_favorites_by_user(user_id)
 
+        await self.message_service.send_new_message(
+            update,
+            self.language_manager.t('common.loading', type="metro"),
+            reply_markup=self.keyboard_factory._back_reply_button()
+        )
+
         if favs == []:
-            await query.edit_message_text(
+            await self.message_service.send_new_message(
+                update,
                 self.language_manager.t('favorites.empty'),
                 reply_markup=self.keyboard_factory.help_menu()
             )
 
         else:
-            await query.edit_message_text(
+            await self.message_service.send_new_message(
+                update,
                 self.language_manager.t('favorites.message'),
                 reply_markup=self.keyboard_factory.favorites_menu(favs)
             )

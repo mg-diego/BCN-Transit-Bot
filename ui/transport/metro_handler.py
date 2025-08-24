@@ -36,10 +36,10 @@ class MetroHandler(HandlerBase):
     async def show_lines(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         logger.info("Showing metro lines menu")
         type=TransportType.METRO.value.capitalize()
-        await self.message_service.edit_inline_message(update, self.language_manager.t('common.loading', type=type))
+        await self.message_service.send_new_message(update, self.language_manager.t('common.loading', type=type), reply_markup=self.keyboard_factory._back_reply_button())
         metro_lines = await self.metro_service.get_all_lines()
         reply_markup = self.keyboard_factory.metro_lines_menu(metro_lines)
-        await self.message_service.edit_inline_message(
+        await self.message_service.handle_interaction(
             update,
             self.language_manager.t('common.select.line', type=type),
             reply_markup=reply_markup
