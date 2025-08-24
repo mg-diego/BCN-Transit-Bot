@@ -35,7 +35,7 @@ class MetroLine:
             "L9N": "🟧",
             "L9S": "🟧",
             "L10N": "🟦",
-            "L10S": "🟦",            
+            "L10S": "🟦",
             "L11": "🟩",
         }
         emoji = emojis.get(self.NOM_LINIA, "")

@@ -65,7 +65,7 @@ class ReplyHandler:
         elif 'ℹ️' in btn_text:
             await self.help_handler.show_help(update, context)
         elif '🔙' in btn_text:
-            await self.menu_handler.back_to_menu(update, context)
+            await self.menu_handler.back_to_menu(update, context, is_first_message)
         else:
             await self.reply_to_user(update, context)
 
