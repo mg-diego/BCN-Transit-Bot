@@ -20,14 +20,14 @@ class MenuHandler:
         await self.show_menu(update, context, False)
 
     async def show_menu(self, update: Update, context: ContextTypes.DEFAULT_TYPE, is_first_message = True):
+        user_id = self.message_service.get_user_id(update)
         if is_first_message:
-            await self.update_manager.start_loading(update, context, base_text=self.language_manager.t('main.menu.loading'))
-            user_id = self.message_service.get_user_id(update)
+            await self.update_manager.start_loading(update, context, base_text=self.language_manager.t('main.menu.loading'))            
             self.user_data_manager.register_user(user_id, self.message_service.get_username(update))
-            user_language = self.user_data_manager.get_user_language(user_id)
-            self.language_manager.set_language(user_language)
             await self.update_manager.stop_loading(update, context)
 
+        user_language = self.user_data_manager.get_user_language(user_id)
+        self.language_manager.set_language(user_language)
         msg = await self.message_service.send_message_direct(self.message_service.get_chat_id(update), context, self.language_manager.t('main.menu.message'), reply_markup=self.keyboard_factory.create_main_menu_replykeyboard())
             
 

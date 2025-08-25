@@ -21,7 +21,7 @@
   "common.loading.favorites": "Loading favorites list",
   "common.select.line": "Choose a {type} line:",
   "common.connections": "<u>Connections:</u>",
-  "common.alerts": "<u>Alerts:</u>",
+  "common.alerts": "⚠️ <u>Alerts:</u>",
   "common.stop.loading": "Loading stop information",
   "common.line.only.map": "<b><u>Line '{line}'</u></b>\n\nExplore the interactive map to choose a specific station.",
   "common.line.stops.list": "📄 Here are all the stops for line '<b>{line}</b>'",

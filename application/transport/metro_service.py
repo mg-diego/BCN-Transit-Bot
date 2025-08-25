@@ -95,17 +95,16 @@ class MetroService(ServiceBase):
         )
         return formatted_connections
 
-    async def get_metro_station_alerts(self, metro_line_id, station_id):
+    async def get_metro_station_alerts(self, metro_line_id, station_id, language):
         line = await self.get_line_by_id(metro_line_id)
         alerts = await self._get_from_cache_or_api(
             f"metro_station_alerts_{station_id}",
-            lambda: self.tmb_api_service.get_metro_station_alerts(line.ORIGINAL_NOM_LINIA, station_id),
+            lambda: self.tmb_api_service.get_metro_station_alerts(line.ORIGINAL_NOM_LINIA, station_id, language),
             cache_ttl=3600
         )
 
         formatted_alerts = (
             "\n".join(f"<pre>{c}</pre>" for c in alerts)
-            or self.language_manager.t('common.no.alerts')
         )
         return formatted_alerts
 

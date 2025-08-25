@@ -85,7 +85,7 @@ class BusHandler(HandlerBase):
             next_buses = await self.bus_service.get_stop_routes(bus_stop_id)
             is_fav = self.user_data_manager.has_favorite(user_id, TransportType.BUS.value, bus_stop_id)
             text = f"🚉 {self.language_manager.t('bus.stop.next')}\n{next_buses}"
-            keyboard = self.keyboard_factory.update_menu(is_fav, TransportType.BUS.value, bus_stop_id, line_id, user_id)
+            keyboard = self.keyboard_factory.update_menu(is_fav, TransportType.BUS.value, bus_stop_id, line_id, user_id, previous_callback=self.message_service.get_callback_query(update))
             return text, keyboard
 
         self.start_update_loop(user_id, chat_id, message.message_id, get_text_callable=update_text)

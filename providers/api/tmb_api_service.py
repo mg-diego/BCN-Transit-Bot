@@ -223,16 +223,18 @@ class TmbApiService:
 
         return connections
 
-    async def get_metro_station_alerts(self, metro_line, metro_station_id):
+    async def get_metro_station_alerts(self, metro_line, metro_station_id, language):
         url = f"https://api.tmb.cat/v1/alerts/metro/channels/WEB/routes/{metro_line}"
         data = await self._get(url)
         alerts = data['data']['alerts']
+        print(f"IDIOMA: {language}")
 
         station_alerts = []
         for alert in alerts:
             for entity in alert['entities']:
                 if entity['station_code'] == str(metro_station_id):
                     for publication in alert['publications']:
-                        station_alerts.append(publication['textEs'])
+                        print(publication)
+                        station_alerts.append(publication[f'text{str(language).capitalize()}'])
 
         return station_alerts

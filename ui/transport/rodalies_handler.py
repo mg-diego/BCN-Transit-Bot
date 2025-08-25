@@ -73,7 +73,7 @@ class RodaliesHandler(HandlerBase):
             next_rodalies = await self.rodalies_service.get_station_routes(rodalies_station_id, line_id)
             is_fav = self.user_data_manager.has_favorite(user_id, self.transport_type, rodalies_station_id)
             text = f"🚉 {self.language_manager.t(f'{self.transport_type}.station.next')}\n{next_rodalies}"
-            keyboard = self.keyboard_factory.update_menu(is_fav, self.transport_type, rodalies_station_id, line_id, user_id)
+            keyboard = self.keyboard_factory.update_menu(is_fav, self.transport_type, rodalies_station_id, line_id, user_id, previous_callback=self.message_service.get_callback_query(update))
             return text, keyboard
 
         self.start_update_loop(user_id, chat_id, message.message_id, get_text_callable=update_text)

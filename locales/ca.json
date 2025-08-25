@@ -21,7 +21,7 @@
   "common.loading.favorites": "Carregant llistat de favorits",
   "common.select.line": "Trieu una línia de {type}:",
   "common.connections": "<u>Conexions:</u>",
-  "common.alerts": "<u>Alertes:</u>",
+  "common.alerts": "⚠️ <u>Alertes:</u>",
   "common.stop.loading": "Carregant informació de la parada",
   "common.line.only.map": "<b><u>Línia '{line}'</u></b>\n\nExplora el mapa interactiu per triar una estació específica.",
   "common.line.stops.list": "📄 Aquestes són totes les parades de la línia '<b>{line}</b>'",

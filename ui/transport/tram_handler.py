@@ -81,7 +81,7 @@ class TramHandler(HandlerBase):
                 f"🚉 {self.language_manager.t('tram.stop.next')}\n{routes} \n\n"
             )
             is_fav = self.user_data_manager.has_favorite(user_id, "tram", stop_id)
-            keyboard = self.keyboard_factory.update_menu(is_fav, "tram", stop_id, line_id, user_id)
+            keyboard = self.keyboard_factory.update_menu(is_fav, "tram", stop_id, line_id, user_id, previous_callback=self.message_service.get_callback_query(update))
             return text, keyboard
         
         self.start_update_loop(user_id, chat_id, message.message_id, update_text)

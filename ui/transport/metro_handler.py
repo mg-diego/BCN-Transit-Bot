@@ -70,12 +70,14 @@ class MetroHandler(HandlerBase):
 
         station = await self.metro_service.get_station_by_id(metro_station_id)
         routes = await self.metro_service.get_station_routes(metro_station_id)
+        station_alerts = await self.metro_service.get_metro_station_alerts(line_id, metro_station_id, self.user_data_manager.get_user_language(user_id))
+        alerts_message = f"{self.language_manager.t("common.alerts")}\n{station_alerts}\n\n" if any(station_alerts) else ""
 
         text = (
             f"{self.language_manager.t(f"metro.station.name", name=station.NOM_ESTACIO.upper())}\n\n"
             f"🚉 {self.language_manager.t('metro.station.next')}\n{routes} \n\n"
+            f"{alerts_message}"
         )
-
         is_fav = self.user_data_manager.has_favorite(user_id, TransportType.METRO.value, metro_station_id)
         message = await self.message_service.handle_interaction(
             update,
@@ -85,9 +87,13 @@ class MetroHandler(HandlerBase):
 
         async def update_text():
             routes = await self.metro_service.get_station_routes(metro_station_id)
+            station_alerts = await self.metro_service.get_metro_station_alerts(line_id, metro_station_id, self.user_data_manager.get_user_language(user_id))
+            alerts_message = f"{self.language_manager.t("common.alerts")}\n{station_alerts}\n\n" if any(station_alerts) else ""
+
             text = (
                 f"{self.language_manager.t(f"metro.station.name", name=station.NOM_ESTACIO.upper())}\n\n"
                 f"🚉 {self.language_manager.t('metro.station.next')}\n{routes} \n\n"
+                f"{alerts_message}"
             )
             is_fav = self.user_data_manager.has_favorite(user_id, TransportType.METRO.value, metro_station_id)
             keyboard = self.keyboard_factory.update_menu(is_fav, TransportType.METRO.value, metro_station_id, line_id, user_id, self.message_service.get_callback_query(update))
@@ -96,7 +102,7 @@ class MetroHandler(HandlerBase):
         self.start_update_loop(user_id, chat_id, message.message_id, update_text)
         logger.info(f"Started update loop task for user {user_id}, station {metro_station_id}")
 
-    async def show_station_accesses(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+    async def show_station_location(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_id = self.message_service.get_chat_id(update)
         self.message_service.set_bot_instance(context.bot)
 
@@ -117,45 +123,17 @@ class MetroHandler(HandlerBase):
         print(access_text)
         text = (
             f"{self.language_manager.t(f"metro.station.name", name=station.NOM_ESTACIO.upper())}\n\n"
-            f"🚪 <b><u>Accesos</u></b>\n{access_text} \n\n"
+            f"<b><u>Accesos</u></b>\n{access_text} \n\n"
         )
+
+        is_fav = self.user_data_manager.has_favorite(user_id, TransportType.METRO.value, station_id)
 
         # 5. Mostrar información estática
         await self.message_service.edit_inline_message(
             update,
             text,
-            reply_markup=self.keyboard_factory.update_menu(False, "metro", station_id, line_id, user_id, self.message_service.get_callback_query(update))
+            reply_markup=self.keyboard_factory.update_menu(is_fav, "metro", station_id, line_id, user_id, self.message_service.get_callback_query(update))
         )
 
     async def show_station_connections(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         pass
-
-    async def show_station_alerts(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        user_id = self.message_service.get_chat_id(update)
-        self.message_service.set_bot_instance(context.bot)
-
-        # 1. Cancelar cualquier actualización en curso (parar el loop de tiempos)
-        self.update_manager.cancel_task(user_id)
-        logger.info(f"[MetroHandler] Update task cancelled for user {user_id} to show station alerts")
-
-        # 2. Obtener datos necesarios de la callback
-        _, line_id, station_id = self.message_service.get_callback_data(update)
-        logger.info(f"[MetroHandler] Showing alerts for station ID: {station_id}")
-
-        # 3. Obtener información de accesos desde el servicio        
-        station_alerts = await self.metro_service.get_metro_station_alerts(line_id, station_id)
-
-        # 4. Preparar mensaje
-        if not station_alerts:
-            text = self.language_manager.t("metro.accesses.none")
-        else:
-            text = self.language_manager.t("metro.accesses.title") + "\n\n"
-            for alert in station_alerts:
-                text += f"• {alert}\n"
-
-        # 5. Mostrar información estática
-        await self.message_service.edit_inline_message(
-            update,
-            text,
-            reply_markup=self.keyboard_factory.update_menu(False, "metro", station_id, line_id, user_id, self.message_service.get_callback_query(update))
-        )

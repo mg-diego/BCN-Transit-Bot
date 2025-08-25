@@ -95,7 +95,7 @@ class FavoritesHandler:
             }
 
         self.user_data_manager.add_favorite(user_id, item_type, new_fav_item)
-        keyboard = self.keyboard_factory.update_menu(is_favorite=True, item_type=item_type, item_id=item_id, line_id=line_id, user_id=user_id)
+        keyboard = self.keyboard_factory.update_menu(is_favorite=True, item_type=item_type, item_id=item_id, line_id=line_id, user_id=user_id, previous_callback=self.message_service.get_callback_query(update))
 
         await query.edit_message_reply_markup(reply_markup=keyboard)
 
@@ -108,6 +108,6 @@ class FavoritesHandler:
         _, item_type, line_id, item_id = data.split(":")
 
         self.user_data_manager.remove_favorite(user_id, item_type, item_id)
-        keyboard = self.keyboard_factory.update_menu(is_favorite=False, item_type=item_type, item_id=item_id, line_id=line_id, user_id=user_id)
+        keyboard = self.keyboard_factory.update_menu(is_favorite=False, item_type=item_type, item_id=item_id, line_id=line_id, user_id=user_id, previous_callback=self.message_service.get_callback_query(update))
 
         await query.edit_message_reply_markup(reply_markup=keyboard)

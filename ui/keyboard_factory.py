@@ -73,8 +73,10 @@ class KeyboardFactory:
 
         return ReplyKeyboardMarkup(
             keyboard,
-            resize_keyboard=True,    # ajusta tamaño automáticamente
-            one_time_keyboard=False  # el teclado permanece visible
+            resize_keyboard=True,       # botones más pequeños → menos scroll
+            one_time_keyboard=False,    # teclado no desaparece
+            is_persistent=False,        # evita que Telegram "fije" el teclado
+            input_field_placeholder=""  # asegura que no reduce espacio para botones
         )
     
     # === LINES ===
@@ -214,14 +216,12 @@ class KeyboardFactory:
             fav_button = InlineKeyboardButton(self.language_manager.t('keyboard.favorites.add'), callback_data=f"add_fav:{item_type}:{line_id}:{item_id}")
 
         inline_buttons = []
-        if "station" not in previous_callback:
-            inline_buttons.append(InlineKeyboardButton('🕒 Próximos', callback_data=f"{item_type}_station:{line_id}:{item_id}"))
-        if "access" not in previous_callback:
-            inline_buttons.append(InlineKeyboardButton('🚪 Accesos', callback_data=f"{item_type}_access:{line_id}:{item_id}"))
+        if "station" not in previous_callback and "stop" not in previous_callback:
+            inline_buttons.append(InlineKeyboardButton('🕒 Próximos  ', callback_data=f"{item_type}_station:{line_id}:{item_id}"))
+        if "location" not in previous_callback:
+            inline_buttons.append(InlineKeyboardButton('📍 Ubicación  ', callback_data=f"{item_type}_location:{line_id}:{item_id}"))
         if "connections" not in previous_callback:
-            inline_buttons.append(InlineKeyboardButton('🔄 Conexiones', callback_data=f"{item_type}_connections:{line_id}:{item_id}"))
-        if "alerts" not in previous_callback:
-            inline_buttons.append(InlineKeyboardButton('⚠️ Alertas', callback_data=f"{item_type}_alerts:{line_id}:{item_id}"))
+            inline_buttons.append(InlineKeyboardButton('🔄 Conexiones  ', callback_data=f"{item_type}_connections:{line_id}:{item_id}"))
 
         keyboard = InlineKeyboardMarkup([
             inline_buttons,

@@ -22,7 +22,7 @@
   "common.loading.favorites": "Cargando lista de favoritos",
   "common.select.line": "Elige una línea de {type}:",
   "common.connections": "<u>Conexiones:</u>",
-  "common.alerts": "<u>Alertas:</u>",
+  "common.alerts": "⚠️ <u>Alertas:</u>",
   "common.stop.loading": "Cargando información de la parada",
   "common.line.only.map": "<b><u>Línea '{line}'</u></b>\n\nExplora el mapa interactivo para elegir una estación específica.",
   "common.line.stops.list": "📄 Estas son todas las paradas de la línea '<b>{line}</b>'",
