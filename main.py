@@ -80,7 +80,10 @@ def main():
     application.add_handler(CommandHandler("help", help_handler.show_help))    
     application.add_handler(CallbackQueryHandler(help_handler.show_help, pattern=r"^help$"))
 
-    # METRO
+    # METRO    
+    application.add_handler(CallbackQueryHandler(metro_handler.show_station_alerts, pattern=r"^metro_alerts"))
+    application.add_handler(CallbackQueryHandler(metro_handler.show_station_connections, pattern=r"^metro_connections"))
+    application.add_handler(CallbackQueryHandler(metro_handler.show_station_accesses, pattern=r"^metro_access"))
     application.add_handler(CallbackQueryHandler(metro_handler.show_list, pattern=r"^metro_list"))
     application.add_handler(CallbackQueryHandler(metro_handler.show_map, pattern=r"^metro_map"))
     application.add_handler(CallbackQueryHandler(metro_handler.show_station, pattern=r"^metro_station"))

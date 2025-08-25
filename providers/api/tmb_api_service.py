@@ -118,7 +118,6 @@ class TmbApiService:
     async def get_bus_stops(self) -> List[BusStop]:
         url = f'{self.BASE_URL_TRANSIT}/parades'
         data = await self._get(url)
-        print(data)
         features = data['features']
 
         stations = []

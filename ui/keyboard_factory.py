@@ -206,17 +206,26 @@ class KeyboardFactory:
     def help_menu(self):
         return InlineKeyboardMarkup([self._back_button(self.BACK_TO_MENU_CALLBACK)])
     
-    def update_menu(self, is_favorite: bool, item_type:str, item_id: str, line_id: str, user_id: str):
+    def update_menu(self, is_favorite: bool, item_type:str, item_id: str, line_id: str, user_id: str, previous_callback: str):
+        print(previous_callback)
         if is_favorite:
             fav_button = InlineKeyboardButton(self.language_manager.t('keyboard.favorites.remove'), callback_data=f"remove_fav:{item_type}:{line_id}:{item_id}")
         else:
             fav_button = InlineKeyboardButton(self.language_manager.t('keyboard.favorites.add'), callback_data=f"add_fav:{item_type}:{line_id}:{item_id}")
 
+        inline_buttons = []
+        if "station" not in previous_callback:
+            inline_buttons.append(InlineKeyboardButton('🕒 Próximos', callback_data=f"{item_type}_station:{line_id}:{item_id}"))
+        if "access" not in previous_callback:
+            inline_buttons.append(InlineKeyboardButton('🚪 Accesos', callback_data=f"{item_type}_access:{line_id}:{item_id}"))
+        if "connections" not in previous_callback:
+            inline_buttons.append(InlineKeyboardButton('🔄 Conexiones', callback_data=f"{item_type}_connections:{line_id}:{item_id}"))
+        if "alerts" not in previous_callback:
+            inline_buttons.append(InlineKeyboardButton('⚠️ Alertas', callback_data=f"{item_type}_alerts:{line_id}:{item_id}"))
+
         keyboard = InlineKeyboardMarkup([
-            [
-                fav_button,
-                self._close_button(user_id)
-            ]
+            inline_buttons,
+            [fav_button, self._close_button(user_id)]
         ])
         return keyboard
     
@@ -304,7 +313,6 @@ class KeyboardFactory:
                 InlineKeyboardButton(f"🚌 ({stop.CODI_PARADA}) - {stop.NOM_PARADA}  ", callback_data=f"bus_stop:{stop.CODI_LINIA}:{stop.CODI_PARADA}")
             )
         rows = self._chunk_buttons(buttons, 1)
-        #rows.append(self._back_button(self.BACK_TO_MENU_CALLBACK))
         return InlineKeyboardMarkup(rows)
     
     

@@ -34,10 +34,10 @@ class MessageService:
         """
         if update.callback_query:
             logger.info(f"[{self.__class__.__name__}] Handling callback_query for user {self.get_user_id(update)}")
-            await self.edit_inline_message(update, text, reply_markup, parse_mode)
+            return await self.edit_inline_message(update, text, reply_markup, parse_mode)
         elif update.message:
             logger.info(f"[{self.__class__.__name__}] Handling message for user {self.get_user_id(update)}")
-            await self.send_new_message(update, text, reply_markup, parse_mode)
+            return await self.send_new_message(update, text, reply_markup, parse_mode)
 
     async def send_new_message(self, update: Update, text: str, reply_markup: InlineKeyboardMarkup = None, parse_mode=ParseMode.HTML):
         """Send a new message (does not edit)."""
@@ -61,6 +61,7 @@ class MessageService:
         )
         self._cache_message(update, msg)
         logger.info(f"[{self.__class__.__name__}] Edited inline message {msg.message_id} for user {self.get_user_id(update)}")
+        return msg
 
     async def send_message_direct(self, chat_id: int, context: ContextTypes.DEFAULT_TYPE, text: str, reply_markup: InlineKeyboardMarkup = None, parse_mode=ParseMode.HTML):
         """Send a message directly to a chat by ID (e.g., from web_app_data)."""
@@ -149,6 +150,9 @@ class MessageService:
             self._user_messages[user_id].clear()
 
     # Utility methods
+    def get_callback_query(self, update):
+        return update.callback_query.data
+    
     def check_query_callback(self, update, expected_callback):
         """Check if callback_query data starts with the expected callback string."""
         return update.callback_query.data.startswith(expected_callback)

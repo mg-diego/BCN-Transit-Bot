@@ -49,7 +49,6 @@ class BusHandler(HandlerBase):
 
     async def show_bus_category_lines(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         _, category = self.message_service.get_callback_data(update)
-        print(f"CATEGORY: {category}")
         lines = await self.bus_service.get_lines_by_category(category)
         await self.message_service.handle_interaction(
             update,
@@ -77,7 +76,7 @@ class BusHandler(HandlerBase):
         user_id, chat_id, line_id, bus_stop_id = self.extract_context(update, context)
         logger.info(f"Showing stop info for user {user_id}, line {line_id}, stop {bus_stop_id}")
 
-        bus_stop = await self.bus_service.get_stop_by_id(bus_stop_id, line_id)
+        bus_stop = await self.bus_service.get_stop_by_id(bus_stop_id)
         message = await self.show_stop_intro(update, context, TransportType.BUS.value, line_id, bus_stop_id, bus_stop.coordinates[1], bus_stop.coordinates[0], bus_stop.NOM_PARADA)
         await self.bus_service.get_stop_routes(bus_stop_id)
         await self.update_manager.stop_loading(update, context)

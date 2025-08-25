@@ -34,12 +34,11 @@ class MetroService(ServiceBase):
         )
 
         filtered_stations = [
-            station
-            for station in stations
+            station for station in stations
             if station_name.lower() in station.NOM_ESTACIO.lower()
         ]
 
-        return filtered_stations
+        return filtered_stations    
 
     async def get_line_by_id(self, line_id) -> MetroLine:
         lines = await self.get_all_lines()
@@ -67,12 +66,21 @@ class MetroService(ServiceBase):
             cache_ttl=3600*24
         )
 
-    async def get_station_by_id(self, station_id, line_id) -> MetroStation:
-        stations = await self.get_stations_by_line(line_id)
-        station = next((s for s in stations if str(s.CODI_ESTACIO) == str(station_id)), None)
-        logger.debug(f"[{self.__class__.__name__}] get_station_by_id({station_id}, line {line_id}) -> {station}")
-        return station    
+    async def get_station_by_id(self, station_id) -> MetroStation:        
+        stations = await self._get_from_cache_or_api(
+            "metro_stations",
+            self.tmb_api_service.get_metro_stations,
+            cache_ttl=3600*24
+        )
 
+        filtered_stations = [
+            station for station in stations
+            if int(station_id) == int(station.ID_ESTACIO)
+        ]
+
+        station = filtered_stations[0] if any(filtered_stations) else None
+        logger.debug(f"[{self.__class__.__name__}] get_station_by_id({station_id}) -> {station}")
+        return station
 
     async def get_metro_station_connections(self, station_id) -> List[MetroConnection]:
         connections = await self._get_from_cache_or_api(

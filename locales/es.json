@@ -30,11 +30,11 @@
   "common.no.connections": "      - Esta parada no tiene ninguna conexión de {type}.",
   "common.no.alerts": "      <pre> - Esta parada no tiene ninguna alerta. </pre>",
   "common.map": "🗺️ Mapa",
-  "common.list": " 📋Lista",
+  "common.list": " 📋 Lista",
   "common.ask.search": "🧭 ¿Cómo prefieres ver las paradas?",
   "common.open.map": "¡Pulsa el botón “Abrir Mapa” que está abajo para ver todas las paradas! 👇",
 
-  "metro.station.name": "🚏 <b>ESTACIÓN '{name}'</b> 🚏\n\nSelecciona una entrada de metro para más detalles:",
+  "metro.station.name": "🚏 <b><u>ESTACIÓN '{name}'</u></b> 🚏",
   "metro.station.next": "<u>Próximos Metros:</u>",
   "bus.stop.name": "🚏 <b>PARADA '{name}'</b> 🚏",
   "bus.stop.next": "<u>Próximos Buses:</u>",

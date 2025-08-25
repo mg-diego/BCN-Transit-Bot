@@ -34,7 +34,7 @@
   "common.open.map": "Prem el botó “Obrir Mapa” que hi ha a baix per veure totes les parades! 👇",
 
 
-  "metro.station.name": "🚏 <b>ESTACIÓ '{name}'</b> 🚏\n\nSeleccioneu una entrada de metro per a més detalls:",
+  "metro.station.name": "🚏 <b><u>ESTACIÓ '{name}'</u></b> 🚏",
   "metro.station.next": "<u>Pròxims Metros:</u>",
   "bus.stop.name":"🚏 <b>STOP '{name}'</b> 🚏",
   "bus.stop.next": "<u>Pròxims Autobusos:</u>",
