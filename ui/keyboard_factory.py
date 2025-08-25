@@ -3,7 +3,7 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMa
 from typing import List
 
 from domain.metro import MetroLine, MetroStation, MetroAccess
-from domain.bus import BusLine
+from domain.bus import BusLine, BusStop
 from domain.tram import TramLine, TramStop
 from domain.rodalies import RodaliesLine
 from domain.transport_type import TransportType
@@ -200,7 +200,7 @@ class KeyboardFactory:
         return ReplyKeyboardMarkup(
             keyboard,
             resize_keyboard=True,
-            one_time_keyboard=False  # el teclado permanece visible
+            one_time_keyboard=False
         )
     
     def help_menu(self):
@@ -294,11 +294,15 @@ class KeyboardFactory:
         rows = self._chunk_buttons(keyboard, 2)
         return InlineKeyboardMarkup(rows)
 
-    def reply_keyboard_stations_menu(self, metro_stations: List[MetroStation]):
+    def reply_keyboard_stations_menu(self, metro_stations: List[MetroStation], bus_stops: List[BusStop]):
         buttons = [
-            InlineKeyboardButton(f"{metro_station.NOM_LINIA} - {metro_station.NOM_ESTACIO}  ", callback_data=f"metro_station:{metro_station.CODI_LINIA}:{metro_station.CODI_ESTACIO}")
+            InlineKeyboardButton(f"🚇 {metro_station.NOM_LINIA} - {metro_station.NOM_ESTACIO}  ", callback_data=f"metro_station:{metro_station.CODI_LINIA}:{metro_station.CODI_ESTACIO}")
             for metro_station in metro_stations
         ]
+        for stop in bus_stops:
+            buttons.append(
+                InlineKeyboardButton(f"🚌 ({stop.CODI_PARADA}) - {stop.NOM_PARADA}  ", callback_data=f"bus_stop:{stop.CODI_LINIA}:{stop.CODI_PARADA}")
+            )
         rows = self._chunk_buttons(buttons, 1)
         #rows.append(self._back_button(self.BACK_TO_MENU_CALLBACK))
         return InlineKeyboardMarkup(rows)

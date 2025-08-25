@@ -17,11 +17,12 @@
   "keyboard.next": "Següent ➡️",
   "keyboard.previous": "⬅️ Anterior",
 
-  "common.loading": "⏳ Carregant línies de {type}...",
+  "common.loading.lines": "Carregant línies de {type}",
+  "common.loading.favorites": "Carregant llistat de favorits",
   "common.select.line": "Trieu una línia de {type}:",
   "common.connections": "<u>Conexions:</u>",
   "common.alerts": "<u>Alertes:</u>",
-  "common.stop.loading": "⏳ Carregant informació de la parada...",
+  "common.stop.loading": "Carregant informació de la parada",
   "common.line.only.map": "<b><u>Línia '{line}'</u></b>\n\nExplora el mapa interactiu per triar una estació específica.",
   "common.line.stops.list": "📄 Aquestes són totes les parades de la línia '<b>{line}</b>'",
   "common.station.error": "⚠️ No s'ha pogut actualitzar la informació de l'estació.\n\n Si us plau, fes clic al botó '❌ Tancar' i reinicia la cerca.",
@@ -55,5 +56,6 @@
 
   "help.text": "ℹ️ <b><u>Ajuda del BCN Transit Bot</u></b> ℹ️\n\nAquest bot et permet consultar informació actualitzada sobre el <b>Metro</b> i el <b>Bus</b> de la ciutat de Barcelona de manera ràpida.\n\n📋 <u>Comandes disponibles:</u>\n  • /start – Inicia una nova cerca\n  • /help – Mostra aquest missatge d’ajuda\n\n🚇 <u>Per veure els propers metros:</u>\n  1. Prem 'Metro' al menú.\n  2. Selecciona una línia.\n  3. Selecciona una estació.\n  4. Veuràs els horaris actualitzats i més detalls.\n\n🚌 <u>Per veure els propers busos:</u>\n  1. Prem 'Bus' al menú.\n  2. Selecciona una línia.\n  3. Selecciona una estació des del mapa interactiu.\n  4. Veuràs els horaris actualitzats i més detalls.\n\n⭐ <u>Per veure els teus favorits:</u>\n  1. Prem 'Favorits' al menú.\n  2. Selecciona un dels teus favorits (has d’haver-lo guardat prèviament).\n  3. Veuràs els horaris actualitzats i més detalls.\n\n🌐 <u>Per seleccionar l'Idioma:</u>\n 1. Fes clic a 'Idioma' al menú.\n 2. Selecciona un dels idiomes disponibles (Anglès, Espanyol o Català).\n 3. Veureu l'aplicació actualitzada al nou idioma.\n\nTens dubtes o suggeriments? Sóc aquí per ajudar-te!\n\n📬 <b>Contacte:</b> <a href='https://github.com/mg-diego/BCN-Transit-Bot'>github.com/mg-diego/BCN-Transit-Bot</a>\n\n 🔖 <b>Versió:</b> <code>v1.3</code>",
 
-  "results_found": "🔍 He trobat {count} resultat{s} que coincideixen amb la teva cerca:"
+  "results.found": "🔍 He trobat {count} resultat{s} que coincideixen amb la teva cerca '{search_value}':",
+  "results.searching": "Cercant resultats"
 }

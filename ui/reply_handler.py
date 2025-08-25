@@ -5,16 +5,13 @@ from telegram.ext import (
     ContextTypes
 )
 
-from application import MetroService, BusService, TramService, RodaliesService, MessageService
+from application import MessageService
 from ui import KeyboardFactory, MetroHandler, BusHandler, TramHandler, RodaliesHandler, FavoritesHandler, LanguageHandler, HelpHandler, MenuHandler
 from providers.manager import LanguageManager 
 
 class ReplyHandler:
     def __init__(
             self,
-            message_service: MessageService,
-            keyboard_factory: KeyboardFactory,
-            language_manager: LanguageManager,
             menu_handler: MenuHandler,
             metro_handler: MetroHandler,
             bus_handler: BusHandler,
@@ -23,14 +20,7 @@ class ReplyHandler:
             favorites_handler: FavoritesHandler,
             language_handler: LanguageHandler,
             help_handler: HelpHandler,
-            metro_service: MetroService,
-            bus_service: BusService,
-            tram_service: TramService,
-            rodalies_service: RodaliesService
         ):
-        self.message_service = message_service
-        self.keyboard_factory = keyboard_factory
-        self.language_manager = language_manager
 
         self.menu_handler = menu_handler
         self.metro_handler = metro_handler
@@ -40,11 +30,6 @@ class ReplyHandler:
         self.favorites_handler = favorites_handler
         self.language_handler = language_handler
         self.help_handler = help_handler
-
-        self.metro_service = metro_service
-        self.bus_service = bus_service
-        self.tram_service = tram_service
-        self.rodalies_service = rodalies_service
 
     async def reply_router(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         btn_text = str(update.message.text)
@@ -69,8 +54,18 @@ class ReplyHandler:
             await self.reply_to_user(update, context)
 
     async def reply_to_user(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        message_service = self.menu_handler.message_service
+        update_manager = self.menu_handler.update_manager
+        language_manager = self.menu_handler.language_manager
+        keyboard_factory = self.menu_handler.keyboard_factory
+
+        metro_service = self.metro_handler.metro_service
+        bus_service = self.bus_handler.bus_service
+    
         search_text = str(update.message.text)
-        self.message_service.set_bot_instance(context.bot)
+        message_service.set_bot_instance(context.bot)
+
+
 
         if len(search_text) < 3:
             await update.message.reply_text(
@@ -78,15 +73,18 @@ class ReplyHandler:
             )
             return
         
-        message = await self.message_service.send_new_message(update, self.language_manager.t('common.loading', type="metro"))
-        chat_id = self.message_service.get_chat_id(update)
+        #message = await message_service.send_new_message(update, language_manager.t('results.searching'))
+        message = await update_manager.start_loading(update, context, language_manager.t('results.searching'))
+        chat_id = message_service.get_chat_id(update)
 
         if search_text.isdigit(): # BUS STATIONS
-
+            await bus_service.get_stop_by_id(search_text)
             pass
 
         else: # METRO STATIONS
-            stations = await self.metro_service.get_stations_by_name(search_text)
+            stations = await metro_service.get_stations_by_name(search_text)
+            stops = await bus_service.get_stops_by_name(search_text)
+            print(stops)
 
             unique_stations = {}
             line_cache = {}
@@ -96,12 +94,12 @@ class ReplyHandler:
 
                 for line_code in lines:
                     if line_code not in line_cache:
-                        line_cache[line_code] = await self.metro_service.get_line_by_name(line_code)
+                        line_cache[line_code] = await metro_service.get_line_by_name(line_code)
                     line = line_cache[line_code]
                     if line is None:
                         continue
 
-                    line_stations = await self.metro_service.get_stations_by_line(line.CODI_LINIA)
+                    line_stations = await metro_service.get_stations_by_line(line.CODI_LINIA)
                     line_station = next(
                         (s for s in line_stations if str(s.NOM_ESTACIO) == str(station.NOM_ESTACIO)),
                         None
@@ -117,11 +115,12 @@ class ReplyHandler:
                     unique_stations[key] = station_copy
 
             final_stations = list(unique_stations.values())
-
-            await self.message_service.edit_message_by_id(
+            
+            await update_manager.stop_loading(update, context)
+            await message_service.edit_message_by_id(
                 chat_id,
                 message.message_id,
-                self.language_manager.t("results_found", count=len(final_stations)),
-                self.keyboard_factory.reply_keyboard_stations_menu(final_stations)
+                language_manager.t("results.found", count=len(final_stations), search_value=search_text),
+                keyboard_factory.reply_keyboard_stations_menu(final_stations, stops)
             )
                 

@@ -70,10 +70,12 @@ class MetroHandler(HandlerBase):
 
         station = await self.metro_service.get_station_by_id(metro_station_id, line_id)      
         station_accesses = await self.metro_service.get_station_accesses(station.CODI_GRUP_ESTACIO)  
-        message = await self.show_stop_intro(update, TransportType.METRO.value, line_id, metro_station_id, station.coordinates[1], station.coordinates[0], station.NOM_ESTACIO, self.keyboard_factory.metro_station_access_menu(station_accesses))
 
+        message = await self.show_stop_intro(update, context, TransportType.METRO.value, line_id, metro_station_id, station.coordinates[1], station.coordinates[0], station.NOM_ESTACIO, self.keyboard_factory.metro_station_access_menu(station_accesses))
+        await self.metro_service.get_station_routes(metro_station_id)
         station_connections = await self.metro_service.get_metro_station_connections(metro_station_id)
-        station_alerts = await self.metro_service.get_metro_station_alerts(line_id, metro_station_id)
+        station_alerts = await self.metro_service.get_metro_station_alerts(line_id, metro_station_id)        
+        await self.update_manager.stop_loading(update, context)
 
         async def update_text():
             routes = await self.metro_service.get_station_routes(metro_station_id)

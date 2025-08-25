@@ -59,7 +59,7 @@ class UpdateManager:
             raise
 
     async def start_loading(self, update: Update, context: ContextTypes.DEFAULT_TYPE,
-                            base_text: str = ''):
+                            base_text: str = '', reply_markup = None):
         """
         Sends an initial loading message and starts the animated update task.
         """
@@ -70,7 +70,7 @@ class UpdateManager:
         await self.stop_loading(update, context)
 
         # Enviar mensaje inicial
-        message = await context.bot.send_message(chat_id=chat_id, text=f"⏳ {base_text}")
+        message = await context.bot.send_message(chat_id=chat_id, text=f"⏳ {base_text}", reply_markup=reply_markup)
         self.loading_messages[user_id] = message.message_id
 
         # Crear tarea de animación usando start_task existente
@@ -78,6 +78,8 @@ class UpdateManager:
             user_id,
             lambda: self._animate_loading(user_id, context, chat_id, base_text)
         )
+
+        return message
 
     async def stop_loading(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """

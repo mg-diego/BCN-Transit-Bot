@@ -12,9 +12,9 @@ class BusService(ServiceBase):
     Service to interact with Bus data via TmbApiService, with optional caching.
     """
 
-    def __init__(self, transport_api_service: TmbApiService, cache_service: CacheService = None):
+    def __init__(self, tmb_api_service: TmbApiService, cache_service: CacheService = None):
         super().__init__(cache_service)
-        self.transport_api_service = transport_api_service        
+        self.tmb_api_service = tmb_api_service        
         logger.info(f"[{self.__class__.__name__}] BusService initialized")
 
     async def get_all_lines(self) -> List[BusLine]:
@@ -23,9 +23,24 @@ class BusService(ServiceBase):
         """
         return await self._get_from_cache_or_api(
             "bus_lines",
-            self.transport_api_service.get_bus_lines,
+            self.tmb_api_service.get_bus_lines,
             cache_ttl=3600*24
         )
+    
+    async def get_stops_by_name(self, stop_name) -> List[BusLine]:
+        stops = await self._get_from_cache_or_api(
+            "bus_stops",
+            self.tmb_api_service.get_bus_stops,
+            cache_ttl=3600*24
+        )
+
+        filtered_stops = [
+            stop
+            for stop in stops
+            if stop_name.lower() in stop.NOM_PARADA.lower()
+        ]
+
+        return filtered_stops
 
     async def get_line_by_id(self, line_id) -> BusLine:
         lines = await self.get_all_lines()
@@ -54,7 +69,7 @@ class BusService(ServiceBase):
         """
         return await self._get_from_cache_or_api(
             f"bus_line_{line_id}_stops",
-            lambda: self.transport_api_service.get_bus_line_stops(line_id),
+            lambda: self.tmb_api_service.get_bus_line_stops(line_id),
             cache_ttl=3600*24
         )
 
@@ -73,7 +88,7 @@ class BusService(ServiceBase):
         """
         routes = await self._get_from_cache_or_api(
             f"bus_stop_{stop_id}_routes",
-            lambda: self.transport_api_service.get_next_bus_at_stop(stop_id),
+            lambda: self.tmb_api_service.get_next_bus_at_stop(stop_id),
             cache_ttl=10
         )
         return "\n\n".join(str(route) for route in routes)

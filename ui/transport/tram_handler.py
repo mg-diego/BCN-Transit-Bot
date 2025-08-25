@@ -71,7 +71,9 @@ class TramHandler(HandlerBase):
         logger.info(f"Showing stop info for user {user_id}, line {line_id}, stop {stop_id}")
 
         stop = await self.tram_service.get_stop_by_id(stop_id, line_id)
-        message = await self.show_stop_intro(update, TransportType.TRAM.value, line_id, stop_id, stop.latitude, stop.longitude, stop.name)
+        message = await self.show_stop_intro(update, context, TransportType.TRAM.value, line_id, stop_id, stop.latitude, stop.longitude, stop.name)
+        await self.tram_service.get_stop_routes(stop.outboundCode, stop.returnCode)
+        await self.update_manager.stop_loading(update, context)
 
         async def update_text():
             routes = await self.tram_service.get_stop_routes(stop.outboundCode, stop.returnCode)

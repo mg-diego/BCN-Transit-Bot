@@ -24,7 +24,7 @@ class FavoritesHandler:
 
         await self.message_service.send_new_message(
             update,
-            self.language_manager.t('common.loading', type="metro"),
+            self.language_manager.t('common.loading.favorites'),
             reply_markup=self.keyboard_factory._back_reply_button()
         )
 

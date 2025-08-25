@@ -41,7 +41,7 @@ class BusHandler(HandlerBase):
         if self.message_service.check_query_callback(update, "bus_page:"):
             _, page = self.message_service.get_callback_data(update)
         else:
-            await self.message_service.handle_interaction(update, self.language_manager.t("common.loading", type=type))
+            await self.message_service.handle_interaction(update, self.language_manager.t("common.loading.lines", type=type))
 
         reply_markup = self.keyboard_factory.bus_lines_paginated_menu(bus_lines, int(page))
         await self.message_service.handle_interaction(update, self.language_manager.t("common.select.line", type=type), reply_markup)
@@ -78,7 +78,9 @@ class BusHandler(HandlerBase):
         logger.info(f"Showing stop info for user {user_id}, line {line_id}, stop {bus_stop_id}")
 
         bus_stop = await self.bus_service.get_stop_by_id(bus_stop_id, line_id)
-        message = await self.show_stop_intro(update, TransportType.BUS.value, line_id, bus_stop_id, bus_stop.coordinates[1], bus_stop.coordinates[0], bus_stop.NOM_PARADA)
+        message = await self.show_stop_intro(update, context, TransportType.BUS.value, line_id, bus_stop_id, bus_stop.coordinates[1], bus_stop.coordinates[0], bus_stop.NOM_PARADA)
+        await self.bus_service.get_stop_routes(bus_stop_id)
+        await self.update_manager.stop_loading(update, context)
 
         async def update_text():
             next_buses = await self.bus_service.get_stop_routes(bus_stop_id)

@@ -1,15 +1,15 @@
-import asyncio
 from telegram import Update
 from telegram.ext import (
     ContextTypes
 )
-from application import MessageService
+from application import MessageService, UpdateManager
 from providers.helpers import logger
+from providers.manager import UserDataManager, LanguageManager
 
 from .keyboard_factory import KeyboardFactory
 
 class MenuHandler:
-    def __init__(self, keyboard_factory: KeyboardFactory, message_service: MessageService, user_data_manager, language_manager, update_manager):
+    def __init__(self, keyboard_factory: KeyboardFactory, message_service: MessageService, user_data_manager: UserDataManager, language_manager: LanguageManager, update_manager: UpdateManager):
         self.keyboard_factory = keyboard_factory
         self.message_service = message_service
         self.user_data_manager = user_data_manager
@@ -22,7 +22,6 @@ class MenuHandler:
     async def show_menu(self, update: Update, context: ContextTypes.DEFAULT_TYPE, is_first_message = True):
         if is_first_message:
             await self.update_manager.start_loading(update, context, base_text=self.language_manager.t('main.menu.loading'))
-            #msg = await self.message_service.send_new_message(update, self.language_manager.t('main.menu.loading'))
             user_id = self.message_service.get_user_id(update)
             self.user_data_manager.register_user(user_id, self.message_service.get_username(update))
             user_language = self.user_data_manager.get_user_language(user_id)

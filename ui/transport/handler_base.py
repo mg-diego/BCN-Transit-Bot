@@ -38,15 +38,21 @@ class HandlerBase:
         logger.info(f"Showing {transport_type.value.lower()} lines menu")
         type_name = transport_type.value.capitalize()
         
+        '''
         # Mensaje de carga
         await self.message_service.send_new_message(
             update,
-            self.language_manager.t('common.loading', type=type_name),
+            self.language_manager.t('common.loading.lines', type=type_name),
             reply_markup=self.keyboard_factory._back_reply_button()
         )
+        '''
+
+        await self.update_manager.start_loading(update, context, self.language_manager.t('common.loading.lines', type=type_name), self.keyboard_factory._back_reply_button())
         
         # Obtener líneas
         lines = await service_get_lines()
+
+        await self.update_manager.stop_loading(update, context)
         
         # Construir teclado
         reply_markup = keyboard_menu_builder(lines)
@@ -158,13 +164,13 @@ class HandlerBase:
 
         return user_id, chat_id, line_id, stop_id
     
-    async def show_stop_intro(self, update: Update, transport_type: str, line_id, stop_id, stop_lat, stop_lon, stop_name, keyboard_reply = None):
+    async def show_stop_intro(self, update: Update, context, transport_type: str, line_id, stop_id, stop_lat, stop_lon, stop_name, keyboard_reply = None):
         sub_key = "station" if transport_type in [TransportType.METRO.value, TransportType.RODALIES.value] else "stop"
         await self.message_service.handle_interaction(update, self.language_manager.t(f"{transport_type}.{sub_key}.name", name=stop_name.upper()))
         await self.message_service.send_location(update, stop_lat, stop_lon, reply_markup=keyboard_reply)
 
-        #message = await self.update_manager.start_loading(update, context, self.language_manager.t("common.stop.loading"))
-        message = await self.message_service.send_new_message_from_callback(update, text=self.language_manager.t("common.stop.loading"))
+        message = await self.update_manager.start_loading(update, context, self.language_manager.t("common.stop.loading"))
+        #message = await self.message_service.send_new_message_from_callback(update, text=self.language_manager.t("common.stop.loading"))
 
         self.user_data_manager.register_search(transport_type, line_id, stop_id, stop_name)
 

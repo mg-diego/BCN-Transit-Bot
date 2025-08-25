@@ -1,8 +1,9 @@
+from typing import List
 import aiohttp
 import re
 import inspect
 
-from domain.metro import MetroLine, MetroLineRoute, NextMetro, MetroConnection, create_metro_station, create_metro_access
+from domain.metro import MetroLine, MetroLineRoute, NextMetro, MetroConnection, MetroStation, create_metro_station, create_metro_access
 from domain.bus import BusStop, BusLine, create_bus_stop, BusLineRoute, NextBus
 
 from providers.helpers import logger
@@ -70,12 +71,12 @@ class TmbApiService:
             items.sort(key=sort_key)
         return items, data
     
-    async def get_bus_lines(self):
+    async def get_bus_lines(self) -> List[BusLine]:
         url = f'{self.BASE_URL_TRANSIT}/linies/bus'
         items, _ = await self.fetch_transit_items(url, BusLine, sort_key=self._natural_key)
         return items
 
-    async def get_bus_line_stops(self, line_code):
+    async def get_bus_line_stops(self, line_code) -> List[BusStop]:
         url = f'{self.BASE_URL_TRANSIT}/linies/bus/{line_code}/parades'
 
         from_origin, _ = await self.fetch_transit_items(
@@ -96,12 +97,12 @@ class TmbApiService:
 
         return from_origin + from_destination
 
-    async def get_metro_lines(self):
+    async def get_metro_lines(self) -> List[MetroLine]:
         url = f'{self.BASE_URL_TRANSIT}/linies/metro'
         items, _ = await self.fetch_transit_items(url, MetroLine, sort_key=lambda x: x.NOM_LINIA)
         return items
     
-    async def get_metro_stations(self):
+    async def get_metro_stations(self) -> List[MetroStation]:
         url = f'{self.BASE_URL_TRANSIT}/estacions'
         data = await self._get(url)
         
@@ -113,8 +114,21 @@ class TmbApiService:
 
         stations.sort(key=lambda x: x.ORDRE_ESTACIO)
         return stations
+    
+    async def get_bus_stops(self) -> List[BusStop]:
+        url = f'{self.BASE_URL_TRANSIT}/parades'
+        data = await self._get(url)
+        print(data)
+        features = data['features']
 
-    async def get_stations_by_metro_line(self, line):
+        stations = []
+        for feature in features:
+            stations.append(create_bus_stop(feature))
+
+        stations.sort(key=lambda x: x.ORDRE_LINIA)
+        return stations
+
+    async def get_stations_by_metro_line(self, line) -> List[MetroStation]:
         url = f'{self.BASE_URL_TRANSIT}/linies/metro/{line}/estacions'
         data = await self._get(url)
         features = data['features']
@@ -139,7 +153,7 @@ class TmbApiService:
                     # NextMetro(**metro) for metro in route_data.get("propers_trens", [])
                     ]
 
-    async def get_next_metro_at_station(self, station_id):
+    async def get_next_metro_at_station(self, station_id) -> List[MetroLineRoute]:
         url = f'{self.BASE_URL_ITRANSIT}/metro/estacions?estacions={station_id}'
         data = await self._get(url)
 
@@ -161,7 +175,7 @@ class TmbApiService:
                     routes.append(route)
         return routes
 
-    async def get_next_bus_at_stop(self, station_id):
+    async def get_next_bus_at_stop(self, station_id) -> List[BusLineRoute]:
         url = f"{self.BASE_URL_ITRANSIT}/bus/parades/{station_id}"
         data = await self._get(url)
 

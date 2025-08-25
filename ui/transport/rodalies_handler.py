@@ -35,7 +35,7 @@ class RodaliesHandler(HandlerBase):
     async def show_lines(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         logger.info("Showing rodalies lines menu")
         type=TransportType.RODALIES.value.capitalize()
-        await self.message_service.send_new_message(update, self.language_manager.t('common.loading', type=type), reply_markup=self.keyboard_factory._back_reply_button())
+        await self.message_service.send_new_message(update, self.language_manager.t('common.loading.lines', type=type), reply_markup=self.keyboard_factory._back_reply_button())
         metro_lines = await self.rodalies_service.get_all_lines()
         reply_markup = self.keyboard_factory.rodalies_lines_menu(metro_lines)
         await self.message_service.handle_interaction(
@@ -65,7 +65,9 @@ class RodaliesHandler(HandlerBase):
         logger.info(f"Showing station info for user {user_id}, line {line_id}, stop {rodalies_station_id}")
 
         rodalies_station = await self.rodalies_service.get_station_by_id(rodalies_station_id, line_id)
-        message = await self.show_stop_intro(update, self.transport_type, line_id, rodalies_station_id, rodalies_station.latitude, rodalies_station.longitude, rodalies_station.name)
+        message = await self.show_stop_intro(update, context, self.transport_type, line_id, rodalies_station_id, rodalies_station.latitude, rodalies_station.longitude, rodalies_station.name)
+        await self.rodalies_service.get_station_routes(rodalies_station_id, line_id)
+        await self.update_manager.stop_loading(update, context)
         
         async def update_text():
             next_rodalies = await self.rodalies_service.get_station_routes(rodalies_station_id, line_id)
