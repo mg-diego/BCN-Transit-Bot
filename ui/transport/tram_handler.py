@@ -26,11 +26,8 @@ class TramHandler(HandlerBase):
         message_service: MessageService,
         language_manager: LanguageManager
     ):
-        super().__init__(message_service, update_manager, language_manager, user_data_manager)
-        self.keyboard_factory = keyboard_factory
+        super().__init__(message_service, update_manager, language_manager, user_data_manager, keyboard_factory)
         self.tram_service = tram_service
-        self.user_data_manager = user_data_manager
-        self.language_manager = language_manager
         self.mapper = TransportDataCompressor()
         logger.info(f"[{self.__class__.__name__}] TramHandler initialized")
 
@@ -69,6 +66,7 @@ class TramHandler(HandlerBase):
         """Show details for a specific tram stop and start update loop."""
         user_id, chat_id, line_id, stop_id = self.extract_context(update, context)
         logger.info(f"Showing stop info for user {user_id}, line {line_id}, stop {stop_id}")
+        callback = f"tram_stop:{line_id}:{stop_id}"
 
         stop = await self.tram_service.get_stop_by_id(stop_id, line_id)
         message = await self.show_stop_intro(update, context, TransportType.TRAM.value, line_id, stop_id, stop.latitude, stop.longitude, stop.name)
@@ -84,5 +82,5 @@ class TramHandler(HandlerBase):
             keyboard = self.keyboard_factory.update_menu(is_fav, "tram", stop_id, line_id, user_id)
             return text, keyboard
         
-        self.start_update_loop(user_id, chat_id, message.message_id, update_text)
+        self.start_update_loop(user_id, chat_id, message.message_id, update_text, callback)
         logger.info(f"Started update loop task for user {user_id}, stop {stop_id}")

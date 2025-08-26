@@ -265,6 +265,9 @@ class KeyboardFactory:
     def _back_button(self, callback):
         return [InlineKeyboardButton(self.language_manager.t('keyboard.back'), callback_data=callback)]
     
+    def restart_search_button(self, callback):
+        return InlineKeyboardMarkup([[InlineKeyboardButton('🔄 Restart', callback_data=callback)]])
+    
     def _back_reply_button(self):
         """Teclado principal como ReplyKeyboard."""
         keyboard = [
@@ -306,5 +309,7 @@ class KeyboardFactory:
         rows = self._chunk_buttons(buttons, 1)
         #rows.append(self._back_button(self.BACK_TO_MENU_CALLBACK))
         return InlineKeyboardMarkup(rows)
+    
+
     
     

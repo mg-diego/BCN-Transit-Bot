@@ -27,8 +27,7 @@ class MetroHandler(HandlerBase):
         message_service: MessageService,
         language_manager: LanguageManager
     ):
-        super().__init__(message_service, update_manager, language_manager, user_data_manager)
-        self.keyboard_factory = keyboard_factory
+        super().__init__(message_service, update_manager, language_manager, user_data_manager, keyboard_factory)
         self.metro_service = metro_service
         self.mapper = TransportDataCompressor()
         logger.info(f"[{self.__class__.__name__}] MetroHandler initialized")
@@ -67,14 +66,15 @@ class MetroHandler(HandlerBase):
     async def show_station(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_id, chat_id, line_id, metro_station_id = self.extract_context(update, context)        
         logger.info(f"Showing station info for user {user_id}, line {line_id}, station {metro_station_id}")
+        callback = f"metro_station:{line_id}:{metro_station_id}"
 
-        station = await self.metro_service.get_station_by_id(metro_station_id, line_id)      
+        station = await self.metro_service.get_station_by_id(metro_station_id)      
         station_accesses = await self.metro_service.get_station_accesses(station.CODI_GRUP_ESTACIO)  
 
         message = await self.show_stop_intro(update, context, TransportType.METRO.value, line_id, metro_station_id, station.coordinates[1], station.coordinates[0], station.NOM_ESTACIO, self.keyboard_factory.metro_station_access_menu(station_accesses))
         await self.metro_service.get_station_routes(metro_station_id)
         station_connections = await self.metro_service.get_metro_station_connections(metro_station_id)
-        station_alerts = await self.metro_service.get_metro_station_alerts(line_id, metro_station_id)        
+        station_alerts = await self.metro_service.get_metro_station_alerts(line_id, metro_station_id, self.user_data_manager.get_user_language(user_id))        
         await self.update_manager.stop_loading(update, context)
 
         async def update_text():
@@ -88,5 +88,5 @@ class MetroHandler(HandlerBase):
             keyboard = self.keyboard_factory.update_menu(is_fav, TransportType.METRO.value, metro_station_id, line_id, user_id)
             return text, keyboard
 
-        self.start_update_loop(user_id, chat_id, message.message_id, update_text)
+        self.start_update_loop(user_id, chat_id, message.message_id, update_text, callback)
         logger.info(f"Started update loop task for user {user_id}, station {metro_station_id}")

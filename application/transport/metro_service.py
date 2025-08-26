@@ -34,12 +34,11 @@ class MetroService(ServiceBase):
         )
 
         filtered_stations = [
-            station
-            for station in stations
+            station for station in stations
             if station_name.lower() in station.NOM_ESTACIO.lower()
         ]
 
-        return filtered_stations
+        return filtered_stations    
 
     async def get_line_by_id(self, line_id) -> MetroLine:
         lines = await self.get_all_lines()
@@ -67,12 +66,21 @@ class MetroService(ServiceBase):
             cache_ttl=3600*24
         )
 
-    async def get_station_by_id(self, station_id, line_id) -> MetroStation:
-        stations = await self.get_stations_by_line(line_id)
-        station = next((s for s in stations if str(s.CODI_ESTACIO) == str(station_id)), None)
-        logger.debug(f"[{self.__class__.__name__}] get_station_by_id({station_id}, line {line_id}) -> {station}")
-        return station    
+    async def get_station_by_id(self, station_id) -> MetroStation:        
+        stations = await self._get_from_cache_or_api(
+            "metro_stations",
+            self.tmb_api_service.get_metro_stations,
+            cache_ttl=3600*24
+        )
 
+        filtered_stations = [
+            station for station in stations
+            if int(station_id) == int(station.ID_ESTACIO)
+        ]
+
+        station = filtered_stations[0] if any(filtered_stations) else None
+        logger.debug(f"[{self.__class__.__name__}] get_station_by_id({station_id}) -> {station}")
+        return station
 
     async def get_metro_station_connections(self, station_id) -> List[MetroConnection]:
         connections = await self._get_from_cache_or_api(
@@ -87,17 +95,16 @@ class MetroService(ServiceBase):
         )
         return formatted_connections
 
-    async def get_metro_station_alerts(self, metro_line_id, station_id):
+    async def get_metro_station_alerts(self, metro_line_id, station_id, language):
         line = await self.get_line_by_id(metro_line_id)
         alerts = await self._get_from_cache_or_api(
             f"metro_station_alerts_{station_id}",
-            lambda: self.tmb_api_service.get_metro_station_alerts(line.ORIGINAL_NOM_LINIA, station_id),
+            lambda: self.tmb_api_service.get_metro_station_alerts(line.ORIGINAL_NOM_LINIA, station_id, language),
             cache_ttl=3600
         )
 
         formatted_alerts = (
             "\n".join(f"<pre>{c}</pre>" for c in alerts)
-            or self.language_manager.t('common.no.alerts')
         )
         return formatted_alerts
 

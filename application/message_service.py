@@ -148,7 +148,7 @@ class MessageService:
                     logger.warning(f"[{self.__class__.__name__}] Error deleting message {msg_id}: {e}")
             self._user_messages[user_id].clear()
 
-    # Utility methods
+    # Utility methods    
     def check_query_callback(self, update, expected_callback):
         """Check if callback_query data starts with the expected callback string."""
         return update.callback_query.data.startswith(expected_callback)

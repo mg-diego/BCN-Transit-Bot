@@ -5,9 +5,7 @@ from telegram.ext import (
     ContextTypes
 )
 
-from application import MessageService
-from ui import KeyboardFactory, MetroHandler, BusHandler, TramHandler, RodaliesHandler, FavoritesHandler, LanguageHandler, HelpHandler, MenuHandler
-from providers.manager import LanguageManager 
+from ui import MetroHandler, BusHandler, TramHandler, RodaliesHandler, FavoritesHandler, LanguageHandler, HelpHandler, MenuHandler
 
 class ReplyHandler:
     def __init__(
@@ -65,8 +63,6 @@ class ReplyHandler:
         search_text = str(update.message.text)
         message_service.set_bot_instance(context.bot)
 
-
-
         if len(search_text) < 3:
             await update.message.reply_text(
                 "⚠️ Usa por lo menos tres letras para buscar."
@@ -77,19 +73,22 @@ class ReplyHandler:
         message = await update_manager.start_loading(update, context, language_manager.t('results.searching'))
         chat_id = message_service.get_chat_id(update)
 
+        metro_stations = []
+        bus_stops = []
+
         if search_text.isdigit(): # BUS STATIONS
-            await bus_service.get_stop_by_id(search_text)
-            pass
+            stop = await bus_service.get_stop_by_id(search_text)
+            if stop is not None:
+                bus_stops.append(stop)
 
         else: # METRO STATIONS
-            stations = await metro_service.get_stations_by_name(search_text)
-            stops = await bus_service.get_stops_by_name(search_text)
-            print(stops)
+            metro_stations = await metro_service.get_stations_by_name(search_text)
+            bus_stops = await bus_service.get_stops_by_name(search_text)
 
             unique_stations = {}
             line_cache = {}
 
-            for station in stations:
+            for station in metro_stations:
                 lines = re.findall(r"L\d+[A-Z]?(?=L|$)", station.PICTO)
 
                 for line_code in lines:
@@ -114,13 +113,17 @@ class ReplyHandler:
                     key = (station_copy.NOM_ESTACIO, station_copy.CODI_LINIA)
                     unique_stations[key] = station_copy
 
-            final_stations = list(unique_stations.values())
-            
-            await update_manager.stop_loading(update, context)
-            await message_service.edit_message_by_id(
-                chat_id,
-                message.message_id,
-                language_manager.t("results.found", count=len(final_stations), search_value=search_text),
-                keyboard_factory.reply_keyboard_stations_menu(final_stations, stops)
-            )
+            metro_stations = list(unique_stations.values())
+
+        metro_results = len(metro_stations)
+        bus_results = len(bus_stops)
+        tram_results = 0
+        rodalies_results = 0
+        await update_manager.stop_loading(update, context)
+        await message_service.edit_message_by_id(
+            chat_id,
+            message.message_id,
+            language_manager.t("results.found", count=metro_results+bus_results+tram_results+rodalies_results, search_value=search_text, metro_results=metro_results, bus_results=bus_results, tram_results=tram_results, rodalies_results=rodalies_results),
+            keyboard_factory.reply_keyboard_stations_menu(metro_stations, bus_stops)
+        )
                 

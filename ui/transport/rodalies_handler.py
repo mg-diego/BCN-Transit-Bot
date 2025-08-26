@@ -25,8 +25,7 @@ class RodaliesHandler(HandlerBase):
         message_service: MessageService,
         language_manager: LanguageManager
     ):
-        super().__init__(message_service, update_manager, language_manager, user_data_manager)
-        self.keyboard_factory = keyboard_factory
+        super().__init__(message_service, update_manager, language_manager, user_data_manager, keyboard_factory)
         self.rodalies_service = rodalies_service
         self.mapper = TransportDataCompressor()
         self.transport_type = TransportType.RODALIES.value
@@ -63,6 +62,7 @@ class RodaliesHandler(HandlerBase):
         """Display a specific rodalies station with next arrivals."""
         user_id, chat_id, line_id, rodalies_station_id = self.extract_context(update, context)
         logger.info(f"Showing station info for user {user_id}, line {line_id}, stop {rodalies_station_id}")
+        callback = f"rodalies_station:{line_id}:{rodalies_station_id}"
 
         rodalies_station = await self.rodalies_service.get_station_by_id(rodalies_station_id, line_id)
         message = await self.show_stop_intro(update, context, self.transport_type, line_id, rodalies_station_id, rodalies_station.latitude, rodalies_station.longitude, rodalies_station.name)
@@ -76,6 +76,6 @@ class RodaliesHandler(HandlerBase):
             keyboard = self.keyboard_factory.update_menu(is_fav, self.transport_type, rodalies_station_id, line_id, user_id)
             return text, keyboard
 
-        self.start_update_loop(user_id, chat_id, message.message_id, get_text_callable=update_text)
+        self.start_update_loop(user_id, chat_id, message.message_id, get_text_callable=update_text, previous_callback=callback)
         logger.info(f"Started update loop task for user {user_id}, station {rodalies_station_id}")
         

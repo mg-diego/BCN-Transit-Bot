@@ -1,24 +1,36 @@
 import asyncio
+from collections import defaultdict
+import time
 import json
 from typing import Awaitable, Callable, List
 from domain.transport_type import TransportType
 from telegram import Update
 from telegram.ext import ContextTypes
+from telegram.error import RetryAfter
 from application import MessageService, UpdateManager
 from providers.manager.language_manager import LanguageManager
 from providers.manager.user_data_manager import UserDataManager
 from providers.helpers import logger
+from ui.keyboard_factory import KeyboardFactory
 
 class HandlerBase:
     """
     Base class for all transport handlers (Bus, Metro, Tram) with common logic.
     """
 
-    def __init__(self, message_service: MessageService, update_manager: UpdateManager, language_manager: LanguageManager, user_data_manager: UserDataManager):
+    def __init__(self, message_service: MessageService, update_manager: UpdateManager, language_manager: LanguageManager, user_data_manager: UserDataManager, keyboard_factory: KeyboardFactory):
         self.message_service = message_service
         self.update_manager = update_manager
         self.language_manager = language_manager
         self.user_data_manager = user_data_manager
+        self.keyboard_factory = keyboard_factory
+
+        self.update_counters = defaultdict(lambda: {"count": 0, "last_reset": time.time()})
+        self.ALERT_THRESHOLD = 120  # aviso preventivo
+        self.INTERVAL = 60  # segundos
+        self.UPDATE_LIMIT = int(self.ALERT_THRESHOLD * 0.8)
+
+
 
     async def show_transport_lines(
         self,
@@ -176,19 +188,27 @@ class HandlerBase:
 
         return message
 
-    def start_update_loop(self, user_id: int, chat_id: int, message_id: int, get_text_callable):
+    def start_update_loop(self, user_id: int, chat_id: int, message_id: int, get_text_callable, previous_callback: str):
         """
         Start an update loop that updates a message periodically.
         - get_text_callable: async function returning the message text.
         - keyboard_callable: function returning reply_markup (optional)
-        """
+        """       
 
         async def loop():
             while True:
                 try:
-                    text, reply_markup = await get_text_callable()
-                    await self.message_service.edit_message_by_id(chat_id, message_id, text, reply_markup)
-                    await asyncio.sleep(1)
+                    can_send, send_alert = self.should_send_update(user_id)
+                    if can_send:
+                        text, reply_markup = await get_text_callable()
+                        await self.message_service.edit_message_by_id(chat_id, message_id, text, reply_markup)
+                        await asyncio.sleep(1)
+                    if send_alert:
+                        await self.message_service.edit_message_by_id(chat_id, message_id, "⚠ Has alcanzado el límite de actualizaciones, reinicia la búsqueda.", reply_markup=self.keyboard_factory.restart_search_button(previous_callback))
+                        self.reset_user_counter(user_id)
+                        break    
+                except RetryAfter as e:
+                    print(f"[FloodWait] Esperando {e.retry_after}s para chat {chat_id}: {e}")
                 except asyncio.CancelledError:
                     logger.info(f"Update loop cancelled for user {user_id}")
                     break
@@ -197,5 +217,27 @@ class HandlerBase:
                     break
 
         self.update_manager.start_task(user_id, loop)
+
+    def should_send_update(self, user_id):
+        counter = self.update_counters[user_id]
+        now = time.time()
+
+        print(counter)
+
+        # Reset del contador cada INTERVAL
+        if now - counter["last_reset"] > self.INTERVAL:
+            counter["count"] = 0
+            counter["last_reset"] = now
+
+        counter["count"] += 1
+
+        # Comprobamos umbral
+        if counter["count"] >= self.ALERT_THRESHOLD:
+            return False, True  # no enviar update, enviar alerta
+        return True, False  # enviar update normalmente
+    
+    def reset_user_counter(self, user_id):
+        self.update_counters[user_id]["count"] = 0
+        self.update_counters[user_id]["last_reset"] = time.time()
 
     

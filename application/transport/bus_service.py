@@ -73,14 +73,23 @@ class BusService(ServiceBase):
             cache_ttl=3600*24
         )
 
-    async def get_stop_by_id(self, stop_id, line_id) -> BusStop:
+    async def get_stop_by_id(self, stop_id) -> BusStop:
         """
         Retrieve a stop by its CODI_PARADA.
         """
-        stops = await self.get_stops_by_line(line_id)
-        stop = next((s for s in stops if str(s.CODI_PARADA) == str(stop_id)), None)
-        logger.debug(f"[{self.__class__.__name__}] get_stop_by_id({stop_id}, line {line_id}) -> {stop}")
-        return stop
+        stops = await self._get_from_cache_or_api(
+            "bus_stops",
+            self.tmb_api_service.get_bus_stops,
+            cache_ttl=3600*24
+        )
+
+        filtered_stops = [
+            stop
+            for stop in stops
+            if int(stop_id) == int(stop.CODI_PARADA)
+        ]
+
+        return filtered_stops[0] if any(filtered_stops) else None
 
     async def get_stop_routes(self, stop_id: str) -> str:
         """
