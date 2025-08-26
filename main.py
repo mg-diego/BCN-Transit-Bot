@@ -113,7 +113,10 @@ def main():
 
     # LANGUAGES
     application.add_handler(CallbackQueryHandler(language_handler.show_languages, pattern=r"^language"))
-    application.add_handler(CallbackQueryHandler(language_handler.update_language, pattern=r"^set_language"))    
+    application.add_handler(CallbackQueryHandler(language_handler.update_language, pattern=r"^set_language"))
+
+    # SEARCH
+    application.add_handler(MessageHandler(filters.LOCATION, reply_handler.location_handler)) 
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, reply_handler.reply_router))
 
     logger.info("Handlers registered successfully")

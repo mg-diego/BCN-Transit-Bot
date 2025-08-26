@@ -16,32 +16,41 @@ class ServiceBase:
         query: str,
         items: List[Any],
         key: Callable[[Any], str],
-        limit: int = 5,
-        threshold: float = 75
+        threshold: float = 80
     ) -> List[Any]:
         """
-        Realiza una búsqueda aproximada (fuzzy) sobre una lista de objetos.
+        Performs fuzzy search on a list of objects, returning all exact matches
+        plus all fuzzy matches above the threshold.
 
         Args:
-            query: Texto a buscar.
-            items: Lista de objetos.
-            key: Función para extraer el campo de texto a comparar de cada objeto.
-            limit: Número máximo de resultados a devolver.
-            threshold: Similitud mínima (0-100) para considerar un match.
+            query: Text to search.
+            items: List of objects.
+            key: Function to extract the text field from each object.
+            threshold: Minimum similarity (0-100) for fuzzy match.
 
         Returns:
-            Lista de objetos que coinciden con el query de manera aproximada.
+            List of objects matching the query exactly or approximately.
         """
-        item_dict = {key(item): item for item in items}
+        query_lower = query.lower()
 
-        matches = process.extract(
+        # --- Exact matches (substring, case-insensitive) ---
+        exact_matches = [item for item in items if query_lower in key(item).lower()]
+
+        # --- Prepare fuzzy search excluding exact matches ---
+        remaining_items = [item for item in items if item not in exact_matches]
+        item_dict = {key(item): item for item in remaining_items}
+
+        # --- Fuzzy matches ---
+        fuzzy_matches = process.extract(
             query=query,
             choices=item_dict.keys(),
-            scorer=fuzz.WRatio,
-            limit=limit
+            scorer=fuzz.WRatio
         )
 
-        return [item_dict[name] for name, score, _ in matches if score >= threshold] 
+        fuzzy_filtered = [item_dict[name] for name, score, _ in fuzzy_matches if score >= threshold]
+
+        # --- Combine exact + fuzzy ---
+        return exact_matches + fuzzy_filtered
 
     async def _get_from_cache_or_api(
         self,

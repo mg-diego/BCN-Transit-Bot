@@ -1,5 +1,7 @@
 import re
 import copy
+from domain.transport_type import TransportType
+from providers.helpers.distance_helper import DistanceHelper
 from telegram import Update
 from telegram.ext import (
     ContextTypes
@@ -29,6 +31,8 @@ class ReplyHandler:
         self.language_handler = language_handler
         self.help_handler = help_handler
 
+        self.previous_search = None
+
     async def reply_router(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         btn_text = str(update.message.text)
 
@@ -51,7 +55,7 @@ class ReplyHandler:
         else:
             await self.reply_to_user(update, context)
 
-    async def reply_to_user(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+    async def reply_to_user(self, update: Update, context: ContextTypes.DEFAULT_TYPE, user_location = None):
         message_service = self.menu_handler.message_service
         update_manager = self.menu_handler.update_manager
         language_manager = self.menu_handler.language_manager
@@ -60,8 +64,15 @@ class ReplyHandler:
         metro_service = self.metro_handler.metro_service
         bus_service = self.bus_handler.bus_service
         tram_service = self.tram_handler.tram_service
-    
-        search_text = str(update.message.text)
+
+        if user_location is None:
+            await message_service.send_new_message(update, language_manager.t('results.location.ask'), keyboard_factory.location_keyboard())
+            search_text = str(update.message.text)            
+        else:
+            await message_service.send_new_message(update, language_manager.t('results.location.received'), keyboard_factory._back_reply_button())
+            search_text = self.previous_search
+
+        self.previous_search = search_text
         message_service.set_bot_instance(context.bot)
 
         if len(search_text) < 3:
@@ -117,19 +128,32 @@ class ReplyHandler:
 
             metro_stations = list(metro_unique_stations.values())
             
-            # PARSE TRAM STOPS:
+            # PARSE TRAM STOPS: (WIP)
             for stop in tram_stops:
                 pass
-
-        metro_results = len(metro_stations)
-        bus_results = len(bus_stops)
-        tram_results = len(tram_stops)
-        rodalies_results = 0
+        
         await update_manager.stop_loading(update, context)
+        stops_with_distance = DistanceHelper.build_stops_list(metro_stations, bus_stops, tram_stops, user_location)
+        metro_count = len([s for s in stops_with_distance if s["type"] == TransportType.METRO.value])
+        bus_count = len([s for s in stops_with_distance if s["type"] == TransportType.BUS.value])
+        tram_count = len([s for s in stops_with_distance if s["type"] == TransportType.TRAM.value])
+        rodalies_count = len([s for s in stops_with_distance if s["type"] == TransportType.RODALIES.value])
+
         await message_service.edit_message_by_id(
             chat_id,
             message.message_id,
-            language_manager.t("results.found", count=metro_results+bus_results+tram_results+rodalies_results, search_value=search_text, metro_results=metro_results, bus_results=bus_results, tram_results=tram_results, rodalies_results='(Available in next versions)'),
-            keyboard_factory.reply_keyboard_stations_menu(metro_stations, bus_stops, tram_stops)
+            language_manager.t(
+                "results.found",
+                count=len(stops_with_distance),
+                search_value=search_text,
+                metro_results=metro_count,
+                bus_results=bus_count,
+                tram_results=tram_count,
+                rodalies_results='(Available in next versions)'
+            ),
+            keyboard_factory.reply_keyboard_stations_menu(stops_with_distance)
         )
+
+    async def location_handler(self, update, context):
+        await self.reply_to_user(update, context, update.message.location)
                 

@@ -9,11 +9,16 @@ from domain.rodalies import RodaliesLine
 from domain.transport_type import TransportType
 from domain.callbacks import Callbacks
 
-from providers.manager.language_manager import LanguageManager
+from providers.manager import LanguageManager
+from providers.helpers import DistanceHelper
 
 class KeyboardFactory:
 
-    BACK_TO_MENU_CALLBACK = "back_to_menu"    
+    BACK_TO_MENU_CALLBACK = "back_to_menu"
+
+    def location_keyboard(self):
+        keyboard = [[KeyboardButton("📍 Enviar mi ubicación", request_location=True)], [KeyboardButton(self.language_manager.t('keyboard.back'))]]
+        return ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=True)
 
     def __init__(self, language_manager: LanguageManager):
         self.language_manager = language_manager
@@ -286,20 +291,48 @@ class KeyboardFactory:
         rows = self._chunk_buttons(keyboard, 2)
         return InlineKeyboardMarkup(rows)
 
-    def reply_keyboard_stations_menu(self, metro_stations: List[MetroStation], bus_stops: List[BusStop], tram_stops: List[TramStop]):
-        buttons = [
-            InlineKeyboardButton(f"🚇 {metro_station.NOM_LINIA} - {metro_station.NOM_ESTACIO}  ", callback_data=Callbacks.METRO_STATION.format(line_code=metro_station.CODI_LINIA, station_code=metro_station.CODI_ESTACIO))
-            for metro_station in metro_stations
-        ]
-        for stop in bus_stops:
-            buttons.append(
-                InlineKeyboardButton(f"🚌 ({stop.CODI_PARADA}) - {stop.NOM_PARADA}  ", callback_data=Callbacks.BUS_STOP.format(line_code=stop.CODI_LINIA, stop_code=stop.CODI_PARADA))
-            )
+    def reply_keyboard_stations_menu(self, all_stops: list):
+        """
+        Generates an InlineKeyboardMarkup with all stops (metro, bus, tram),
+        using the precomputed distances if available.
+        
+        Args:
+            all_stops (list): List of dictionaries containing stop info and distance_km.
 
-        for stop in tram_stops:
-            buttons.append(
-                InlineKeyboardButton(f"🚋 ({stop.id}) - {stop.name}  ", callback_data=Callbacks.TRAM_STOP.format(line_code=1, stop_code=stop.id))
-            )
+        Returns:
+            InlineKeyboardMarkup: Keyboard markup ready to send to the user.
+        """
+        buttons = []
+
+        for stop in all_stops:
+            # Format distance if available
+            distance_str = f" ({DistanceHelper.format_distance(stop['distance_km'])})" if stop.get("distance_km") is not None else ""
+
+            # Build text and callback depending on type
+            if stop["type"] == "metro":
+                text = f"🚇 {stop['line']} - {stop['name']}{distance_str}"
+                callback = Callbacks.METRO_STATION.format(
+                    line_code=stop["code_line"],
+                    station_code=stop["code_station"]
+                )
+            elif stop["type"] == "bus":
+                text = f"🚌 ({stop['code_stop']}) - {stop['name']}{distance_str}"
+                callback = Callbacks.BUS_STOP.format(
+                    line_code=stop["line"],
+                    stop_code=stop["code_stop"]
+                )
+            elif stop["type"] == "tram":
+                text = f"🚋 ({stop['code_stop']}) - {stop['name']}{distance_str}"
+                callback = Callbacks.TRAM_STOP.format(
+                    line_code=stop["line"],
+                    stop_code=stop["code_stop"]
+                )
+            else:
+                continue  # ignore unknown types
+
+            buttons.append(InlineKeyboardButton(text, callback_data=callback))
+
+        # Chunk buttons into rows
         rows = self._chunk_buttons(buttons, 1)
         return InlineKeyboardMarkup(rows)
     
