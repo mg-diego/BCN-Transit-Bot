@@ -64,7 +64,7 @@ class TramHandler(HandlerBase):
 
     async def show_stop(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Show details for a specific tram stop and start update loop."""
-        user_id, chat_id, line_id, stop_id = self.extract_context(update, context)
+        user_id, chat_id, line_id, stop_id = self.message_service.extract_context(update, context)
         logger.info(f"Showing stop info for user {user_id}, line {line_id}, stop {stop_id}")
         callback = f"tram_stop:{line_id}:{stop_id}"
 
@@ -76,10 +76,11 @@ class TramHandler(HandlerBase):
         async def update_text():
             routes = await self.tram_service.get_stop_routes(stop.outboundCode, stop.returnCode)
             text = (
-                f"🚉 {self.language_manager.t('tram.stop.next')}\n{routes} \n\n"
+                f"{self.language_manager.t(f'{TransportType.TRAM.value}.stop.name', name=stop.name.upper())}\n\n"
+                f"{self.language_manager.t(f'{TransportType.TRAM.value}.stop.next')}\n{routes} \n\n"
             )
-            is_fav = self.user_data_manager.has_favorite(user_id, "tram", stop_id)
-            keyboard = self.keyboard_factory.update_menu(is_fav, "tram", stop_id, line_id, user_id)
+            is_fav = self.user_data_manager.has_favorite(user_id, TransportType.TRAM.value, stop_id)
+            keyboard = self.keyboard_factory.update_menu(is_fav, TransportType.TRAM.value, stop_id, line_id, user_id)
             return text, keyboard
         
         self.start_update_loop(user_id, chat_id, message.message_id, update_text, callback)

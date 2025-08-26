@@ -26,10 +26,9 @@ class HandlerBase:
         self.keyboard_factory = keyboard_factory
 
         self.update_counters = defaultdict(lambda: {"count": 0, "last_reset": time.time()})
-        self.ALERT_THRESHOLD = 5  # aviso preventivo
+        self.ALERT_THRESHOLD = 120  # aviso preventivo
         self.INTERVAL = 60  # segundos
         self.UPDATE_LIMIT = int(self.ALERT_THRESHOLD * 0.8)
-
 
 
     async def show_transport_lines(
@@ -158,32 +157,13 @@ class HandlerBase:
             text=self.language_manager.t("common.open.map", line_name=line_name),
             reply_markup=keyboard_menu_builder(encoded_map),
         )
-
-    def extract_context(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Return common info: user_id, chat_id, line_id, stop_id (if available)"""
-        self.message_service.set_bot_instance(context.bot)
-        user_id = self.message_service.get_user_id(update)
-        chat_id = self.message_service.get_chat_id(update)
-
-        if update.message and update.message.web_app_data:
-            data = json.loads(update.message.web_app_data.data)
-            stop_id = data.get("stop_id").strip()
-            line_id = data.get("line_id").strip()
-        else:
-            callback_data = self.message_service.get_callback_data(update)
-            line_id = callback_data[1] if len(callback_data) > 1 else None
-            stop_id = callback_data[2] if len(callback_data) > 2 else None
-
-        return user_id, chat_id, line_id, stop_id
     
-    async def show_stop_intro(self, update: Update, context, transport_type: str, line_id, stop_id, stop_lat, stop_lon, stop_name, keyboard_reply = None):
-        sub_key = "station" if transport_type in [TransportType.METRO.value, TransportType.RODALIES.value] else "stop"
-        await self.message_service.handle_interaction(update, self.language_manager.t(f"{transport_type}.{sub_key}.name", name=stop_name.upper()))
-        await self.message_service.send_location(update, stop_lat, stop_lon, reply_markup=keyboard_reply)
+    async def show_stop_intro(self, update: Update, context, transport_type: str, line_id, stop_id, stop_lat, stop_lon, stop_name, keyboard_reply = None):        
+        #sub_key = "station" if transport_type in [TransportType.METRO.value, TransportType.RODALIES.value] else "stop"
+        #await self.message_service.handle_interaction(update, self.language_manager.t(f"{transport_type}.{sub_key}.name", name=stop_name.upper()))
+        #await self.message_service.send_location(update, stop_lat, stop_lon, reply_markup=keyboard_reply)
 
         message = await self.update_manager.start_loading(update, context, self.language_manager.t("common.stop.loading"))
-        #message = await self.message_service.send_new_message_from_callback(update, text=self.language_manager.t("common.stop.loading"))
-
         self.user_data_manager.register_search(transport_type, line_id, stop_id, stop_name)
 
         return message

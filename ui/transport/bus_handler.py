@@ -59,7 +59,7 @@ class BusHandler(HandlerBase):
 
     async def show_stop(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Display a specific bus stop with next arrivals."""
-        user_id, chat_id, line_id, bus_stop_id = self.extract_context(update, context)
+        user_id, chat_id, line_id, bus_stop_id = self.message_service.extract_context(update, context)
         logger.info(f"Showing stop info for user {user_id}, line {line_id}, stop {bus_stop_id}")
         callback = f"bus_stop:{line_id}:{bus_stop_id}"
 
@@ -71,7 +71,10 @@ class BusHandler(HandlerBase):
         async def update_text():
             next_buses = await self.bus_service.get_stop_routes(bus_stop_id)
             is_fav = self.user_data_manager.has_favorite(user_id, TransportType.BUS.value, bus_stop_id)
-            text = f"🚉 {self.language_manager.t('bus.stop.next')}\n{next_buses}"
+            text = (
+                f"{self.language_manager.t(f'{TransportType.BUS.value}.stop.name', name=bus_stop.NOM_PARADA.upper())}\n\n"
+                f"{self.language_manager.t(f'{TransportType.BUS.value}.stop.next')}\n{next_buses}"
+            )
             keyboard = self.keyboard_factory.update_menu(is_fav, TransportType.BUS.value, bus_stop_id, line_id, user_id)
             return text, keyboard
 

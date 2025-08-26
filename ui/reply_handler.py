@@ -81,7 +81,7 @@ class ReplyHandler:
             if stop is not None:
                 bus_stops.append(stop)
 
-        else: # METRO STATIONS
+        else: # METRO STATIONS | TRAM STOPS | RODALIES STATIONS
             metro_stations = await metro_service.get_stations_by_name(search_text)
             bus_stops = await bus_service.get_stops_by_name(search_text)
 
@@ -123,7 +123,7 @@ class ReplyHandler:
         await message_service.edit_message_by_id(
             chat_id,
             message.message_id,
-            language_manager.t("results.found", count=metro_results+bus_results+tram_results+rodalies_results, search_value=search_text, metro_results=metro_results, bus_results=bus_results, tram_results=tram_results, rodalies_results=rodalies_results),
+            language_manager.t("results.found", count=metro_results+bus_results+tram_results+rodalies_results, search_value=search_text, metro_results=metro_results, bus_results=bus_results, tram_results='(Available in next versions)', rodalies_results='(Available in next versions)'),
             keyboard_factory.reply_keyboard_stations_menu(metro_stations, bus_stops)
         )
                 

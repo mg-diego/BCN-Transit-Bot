@@ -63,6 +63,6 @@ class TramService(ServiceBase):
         routes = await self._get_from_cache_or_api(
             f"tram_routes_{outbound_code}_{return_code}",
             lambda: self.tram_api_service.get_next_trams_at_stop(outbound_code, return_code),
-            cache_ttl=10
+            cache_ttl=30
         )
         return "\n\n".join(str(route) for route in routes)

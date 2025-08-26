@@ -39,6 +39,5 @@ class MenuHandler:
         self.update_manager.cancel_task(user_id)
         await self.message_service.edit_inline_message(update, self.language_manager.t('search.cleaning'))
         await self.message_service.clear_user_messages(user_id)
-        #await self.message_service.send_new_message_from_callback(update, self.language_manager.t('search.finish'))
         logger.info(f"Updates stopped and messages cleared for user {user_id}")
         await self.back_to_menu(update, context)

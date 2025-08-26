@@ -59,7 +59,7 @@ def main():
     rodalies_handler = RodaliesHandler(keyboard_factory, rodalies_service, update_manager, user_data_manager, message_service, language_manager)
     favorites_handler = FavoritesHandler(message_service, user_data_manager, keyboard_factory, metro_service, bus_service, tram_service, rodalies_service, language_manager)
     help_handler = HelpHandler(message_service, keyboard_factory, language_manager)
-    language_handler = LanguageHandler(keyboard_factory, user_data_manager, message_service, language_manager)
+    language_handler = LanguageHandler(keyboard_factory, user_data_manager, message_service, language_manager, update_manager)
     web_app_handler = WebAppHandler(metro_handler, bus_handler, tram_handler, rodalies_handler)
     reply_handler = ReplyHandler(menu_handler, metro_handler, bus_handler, tram_handler, rodalies_handler, favorites_handler, language_handler, help_handler)
 

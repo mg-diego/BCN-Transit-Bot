@@ -1,4 +1,5 @@
 from collections import defaultdict
+import json
 from telegram.constants import ParseMode
 from telegram import Update, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
@@ -148,7 +149,26 @@ class MessageService:
                     logger.warning(f"[{self.__class__.__name__}] Error deleting message {msg_id}: {e}")
             self._user_messages[user_id].clear()
 
-    # Utility methods    
+    # Utility methods
+    def extract_context(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Return common info: user_id, chat_id, line_id, stop_id (if available)"""
+        self.set_bot_instance(context.bot)
+        user_id = self.get_user_id(update)
+        chat_id = self.get_chat_id(update)
+        line_id = None
+        stop_id = None
+
+        if update.message and update.message.web_app_data:
+            data = json.loads(update.message.web_app_data.data)
+            stop_id = data.get("stop_id").strip()
+            line_id = data.get("line_id").strip()
+        elif update.callback_query:
+            callback_data = self.get_callback_data(update)
+            line_id = callback_data[1] if len(callback_data) > 1 else None
+            stop_id = callback_data[2] if len(callback_data) > 2 else None
+
+        return user_id, chat_id, line_id, stop_id
+    
     def check_query_callback(self, update, expected_callback):
         """Check if callback_query data starts with the expected callback string."""
         return update.callback_query.data.startswith(expected_callback)
