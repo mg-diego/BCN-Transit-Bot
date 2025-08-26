@@ -286,7 +286,7 @@ class KeyboardFactory:
         rows = self._chunk_buttons(keyboard, 2)
         return InlineKeyboardMarkup(rows)
 
-    def reply_keyboard_stations_menu(self, metro_stations: List[MetroStation], bus_stops: List[BusStop]):
+    def reply_keyboard_stations_menu(self, metro_stations: List[MetroStation], bus_stops: List[BusStop], tram_stops: List[TramStop]):
         buttons = [
             InlineKeyboardButton(f"🚇 {metro_station.NOM_LINIA} - {metro_station.NOM_ESTACIO}  ", callback_data=Callbacks.METRO_STATION.format(line_code=metro_station.CODI_LINIA, station_code=metro_station.CODI_ESTACIO))
             for metro_station in metro_stations
@@ -294,6 +294,11 @@ class KeyboardFactory:
         for stop in bus_stops:
             buttons.append(
                 InlineKeyboardButton(f"🚌 ({stop.CODI_PARADA}) - {stop.NOM_PARADA}  ", callback_data=Callbacks.BUS_STOP.format(line_code=stop.CODI_LINIA, stop_code=stop.CODI_PARADA))
+            )
+
+        for stop in tram_stops:
+            buttons.append(
+                InlineKeyboardButton(f"🚋 ({stop.id}) - {stop.name}  ", callback_data=Callbacks.TRAM_STOP.format(line_code=1, stop_code=stop.id))
             )
         rows = self._chunk_buttons(buttons, 1)
         return InlineKeyboardMarkup(rows)

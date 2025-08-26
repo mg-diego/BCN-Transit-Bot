@@ -1,4 +1,5 @@
 from typing import List
+
 from providers.api.tmb_api_service import TmbApiService
 
 from domain.bus import BusLine, BusStop
@@ -33,14 +34,11 @@ class BusService(ServiceBase):
             self.tmb_api_service.get_bus_stops,
             cache_ttl=3600*24
         )
-
-        filtered_stops = [
-            stop
-            for stop in stops
-            if stop_name.lower() in stop.NOM_PARADA.lower()
-        ]
-
-        return filtered_stops
+        return self.fuzzy_search(
+            query=stop_name,
+            items=stops,
+            key=lambda stop: stop.NOM_PARADA
+        )
 
     async def get_line_by_id(self, line_id) -> BusLine:
         lines = await self.get_all_lines()

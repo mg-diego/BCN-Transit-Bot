@@ -59,6 +59,7 @@ class ReplyHandler:
 
         metro_service = self.metro_handler.metro_service
         bus_service = self.bus_handler.bus_service
+        tram_service = self.tram_handler.tram_service
     
         search_text = str(update.message.text)
         message_service.set_bot_instance(context.bot)
@@ -76,25 +77,26 @@ class ReplyHandler:
         metro_stations = []
         bus_stops = []
 
-        if search_text.isdigit(): # BUS STATIONS
+        if search_text.isdigit(): # ONLY FOR BUS STOPS
             stop = await bus_service.get_stop_by_id(search_text)
             if stop is not None:
                 bus_stops.append(stop)
 
-        else: # METRO STATIONS | TRAM STOPS | RODALIES STATIONS
+        else: # METRO STATIONS | BUS STOPS | TRAM STOPS | RODALIES STATIONS
+            tram_stops = await tram_service.get_stops_by_name(search_text)
             metro_stations = await metro_service.get_stations_by_name(search_text)
             bus_stops = await bus_service.get_stops_by_name(search_text)
 
-            unique_stations = {}
-            line_cache = {}
-
+            # PARSE METRO STATIONS
+            metro_unique_stations = {}
+            metro_line_cache = {}
             for station in metro_stations:
                 lines = re.findall(r"L\d+[A-Z]?(?=L|$)", station.PICTO)
 
                 for line_code in lines:
-                    if line_code not in line_cache:
-                        line_cache[line_code] = await metro_service.get_line_by_name(line_code)
-                    line = line_cache[line_code]
+                    if line_code not in metro_line_cache:
+                        metro_line_cache[line_code] = await metro_service.get_line_by_name(line_code)
+                    line = metro_line_cache[line_code]
                     if line is None:
                         continue
 
@@ -111,19 +113,23 @@ class ReplyHandler:
                     station_copy.CODI_ESTACIO = line_station.CODI_ESTACIO if line_station else None
 
                     key = (station_copy.NOM_ESTACIO, station_copy.CODI_LINIA)
-                    unique_stations[key] = station_copy
+                    metro_unique_stations[key] = station_copy
 
-            metro_stations = list(unique_stations.values())
+            metro_stations = list(metro_unique_stations.values())
+            
+            # PARSE TRAM STOPS:
+            for stop in tram_stops:
+                pass
 
         metro_results = len(metro_stations)
         bus_results = len(bus_stops)
-        tram_results = 0
+        tram_results = len(tram_stops)
         rodalies_results = 0
         await update_manager.stop_loading(update, context)
         await message_service.edit_message_by_id(
             chat_id,
             message.message_id,
-            language_manager.t("results.found", count=metro_results+bus_results+tram_results+rodalies_results, search_value=search_text, metro_results=metro_results, bus_results=bus_results, tram_results='(Available in next versions)', rodalies_results='(Available in next versions)'),
-            keyboard_factory.reply_keyboard_stations_menu(metro_stations, bus_stops)
+            language_manager.t("results.found", count=metro_results+bus_results+tram_results+rodalies_results, search_value=search_text, metro_results=metro_results, bus_results=bus_results, tram_results=tram_results, rodalies_results='(Available in next versions)'),
+            keyboard_factory.reply_keyboard_stations_menu(metro_stations, bus_stops, tram_stops)
         )
                 

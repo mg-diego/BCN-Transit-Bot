@@ -1,4 +1,5 @@
 from typing import List
+
 from domain.metro import MetroLine, MetroStation, MetroAccess, MetroConnection
 
 from providers.api import TmbApiService
@@ -32,13 +33,11 @@ class MetroService(ServiceBase):
             self.tmb_api_service.get_metro_stations,
             cache_ttl=3600*24
         )
-
-        filtered_stations = [
-            station for station in stations
-            if station_name.lower() in station.NOM_ESTACIO.lower()
-        ]
-
-        return filtered_stations    
+        return self.fuzzy_search(
+            query=station_name,
+            items=stations,
+            key=lambda stop: stop.NOM_ESTACIO
+        )
 
     async def get_line_by_id(self, line_id) -> MetroLine:
         lines = await self.get_all_lines()

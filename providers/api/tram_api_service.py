@@ -163,6 +163,37 @@ class TramApiService:
 
         return [TramStop(**stop) for stop in stops]
 
+    async def get_tram_stops(
+        self,
+        name: str = "",
+        description: str = "",
+        gtfsCode: str = "",
+        latitude: float | None = None,
+        longitude: float | None = None,
+        outboundCode: int | None = None,
+        returnCode: int | None = None,
+        image: str = "",
+        page: int = 1,
+        page_size: int = 100,
+        sort: str = ""
+    ) -> List[TramStop]:
+        params = {
+            "name": name,
+            "description": description,
+            "gtfsCode": gtfsCode,
+            "latitude": latitude,
+            "longitude": longitude,
+            "outboundCode": outboundCode,
+            "returnCode": returnCode,
+            "image": image,
+            "page": page,
+            "pageSize": page_size,
+            "sort": sort
+        }
+        params = {k: v for k, v in params.items() if v is not None}
+        stops = await self._request("GET", f"/stops", params=params)
+        return [TramStop(**stop) for stop in stops]
+
     async def get_connections_at_stop(
         self,
         stop_id: int,

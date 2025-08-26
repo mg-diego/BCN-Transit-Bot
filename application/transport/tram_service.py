@@ -39,6 +39,18 @@ class TramService(ServiceBase):
             lambda: self.tram_api_service.get_stops_on_line(line_id),
             cache_ttl=3600*24
         )
+    
+    async def get_stops_by_name(self, stop_name):
+        stops = await self._get_from_cache_or_api(
+            "tram_stops",
+            self.tram_api_service.get_tram_stops,
+            cache_ttl=3600*24
+        )
+        return self.fuzzy_search(
+            query=stop_name,
+            items=stops,
+            key=lambda stop: stop.name
+        )
 
     async def get_stop_by_id(self, stop_id, line_id) -> TramStop:
         stops = await self.get_stops_by_line(line_id)
@@ -65,4 +77,5 @@ class TramService(ServiceBase):
             lambda: self.tram_api_service.get_next_trams_at_stop(outbound_code, return_code),
             cache_ttl=30
         )
+        return routes
         return "\n\n".join(str(route) for route in routes)

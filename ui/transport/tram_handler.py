@@ -1,3 +1,4 @@
+from domain.tram.next_tram import TramLineRoute
 from domain.transport_type import TransportType
 
 from telegram import Update
@@ -75,9 +76,10 @@ class TramHandler(HandlerBase):
 
         async def update_text():
             routes = await self.tram_service.get_stop_routes(stop.outboundCode, stop.returnCode)
+            grouped_routes = TramLineRoute.group_by_line(routes)
             text = (
                 f"{self.language_manager.t(f'{TransportType.TRAM.value}.stop.name', name=stop.name.upper())}\n\n"
-                f"{self.language_manager.t(f'{TransportType.TRAM.value}.stop.next')}\n{routes} \n\n"
+                f"{self.language_manager.t(f'{TransportType.TRAM.value}.stop.next')}\n{grouped_routes} \n\n"
             )
             is_fav = self.user_data_manager.has_favorite(user_id, TransportType.TRAM.value, stop_id)
             keyboard = self.keyboard_factory.update_menu(is_fav, TransportType.TRAM.value, stop_id, line_id, user_id)

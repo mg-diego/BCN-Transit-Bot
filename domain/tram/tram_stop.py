@@ -13,6 +13,7 @@ class TramStop:
     gtfsCode: str
     order: int
     image: str
+    lineId: Optional[int] = None 
 
     def __str__(self):
         return f"TramStop {self.name} (code: {self.id} - outbound: {self.outboundCode} - return: {self.returnCode})"

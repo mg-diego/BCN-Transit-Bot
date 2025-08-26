@@ -7,3 +7,4 @@ gtfs-realtime-bindings
 protobuf
 tzdata
 pandas
+rapidfuzz

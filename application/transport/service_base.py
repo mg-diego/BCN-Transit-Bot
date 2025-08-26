@@ -1,4 +1,5 @@
-from typing import Callable, Any
+from typing import Callable, Any, List
+from rapidfuzz import process, fuzz
 from providers.helpers import logger
 from application.cache_service import CacheService
 
@@ -9,6 +10,38 @@ class ServiceBase:
 
     def __init__(self, cache_service: CacheService = None):
         self.cache_service = cache_service
+
+    def fuzzy_search(
+        self,
+        query: str,
+        items: List[Any],
+        key: Callable[[Any], str],
+        limit: int = 5,
+        threshold: float = 75
+    ) -> List[Any]:
+        """
+        Realiza una búsqueda aproximada (fuzzy) sobre una lista de objetos.
+
+        Args:
+            query: Texto a buscar.
+            items: Lista de objetos.
+            key: Función para extraer el campo de texto a comparar de cada objeto.
+            limit: Número máximo de resultados a devolver.
+            threshold: Similitud mínima (0-100) para considerar un match.
+
+        Returns:
+            Lista de objetos que coinciden con el query de manera aproximada.
+        """
+        item_dict = {key(item): item for item in items}
+
+        matches = process.extract(
+            query=query,
+            choices=item_dict.keys(),
+            scorer=fuzz.WRatio,
+            limit=limit
+        )
+
+        return [item_dict[name] for name, score, _ in matches if score >= threshold] 
 
     async def _get_from_cache_or_api(
         self,
