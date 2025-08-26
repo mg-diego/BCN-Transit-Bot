@@ -1,6 +1,6 @@
 from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, MessageHandler, filters
 
-from ui import MenuHandler, MetroHandler, BusHandler, TramHandler, FavoritesHandler, HelpHandler, LanguageHandler, KeyboardFactory, WebAppHandler, RodaliesHandler, ReplyHandler
+from ui import MenuHandler, MetroHandler, BusHandler, TramHandler, FavoritesHandler, HelpHandler, LanguageHandler, KeyboardFactory, WebAppHandler, RodaliesHandler, ReplyHandler, AdminHandler
 
 from application import MessageService, MetroService, BusService, TramService, RodaliesService, CacheService, UpdateManager
 
@@ -32,6 +32,7 @@ def main():
         tmb_app_key = secrets_manager.get('TMB_APP_KEY')
         tram_client_id = secrets_manager.get('TRAM_CLIENT_ID')
         tram_client_secret = secrets_manager.get('TRAM_CLIENT_SECRET')
+        admin_id = secrets_manager.get('ADMIN_ID')
 
         logger.info("Secrets loaded successfully")
     except Exception as e:
@@ -51,7 +52,8 @@ def main():
 
     logger.info("Transport services initialized")
 
-    # Handlers
+    # Handlers    
+    admin_handler = AdminHandler(admin_id)
     menu_handler = MenuHandler(keyboard_factory, message_service, user_data_manager, language_manager, update_manager)
     metro_handler = MetroHandler(keyboard_factory, metro_service, update_manager, user_data_manager, message_service, language_manager)
     bus_handler = BusHandler(keyboard_factory, bus_service, update_manager, user_data_manager, message_service, language_manager)
@@ -118,6 +120,11 @@ def main():
     # SEARCH
     application.add_handler(MessageHandler(filters.LOCATION, reply_handler.location_handler)) 
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, reply_handler.reply_router))
+
+    # ADMIN
+    application.add_handler(CommandHandler("commit", admin_handler.commit_command))
+    application.add_handler(CommandHandler("logs", admin_handler.tail_log_command))
+    application.add_handler(CommandHandler("uptime", admin_handler.uptime_command))
 
     logger.info("Handlers registered successfully")
     logger.info("Starting Telegram polling loop...")

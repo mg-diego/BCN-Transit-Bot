@@ -10,5 +10,6 @@ from .keyboard_factory import KeyboardFactory
 from .transport.web_app_handler import WebAppHandler
 from .transport.handler_base import HandlerBase
 from .reply_handler import ReplyHandler
+from .admin_handler import AdminHandler
 
-__all__ = ["MenuHandler", "MetroHandler", "BusHandler", "TramHandler", "RodaliesHandler", "FavoritesHandler", "HelpHandler", "LanguageHandler", "KeyboardFactory", "WebAppHandler", "HandlerBase", "ReplyHandler"]
+__all__ = ["MenuHandler", "MetroHandler", "BusHandler", "TramHandler", "RodaliesHandler", "FavoritesHandler", "HelpHandler", "LanguageHandler", "KeyboardFactory", "WebAppHandler", "HandlerBase", "ReplyHandler", "AdminHandler"]
