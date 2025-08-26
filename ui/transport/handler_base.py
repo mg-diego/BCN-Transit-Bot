@@ -26,7 +26,7 @@ class HandlerBase:
         self.keyboard_factory = keyboard_factory
 
         self.update_counters = defaultdict(lambda: {"count": 0, "last_reset": time.time()})
-        self.ALERT_THRESHOLD = 120  # aviso preventivo
+        self.ALERT_THRESHOLD = 5  # aviso preventivo
         self.INTERVAL = 60  # segundos
         self.UPDATE_LIMIT = int(self.ALERT_THRESHOLD * 0.8)
 
@@ -204,11 +204,11 @@ class HandlerBase:
                         await self.message_service.edit_message_by_id(chat_id, message_id, text, reply_markup)
                         await asyncio.sleep(1)
                     if send_alert:
-                        await self.message_service.edit_message_by_id(chat_id, message_id, "⚠ Has alcanzado el límite de actualizaciones, reinicia la búsqueda.", reply_markup=self.keyboard_factory.restart_search_button(previous_callback))
+                        await self.message_service.edit_message_by_id(chat_id, message_id, self.language_manager.t('common.reload.message'), reply_markup=self.keyboard_factory.restart_search_button(previous_callback))
                         self.reset_user_counter(user_id)
                         break    
                 except RetryAfter as e:
-                    print(f"[FloodWait] Esperando {e.retry_after}s para chat {chat_id}: {e}")
+                    logger.warning(f"[FloodWait] Waiting {e.retry_after}s for chat {chat_id}: {e}")
                 except asyncio.CancelledError:
                     logger.info(f"Update loop cancelled for user {user_id}")
                     break
@@ -221,8 +221,6 @@ class HandlerBase:
     def should_send_update(self, user_id):
         counter = self.update_counters[user_id]
         now = time.time()
-
-        print(counter)
 
         # Reset del contador cada INTERVAL
         if now - counter["last_reset"] > self.INTERVAL:

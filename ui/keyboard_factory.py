@@ -7,19 +7,11 @@ from domain.bus import BusLine, BusStop
 from domain.tram import TramLine, TramStop
 from domain.rodalies import RodaliesLine
 from domain.transport_type import TransportType
+from domain.callbacks import Callbacks
 
 from providers.manager.language_manager import LanguageManager
 
 class KeyboardFactory:
-
-    MENU_CALLBACK = "menu"
-    MENU_METRO_CALLBACK = TransportType.METRO.value
-    MENU_BUS_CALLBACK = TransportType.BUS.value
-    MENU_TRAM_CALLBACK = TransportType.TRAM.value
-    MENU_RODALIES_CALLBACK = TransportType.RODALIES.value
-    MENU_FAVORITES_CALLBACK = "favorites"
-    MENU_LANGUAGE_CALLBACK = "language"
-    MENU_HELP_CALLBACK = "help"
 
     BACK_TO_MENU_CALLBACK = "back_to_menu"    
 
@@ -45,15 +37,15 @@ class KeyboardFactory:
     def create_main_menu(self):
         """Teclado del menú principal."""
         keyboard = [
-            InlineKeyboardButton(self.language_manager.t('main.menu.metro'), callback_data=self.MENU_METRO_CALLBACK),
-            InlineKeyboardButton(self.language_manager.t('main.menu.bus'), callback_data=self.MENU_BUS_CALLBACK),
-            InlineKeyboardButton(self.language_manager.t('main.menu.tram'), callback_data=self.MENU_TRAM_CALLBACK),
-            InlineKeyboardButton(self.language_manager.t('main.menu.rodalies'), callback_data=self.MENU_RODALIES_CALLBACK),
-            InlineKeyboardButton(self.language_manager.t('main.menu.favorites'), callback_data=self.MENU_FAVORITES_CALLBACK),
-            InlineKeyboardButton(self.language_manager.t('main.menu.language'), callback_data=self.MENU_LANGUAGE_CALLBACK)
+            InlineKeyboardButton(self.language_manager.t('main.menu.metro'), callback_data=Callbacks.MENU_METRO_CALLBACK.value),
+            InlineKeyboardButton(self.language_manager.t('main.menu.bus'), callback_data=Callbacks.MENU_BUS_CALLBACK.value),
+            InlineKeyboardButton(self.language_manager.t('main.menu.tram'), callback_data=Callbacks.MENU_TRAM_CALLBACK.value),
+            InlineKeyboardButton(self.language_manager.t('main.menu.rodalies'), callback_data=Callbacks.MENU_RODALIES_CALLBACK.value),
+            InlineKeyboardButton(self.language_manager.t('main.menu.favorites'), callback_data=Callbacks.MENU_FAVORITES_CALLBACK.value),
+            InlineKeyboardButton(self.language_manager.t('main.menu.language'), callback_data=Callbacks.MENU_LANGUAGE_CALLBACK.value)
         ]
         rows = self._chunk_buttons(keyboard, 2)
-        rows.append([InlineKeyboardButton(self.language_manager.t('main.menu.help'),callback_data=self.MENU_HELP_CALLBACK)])
+        rows.append([InlineKeyboardButton(self.language_manager.t('main.menu.help'),callback_data=Callbacks.MENU_HELP_CALLBACK.value)])
         return InlineKeyboardMarkup(rows)
     
     def create_main_menu_replykeyboard(self):
@@ -68,13 +60,13 @@ class KeyboardFactory:
             [KeyboardButton(self.language_manager.t('main.menu.favorites')),
             KeyboardButton(self.language_manager.t('main.menu.language'))],
             
-            [KeyboardButton(self.language_manager.t('main.menu.help'))]  # botón en fila propia
+            [KeyboardButton(self.language_manager.t('main.menu.help'))]
         ]
 
         return ReplyKeyboardMarkup(
             keyboard,
-            resize_keyboard=True,    # ajusta tamaño automáticamente
-            one_time_keyboard=False  # el teclado permanece visible
+            resize_keyboard=True,
+            one_time_keyboard=False
         )
     
     # === LINES ===
@@ -82,7 +74,7 @@ class KeyboardFactory:
     def metro_lines_menu(self, metro_lines: List[MetroLine]) -> InlineKeyboardMarkup:
         sorted_lines = sorted(metro_lines, key=self._custom_sort_key)
         buttons = [
-            InlineKeyboardButton(f"{line.NOM_LINIA}  ", callback_data=f"metro_line:{line.CODI_LINIA}:{line.ORIGINAL_NOM_LINIA}")
+            InlineKeyboardButton(f"{line.NOM_LINIA}  ", callback_data=Callbacks.METRO_LINE.format(line_code=line.CODI_LINIA, line_name=line.ORIGINAL_NOM_LINIA))
             for line in sorted_lines
         ]
 
@@ -90,66 +82,33 @@ class KeyboardFactory:
         return InlineKeyboardMarkup(rows)
     
     def bus_category_menu(self, list):
-        base_callback = "bus_category"
         keyboard = [
-            InlineKeyboardButton('🟣 D', callback_data=f"{base_callback}:Diagonals"),
-            InlineKeyboardButton('🔵 H', callback_data=f"{base_callback}:Horitzontals"),
-            InlineKeyboardButton('🟢 V', callback_data=f"{base_callback}:Verticals"),
-            InlineKeyboardButton('🔴 M', callback_data=f"{base_callback}:Llançadores"),
-            InlineKeyboardButton('⚫ X', callback_data=f"{base_callback}:XPRESBus"),
-            InlineKeyboardButton('🔴 1-60 ', callback_data=f"{base_callback}:1-60"),
-            InlineKeyboardButton('🔴 61-100 ', callback_data=f"{base_callback}:61-100"),
-            InlineKeyboardButton('🔴 101-120 ', callback_data=f"{base_callback}:101-120"),
-            InlineKeyboardButton('🔴 121-140 ', callback_data=f"{base_callback}:121-140"),
-            InlineKeyboardButton('🔴 141-200 ', callback_data=f"{base_callback}:141-200")
+            InlineKeyboardButton('🟣 D', callback_data=Callbacks.BUS_CATEGORY_D.value),
+            InlineKeyboardButton('🔵 H', callback_data=Callbacks.BUS_CATEGORY_H.value),
+            InlineKeyboardButton('🟢 V', callback_data=Callbacks.BUS_CATEGORY_V.value),
+            InlineKeyboardButton('🔴 M', callback_data=Callbacks.BUS_CATEGORY_M.value),
+            InlineKeyboardButton('⚫ X', callback_data=Callbacks.BUS_CATEGORY_M.value),
+            InlineKeyboardButton('🔴 1-60 ', callback_data=Callbacks.BUS_CATEGORY_X.value),
+            InlineKeyboardButton('🔴 61-100 ', callback_data=Callbacks.BUS_CATEGORY_1_60.value),
+            InlineKeyboardButton('🔴 101-120 ', callback_data=Callbacks.BUS_CATEGORY_101_120.value),
+            InlineKeyboardButton('🔴 121-140 ', callback_data=Callbacks.BUS_CATEGORY_121_140.value),
+            InlineKeyboardButton('🔴 141-200 ', callback_data=Callbacks.BUS_CATEGORY_141_200.value)
         ]
         rows = self._chunk_buttons(keyboard, 2)
         return InlineKeyboardMarkup(rows)
     
     def bus_lines_menu(self, bus_lines: List[BusLine]):
         buttons = [
-            InlineKeyboardButton(f"{line.NOM_LINIA}  ", callback_data=f"bus_line:{line.CODI_LINIA}:{line.NOM_LINIA}")
+            InlineKeyboardButton(f"{line.NOM_LINIA}  ", callback_data=Callbacks.BUS_LINE.format(line_code=line.CODI_LINIA, line_name=line.NOM_LINIA))
             for line in bus_lines
         ]
 
         rows = self._chunk_buttons(buttons, 3)
         return InlineKeyboardMarkup(rows)
     
-    def bus_lines_paginated_menu(self, bus_lines: List[BusLine], page: int = 0):
-        BUTTONS_PER_PAGE = 20
-        BUTTONS_PER_ROW = 4
-
-        start = page * BUTTONS_PER_PAGE
-        end = start + BUTTONS_PER_PAGE
-        current_lines = bus_lines[start:end]
-
-        buttons = [
-            InlineKeyboardButton(
-                f"{line.NOM_LINIA}  ",
-                callback_data=f"bus_line:{line.CODI_LINIA}:{line.NOM_LINIA}"
-            )
-            for line in current_lines
-        ]
-        rows = self._chunk_buttons(buttons, BUTTONS_PER_ROW)
-
-        navigation_buttons = []
-        if page > 0:
-            navigation_buttons.append(
-                InlineKeyboardButton(self.language_manager.t('keyboard.previous'), callback_data=f"bus_page:{page - 1}")
-            )
-        if end < len(bus_lines):
-            navigation_buttons.append(
-                InlineKeyboardButton(self.language_manager.t('keyboard.next'), callback_data=f"bus_page:{page + 1}")
-            )
-        if navigation_buttons:
-            rows.append(navigation_buttons)
-
-        rows.append(self._back_button(self.BACK_TO_MENU_CALLBACK))
-        return InlineKeyboardMarkup(rows)
-    
     def tram_lines_menu(self, tram_lines: List[TramLine]) -> InlineKeyboardMarkup:
         buttons = [
-            InlineKeyboardButton(line.name, callback_data=f"tram_line:{line.id}:{line.original_name}")
+            InlineKeyboardButton(line.name, callback_data=Callbacks.TRAM_LINE.format(line_code=line.id, line_name=line.original_name))
             for line in tram_lines
         ]
         rows = self._chunk_buttons(buttons, 3)
@@ -158,14 +117,14 @@ class KeyboardFactory:
     def rodalies_lines_menu(self, rodalies_lines: List[RodaliesLine])-> InlineKeyboardMarkup:
         keyboard = []
         for line in rodalies_lines:
-            keyboard.append([InlineKeyboardButton(f"{line.emoji_name} - {line.description}  ", callback_data=f"rodalies_line:{line.id}")])
+            keyboard.append([InlineKeyboardButton(f"{line.emoji_name} - {line.description}  ", callback_data=Callbacks.RODALIES_LINE.format(line_code=line.id))])
         return InlineKeyboardMarkup(keyboard)
 
     # === STATIONS / STOPS ===
 
     def metro_stations_menu(self, metro_stations: List[MetroStation], line_id):
         buttons = [
-            InlineKeyboardButton(f"{metro_station.ORDRE_ESTACIO}. {metro_station.NOM_ESTACIO}  ", callback_data=f"metro_station:{line_id}:{metro_station.CODI_ESTACIO}")
+            InlineKeyboardButton(f"{metro_station.ORDRE_ESTACIO}. {metro_station.NOM_ESTACIO}  ", callback_data=Callbacks.METRO_STATION.format(line_code=line_id, station_code=metro_station.CODI_ESTACIO))
             for metro_station in metro_stations
         ]
         rows = self._chunk_buttons(buttons, 2)
@@ -173,7 +132,7 @@ class KeyboardFactory:
     
     def tram_stops_menu(self, tram_stops: List[TramStop], line_id):
         buttons = [
-            InlineKeyboardButton(f"{tram_stop.order}. {tram_stop.name}  ", callback_data=f"tram_stop:{line_id}:{tram_stop.id}")
+            InlineKeyboardButton(f"{tram_stop.order}. {tram_stop.name}  ", callback_data=Callbacks.TRAM_STOP.format(line_code=line_id, stop_code=tram_stop.id))
             for tram_stop in tram_stops
         ]
         rows = self._chunk_buttons(buttons, 2)
@@ -185,8 +144,7 @@ class KeyboardFactory:
             for access in station_accesses
         ]
         rows = self._chunk_buttons(buttons, 2)
-        return InlineKeyboardMarkup(rows)
-    
+        return InlineKeyboardMarkup(rows)    
     
     def bus_stops_map_menu(self, encoded):
         keyboard = [
@@ -208,9 +166,9 @@ class KeyboardFactory:
     
     def update_menu(self, is_favorite: bool, item_type:str, item_id: str, line_id: str, user_id: str):
         if is_favorite:
-            fav_button = InlineKeyboardButton(self.language_manager.t('keyboard.favorites.remove'), callback_data=f"remove_fav:{item_type}:{line_id}:{item_id}")
+            fav_button = InlineKeyboardButton(self.language_manager.t('keyboard.favorites.remove'), callback_data=Callbacks.REMOVE_FAVORITE.format(item_type=item_type, line_id=line_id, item_id=item_id))
         else:
-            fav_button = InlineKeyboardButton(self.language_manager.t('keyboard.favorites.add'), callback_data=f"add_fav:{item_type}:{line_id}:{item_id}")
+            fav_button = InlineKeyboardButton(self.language_manager.t('keyboard.favorites.add'), callback_data=Callbacks.ADD_FAVORITE.format(item_type=item_type, line_id=line_id, item_id=item_id))
 
         keyboard = InlineKeyboardMarkup([
             [
@@ -236,29 +194,60 @@ class KeyboardFactory:
     )
     
     def favorites_menu(self, favs):
+        TRANSPORT_CONFIG = {
+            TransportType.METRO.value: {
+                "emoji": "🚇",
+                "name_fmt": "{nom_linia} - {name}",
+                "callback": lambda item: Callbacks.METRO_STATION.format(
+                    line_code=item.get("codi_linia"),
+                    station_code=item.get("code")
+                ),
+            },
+            TransportType.BUS.value: {
+                "emoji": "🚌",
+                "name_fmt": "({code}) {name}",
+                "callback": lambda item: Callbacks.BUS_STOP.format(
+                    line_code=item.get("codi_linia"),
+                    stop_code=item.get("code")
+                ),
+            },
+            TransportType.TRAM.value: {
+                "emoji": "🚋",
+                "name_fmt": "{nom_linia} - {name}",
+                "callback": lambda item: Callbacks.TRAM_STOP.format(
+                    line_code=item.get("codi_linia"),
+                    stop_code=item.get("code")
+                ),
+            },
+            TransportType.RODALIES.value: {
+                "emoji": "🚆",
+                "name_fmt": "{nom_linia} - {name}",
+                "callback": lambda item: Callbacks.RODALIES_STATION.format(
+                    line_code=item.get("codi_linia"),
+                    station_code=item.get("code")
+                ),
+            },
+        }
+
         fav_keyboard = []
 
         for item in favs:
-            if item['type'] == TransportType.METRO.value:
-                name = f"{item.get('nom_linia', 'Sin nombre')} - {item.get('name', '')}  "
-                fav_keyboard.append([
-                    InlineKeyboardButton(f"🚇 {name}", callback_data=f"metro_station:{item.get('codi_linia')}:{item.get('code')}")
-                ])
-            elif item['type'] == TransportType.BUS.value:
-                name = f"({item.get('code', '')})  {item.get('name', '')}  "
-                fav_keyboard.append([
-                    InlineKeyboardButton(f"🚌 {name}", callback_data=f"bus_stop:{item.get('codi_linia')}:{item.get('code')}")
-                ])
-            elif item['type'] == TransportType.TRAM.value:
-                name = f"{item.get('nom_linia', 'Sin nombre')} - {item.get('name', '')}  "
-                fav_keyboard.append([
-                    InlineKeyboardButton(f"🚋 {name}", callback_data=f"tram_stop:{item.get('codi_linia')}:{item.get('code')}")
-                ])
-            elif item['type'] == TransportType.RODALIES.value:
-                name = f"{item.get('nom_linia', 'Sin nombre')} - {item.get('name', '')}  "
-                fav_keyboard.append([
-                    InlineKeyboardButton(f"🚆 {name}", callback_data=f"rodalies_station:{item.get('codi_linia')}:{item.get('code')}")
-                ])
+            config = TRANSPORT_CONFIG.get(item["type"])
+            if not config:
+                continue
+
+            name = config["name_fmt"].format(
+                nom_linia=item.get("nom_linia", "Sin nombre"),
+                name=item.get("name", ""),
+                code=item.get("code", "")
+            )
+
+            fav_keyboard.append([
+                InlineKeyboardButton(
+                    text=f"{config['emoji']} {name}",
+                    callback_data=config["callback"](item)
+                )
+            ])
 
         return InlineKeyboardMarkup(fav_keyboard)
     
@@ -266,7 +255,7 @@ class KeyboardFactory:
         return [InlineKeyboardButton(self.language_manager.t('keyboard.back'), callback_data=callback)]
     
     def restart_search_button(self, callback):
-        return InlineKeyboardMarkup([[InlineKeyboardButton('🔄 Restart', callback_data=callback)]])
+        return InlineKeyboardMarkup([[InlineKeyboardButton(self.language_manager.t('common.reload.btn'), callback_data=callback)]])
     
     def _back_reply_button(self):
         """Teclado principal como ReplyKeyboard."""
@@ -282,7 +271,7 @@ class KeyboardFactory:
     
     def language_menu(self, available_languages: dict):
         buttons = [
-            InlineKeyboardButton(name, callback_data=f"set_language:{code}")
+            InlineKeyboardButton(name, callback_data=Callbacks.SET_LANGUAGE.format(language_code=code))
             for code, name in available_languages.items()
         ]
         rows = self._chunk_buttons(buttons, 2)
@@ -299,15 +288,14 @@ class KeyboardFactory:
 
     def reply_keyboard_stations_menu(self, metro_stations: List[MetroStation], bus_stops: List[BusStop]):
         buttons = [
-            InlineKeyboardButton(f"🚇 {metro_station.NOM_LINIA} - {metro_station.NOM_ESTACIO}  ", callback_data=f"metro_station:{metro_station.CODI_LINIA}:{metro_station.CODI_ESTACIO}")
+            InlineKeyboardButton(f"🚇 {metro_station.NOM_LINIA} - {metro_station.NOM_ESTACIO}  ", callback_data=Callbacks.METRO_STATION.format(line_code=metro_station.CODI_LINIA, station_code=metro_station.CODI_ESTACIO))
             for metro_station in metro_stations
         ]
         for stop in bus_stops:
             buttons.append(
-                InlineKeyboardButton(f"🚌 ({stop.CODI_PARADA}) - {stop.NOM_PARADA}  ", callback_data=f"bus_stop:{stop.CODI_LINIA}:{stop.CODI_PARADA}")
+                InlineKeyboardButton(f"🚌 ({stop.CODI_PARADA}) - {stop.NOM_PARADA}  ", callback_data=Callbacks.BUS_STOP.format(line_code=stop.CODI_LINIA, stop_code=stop.CODI_PARADA))
             )
         rows = self._chunk_buttons(buttons, 1)
-        #rows.append(self._back_button(self.BACK_TO_MENU_CALLBACK))
         return InlineKeyboardMarkup(rows)
     
 

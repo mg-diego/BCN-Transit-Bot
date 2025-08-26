@@ -32,19 +32,6 @@ class BusHandler(HandlerBase):
             service_get_lines=self.bus_service.get_all_lines,
             keyboard_menu_builder=self.keyboard_factory.bus_category_menu
         )
-        '''
-        bus_lines = await self.bus_service.get_all_lines()
-        page = 0
-        type = TransportType.BUS.value.capitalize()
-
-        if self.message_service.check_query_callback(update, "bus_page:"):
-            _, page = self.message_service.get_callback_data(update)
-        else:
-            await self.message_service.handle_interaction(update, self.language_manager.t("common.loading.lines", type=type))
-
-        reply_markup = self.keyboard_factory.bus_lines_paginated_menu(bus_lines, int(page))
-        await self.message_service.handle_interaction(update, self.language_manager.t("common.select.line", type=type), reply_markup)
-        '''
 
     async def show_bus_category_lines(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         _, category = self.message_service.get_callback_data(update)
