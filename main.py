@@ -20,10 +20,11 @@ def main():
     language_manager = LanguageManager()
     secrets_manager = SecretsManager()
     message_service = MessageService()
-    update_manager = UpdateManager()
     user_data_manager = UserDataManager()
     cache_service = CacheService()
-    keyboard_factory = KeyboardFactory(language_manager)
+    
+    keyboard_factory = KeyboardFactory(language_manager)    
+    update_manager = UpdateManager(message_service)
 
     # Tokens y credenciales
     try:

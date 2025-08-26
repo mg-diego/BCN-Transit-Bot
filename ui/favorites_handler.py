@@ -52,7 +52,7 @@ class FavoritesHandler:
 
         # Añadir favorito
         if item_type == TransportType.METRO.value:
-            item = await self.metro_service.get_station_by_id(item_id, line_id)
+            item = await self.metro_service.get_station_by_id(item_id)
             
             new_fav_item = {
                 "STATION_CODE": item_id,

@@ -227,7 +227,6 @@ class TmbApiService:
         url = f"https://api.tmb.cat/v1/alerts/metro/channels/WEB/routes/{metro_line}"
         data = await self._get(url)
         alerts = data['data']['alerts']
-        print(f"IDIOMA: {language}")
 
         station_alerts = []
         for alert in alerts:

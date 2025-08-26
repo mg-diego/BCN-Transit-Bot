@@ -26,11 +26,8 @@ class TramHandler(HandlerBase):
         message_service: MessageService,
         language_manager: LanguageManager
     ):
-        super().__init__(message_service, update_manager, language_manager, user_data_manager)
-        self.keyboard_factory = keyboard_factory
+        super().__init__(message_service, update_manager, language_manager, user_data_manager, keyboard_factory)
         self.tram_service = tram_service
-        self.user_data_manager = user_data_manager
-        self.language_manager = language_manager
         self.mapper = TransportDataCompressor()
         logger.info(f"[{self.__class__.__name__}] TramHandler initialized")
 

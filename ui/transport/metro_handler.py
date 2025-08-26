@@ -27,8 +27,7 @@ class MetroHandler(HandlerBase):
         message_service: MessageService,
         language_manager: LanguageManager
     ):
-        super().__init__(message_service, update_manager, language_manager, user_data_manager)
-        self.keyboard_factory = keyboard_factory
+        super().__init__(message_service, update_manager, language_manager, user_data_manager, keyboard_factory)
         self.metro_service = metro_service
         self.mapper = TransportDataCompressor()
         logger.info(f"[{self.__class__.__name__}] MetroHandler initialized")
@@ -65,10 +64,18 @@ class MetroHandler(HandlerBase):
         )
 
     async def show_station(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        await self.message_service.answer_callback_query(update)
         user_id, chat_id, line_id, metro_station_id = self.extract_context(update, context)        
         logger.info(f"Showing station info for user {user_id}, line {line_id}, station {metro_station_id}")
-
         station = await self.metro_service.get_station_by_id(metro_station_id)
+        message = await self.update_manager.start_loading(update, context, self.language_manager.t('common.stop.loading'))
+        is_fav = self.user_data_manager.has_favorite(user_id, TransportType.METRO.value, metro_station_id)
+        
+        previous_callback = self.message_service.get_callback_query(update)
+        keyboard = self.keyboard_factory.update_menu(is_fav, TransportType.METRO.value, metro_station_id, line_id, user_id, previous_callback)
+        await self.show_stop_intro(update, context, transport_type=TransportType.METRO.value, line_id=line_id, stop_id=metro_station_id, stop_name=station.NOM_ESTACIO, stop_lat=station.coordinates[1], stop_lon=station.coordinates[0], keyboard_reply=keyboard)
+        
+        '''
         routes = await self.metro_service.get_station_routes(metro_station_id)
         station_alerts = await self.metro_service.get_metro_station_alerts(line_id, metro_station_id, self.user_data_manager.get_user_language(user_id))
         alerts_message = f"{self.language_manager.t("common.alerts")}\n{station_alerts}\n\n" if any(station_alerts) else ""
@@ -83,12 +90,14 @@ class MetroHandler(HandlerBase):
             update,
             text,
             reply_markup=self.keyboard_factory.update_menu(is_fav, TransportType.METRO.value, metro_station_id, line_id, user_id, self.message_service.get_callback_query(update))
-        )        
+        )    
+        '''
+        
+        station_alerts = await self.metro_service.get_metro_station_alerts(line_id, metro_station_id, self.user_data_manager.get_user_language(user_id))     
+        alerts_message = f"{self.language_manager.t("common.alerts")}\n{station_alerts}\n\n" if any(station_alerts) else ""
 
         async def update_text():
-            routes = await self.metro_service.get_station_routes(metro_station_id)
-            station_alerts = await self.metro_service.get_metro_station_alerts(line_id, metro_station_id, self.user_data_manager.get_user_language(user_id))
-            alerts_message = f"{self.language_manager.t("common.alerts")}\n{station_alerts}\n\n" if any(station_alerts) else ""
+            routes = await self.metro_service.get_station_routes(metro_station_id)       
 
             text = (
                 f"{self.language_manager.t(f"metro.station.name", name=station.NOM_ESTACIO.upper())}\n\n"
@@ -96,10 +105,11 @@ class MetroHandler(HandlerBase):
                 f"{alerts_message}"
             )
             is_fav = self.user_data_manager.has_favorite(user_id, TransportType.METRO.value, metro_station_id)
-            keyboard = self.keyboard_factory.update_menu(is_fav, TransportType.METRO.value, metro_station_id, line_id, user_id, self.message_service.get_callback_query(update))
+            keyboard = self.keyboard_factory.update_menu(is_fav, TransportType.METRO.value, metro_station_id, line_id, user_id, previous_callback)
             return text, keyboard
-
-        self.start_update_loop(user_id, chat_id, message.message_id, update_text)
+        
+        await update_text()
+        self.start_update_loop(user_id, update, update_text)
         logger.info(f"Started update loop task for user {user_id}, station {metro_station_id}")
 
     async def show_station_location(self, update: Update, context: ContextTypes.DEFAULT_TYPE):

@@ -2,15 +2,13 @@ import asyncio
 from telegram import Update
 from telegram.ext import ContextTypes
 from providers.helpers import logger
+from application.message_service import MessageService
 
 
 class UpdateManager:
-    """
-    Manages per-user asynchronous update tasks.
-    Now also handles animated loading messages (⏳., ⏳.., ⏳...).
-    """
 
-    def __init__(self):
+    def __init__(self, message_service: MessageService):
+        self.message_service = message_service
         # user_id -> asyncio.Task
         self.tasks: dict[int, asyncio.Task] = {}
         # user_id -> message_id (for loading animations)
@@ -39,21 +37,26 @@ class UpdateManager:
         logger.info(f"[{self.__class__.__name__}] Update task started for user {user_id}")
 
     async def _animate_loading(self, user_id: int, context: ContextTypes.DEFAULT_TYPE,
-                               chat_id: int, base_text: str):
+                            chat_id: int, base_text: str):
         """
         Internal coroutine that updates the message text with an animated loading indicator.
+        Sequence: "..." -> "." -> ".." -> "..." -> ...
         """
-        dots = 1
+        # Definimos el patrón deseado explícitamente
+        pattern = [1, 2, 3]
+        index = 0
         message_id = self.loading_messages[user_id]
         try:
             while True:
                 await asyncio.sleep(0.5)
-                dots = (dots % 3) + 1
-                await context.bot.edit_message_text(
+                dots = pattern[index]
+                await self.message_service.edit_message_by_id(
                     chat_id=chat_id,
                     message_id=message_id,
                     text=f"⏳ {base_text}{'.' * dots}"
                 )
+                # Avanzamos en el patrón de forma circular
+                index = (index + 1) % len(pattern)
         except asyncio.CancelledError:
             logger.info(f"[{self.__class__.__name__}] Animation cancelled for user {user_id}")
             raise
@@ -63,6 +66,7 @@ class UpdateManager:
         """
         Sends an initial loading message and starts the animated update task.
         """
+        self.message_service.set_bot_instance(context.bot)
         chat_id = update.effective_chat.id
         user_id = update.effective_user.id
 
@@ -70,7 +74,7 @@ class UpdateManager:
         await self.stop_loading(update, context)
 
         # Enviar mensaje inicial
-        message = await context.bot.send_message(chat_id=chat_id, text=f"⏳ {base_text}", reply_markup=reply_markup)
+        message = await self.message_service.handle_interaction(update, text=f"⏳ {base_text}...", reply_markup=reply_markup)
         self.loading_messages[user_id] = message.message_id
 
         # Crear tarea de animación usando start_task existente
@@ -85,11 +89,12 @@ class UpdateManager:
         """
         Stops the animation and deletes the loading message.
         """
+        self.message_service.set_bot_instance(context.bot)
         user_id = update.effective_user.id
         chat_id = update.effective_chat.id
 
         # Cancelar animación si está activa
-        self.cancel_task(user_id)
+        self.cancel_task(user_id)            
 
         '''
         # Borrar mensaje de carga si existe

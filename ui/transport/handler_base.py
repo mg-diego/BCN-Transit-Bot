@@ -8,6 +8,7 @@ from application import MessageService, UpdateManager
 from providers.manager.language_manager import LanguageManager
 from providers.manager.user_data_manager import UserDataManager
 from providers.helpers import logger
+from ui.keyboard_factory import KeyboardFactory
 
 
 class HandlerBase:
@@ -20,12 +21,14 @@ class HandlerBase:
         message_service: MessageService,
         update_manager: UpdateManager,
         language_manager: LanguageManager,
-        user_data_manager: UserDataManager
+        user_data_manager: UserDataManager,
+        keyboard_factory: KeyboardFactory
     ):
         self.message_service = message_service
         self.update_manager = update_manager
         self.language_manager = language_manager
         self.user_data_manager = user_data_manager
+        self.keyboard_factory = keyboard_factory
 
     async def show_transport_lines(
         self,
@@ -52,6 +55,7 @@ class HandlerBase:
         try:
             # Obtener líneas
             lines = await service_get_lines()
+            await self.update_manager.stop_loading(update, context)
 
             # Construir teclado
             reply_markup = keyboard_menu_builder(lines)
@@ -70,10 +74,6 @@ class HandlerBase:
                 self.language_manager.t("common.error.loading"),
                 reply_markup=self.keyboard_factory._back_reply_button()
             )
-
-        finally:
-            # Detener animación en cualquier caso
-            await self.update_manager.stop_loading(update, context)
 
     async def ask_search_method(
         self,
@@ -220,8 +220,7 @@ class HandlerBase:
     def start_update_loop(
         self,
         user_id: int,
-        chat_id: int,
-        message_id: int,
+        update,
         get_text_callable: Callable[[], Awaitable[Tuple[str, Any]]]
     ):
         """
@@ -231,14 +230,13 @@ class HandlerBase:
         async def loop():
             while True:
                 try:
-                    await asyncio.sleep(1)
                     text, reply_markup = await get_text_callable()
-                    await self.message_service.edit_message_by_id(
-                        chat_id,
-                        message_id,
+                    await self.message_service.handle_interaction(
+                        update,
                         text,
                         reply_markup
                     )
+                    await asyncio.sleep(1)
                 except asyncio.CancelledError:
                     logger.info(f"Update loop cancelled for user {user_id}")
                     break

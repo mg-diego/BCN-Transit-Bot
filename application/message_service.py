@@ -25,6 +25,10 @@ class MessageService:
         self._bot = bot
         logger.info(f"[{self.__class__.__name__}] Bot instance set")
 
+    async def answer_callback_query(self, update):
+        query = update.callback_query
+        await query.answer()
+
     async def handle_interaction(self, update: Update, text: str, reply_markup: InlineKeyboardMarkup = None, parse_mode=ParseMode.HTML):
         """
         Send or edit a message depending on the type of interaction:
@@ -33,6 +37,7 @@ class MessageService:
         - web_app_data (update.message.web_app_data)
         """
         if update.callback_query:
+            await self.answer_callback_query(update)
             logger.info(f"[{self.__class__.__name__}] Handling callback_query for user {self.get_user_id(update)}")
             return await self.edit_inline_message(update, text, reply_markup, parse_mode)
         elif update.message:
@@ -52,9 +57,7 @@ class MessageService:
 
     async def edit_inline_message(self, update: Update, text: str, reply_markup: InlineKeyboardMarkup = None, parse_mode=ParseMode.HTML):
         """Edit a message originating from an inline button (callback_query)."""
-        query = update.callback_query
-        await query.answer()
-        msg = await query.edit_message_text(
+        msg = await update.callback_query.edit_message_text(
             text=text,
             reply_markup=reply_markup,
             parse_mode=parse_mode

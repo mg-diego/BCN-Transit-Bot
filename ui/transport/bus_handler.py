@@ -19,8 +19,7 @@ class BusHandler(HandlerBase):
         message_service: MessageService,
         language_manager: LanguageManager
     ):
-        super().__init__(message_service, update_manager, language_manager, user_data_manager)
-        self.keyboard_factory = keyboard_factory
+        super().__init__(message_service, update_manager, language_manager, user_data_manager, keyboard_factory)
         self.bus_service = bus_service
         self.mapper = TransportDataCompressor()
 
