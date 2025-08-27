@@ -209,7 +209,7 @@ class TmbApiService:
 
         return accesses
 
-    async def get_metro_station_connections(self, metro_station_id):
+    async def get_station_connections(self, metro_station_id):
         url = f"https://api.tmb.cat/v1/transit/linies/metro/estacions/{metro_station_id}/corresp"
         data = await self._get(url)
         features = data['features']
@@ -223,7 +223,7 @@ class TmbApiService:
 
         return connections
 
-    async def get_metro_station_alerts(self, metro_line, metro_station_id, language):
+    async def get_station_alerts(self, metro_line, metro_station_id, language):
         url = f"https://api.tmb.cat/v1/alerts/metro/channels/WEB/routes/{metro_line}"
         data = await self._get(url)
         alerts = data['data']['alerts']
@@ -233,7 +233,6 @@ class TmbApiService:
             for entity in alert['entities']:
                 if entity['station_code'] == str(metro_station_id):
                     for publication in alert['publications']:
-                        print(publication)
                         station_alerts.append(publication[f'text{str(language).capitalize()}'])
 
         return station_alerts

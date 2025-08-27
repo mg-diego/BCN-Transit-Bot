@@ -72,7 +72,7 @@ class UpdateManager:
         await self.stop_loading(update, context)
 
         # Enviar mensaje inicial
-        message = await self.message_service.send_message_direct(chat_id, context, text=f"⏳ {base_text}", reply_markup=reply_markup)
+        message = await self.message_service.handle_interaction(update, text=f"⏳ {base_text}", reply_markup=reply_markup)
         self.loading_messages[user_id] = message.message_id
 
         # Crear tarea de animación usando start_task existente

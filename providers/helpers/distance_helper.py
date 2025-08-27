@@ -4,6 +4,7 @@ from typing import List, Optional, Tuple, Dict
 from domain.bus import BusStop
 from domain.metro import MetroStation
 from domain.tram import TramStop
+from domain.rodalies import RodaliesStation
 
 class DistanceHelper:
     """
@@ -17,6 +18,7 @@ class DistanceHelper:
         metro_stations: List[MetroStation],
         bus_stops: List[BusStop],
         tram_stops: List[TramStop],
+        rodalies_stations: List[RodaliesStation],
         user_location: Optional[object] = None
     ) -> List[Dict]:
         """
@@ -44,28 +46,11 @@ class DistanceHelper:
                 )
             stops.append({
                 "type": "metro",
-                "line": m.NOM_LINIA,
-                "name": m.NOM_ESTACIO,
-                "code_line": m.CODI_LINIA,
-                "code_station": m.CODI_ESTACIO,
+                "line_name": m.EMOJI_NOM_LINIA,
+                "line_code": m.CODI_LINIA,                
+                "station_name": m.NOM_ESTACIO,
+                "station_code": m.CODI_ESTACIO,
                 "coordinates": m.coordinates,
-                "distance_km": distance_km
-            })
-
-        # --- Bus ---
-        for b in bus_stops:
-            distance_km = None
-            if user_location:
-                distance_km = DistanceHelper.haversine_distance(
-                    b.coordinates[1], b.coordinates[0],
-                    user_location.latitude, user_location.longitude
-                )
-            stops.append({
-                "type": "bus",
-                "line": b.CODI_LINIA,
-                "name": b.NOM_PARADA,
-                "code_stop": b.CODI_PARADA,
-                "coordinates": b.coordinates,
                 "distance_km": distance_km
             })
 
@@ -77,14 +62,55 @@ class DistanceHelper:
                     t.latitude, t.longitude,
                     user_location.latitude, user_location.longitude
                 )
+
             stops.append({
                 "type": "tram",
-                "line": t.lineId,
-                "name": t.name,
-                "code_stop": t.id,
+                "line_name": t.lineName,
+                "line_code": t.lineId,
+                "stop_name": t.name,
+                "stop_code": t.id,
                 "coordinates": (t.latitude, t.longitude),
                 "distance_km": distance_km
             })
+            
+        # --- Rodalies ---
+        for t in rodalies_stations:
+            distance_km = None
+            if user_location:
+                distance_km = DistanceHelper.haversine_distance(
+                    t.latitude, t.longitude,
+                    user_location.latitude, user_location.longitude
+                )
+
+            stops.append({
+                "type": "rodalies",
+                "line_name": t.line_name,
+                "line_code": t.line_id,
+                "station_name": t.name,
+                "station_code": t.id,
+                "coordinates": (t.latitude, t.longitude),
+                "distance_km": distance_km
+            })
+
+        # --- Bus --- (Adding bus stops as last option to avoid consuming the 50 slots just by bus stops in case of generic searches)
+        for b in bus_stops:
+            distance_km = None
+            if user_location:
+                distance_km = DistanceHelper.haversine_distance(
+                    b.coordinates[1], b.coordinates[0],
+                    user_location.latitude, user_location.longitude
+                )
+
+            new_stop = {
+                "type": "bus",
+                "line_code": b.CODI_LINIA,
+                "stop_name": b.NOM_PARADA,
+                "stop_code": b.CODI_PARADA,
+                "coordinates": b.coordinates,
+                "distance_km": distance_km
+            }
+            if not any(stop.get("stop_code") == new_stop["stop_code"] and stop.get("type") == new_stop["type"] for stop in stops):
+                stops.append(new_stop)
 
         stops.sort(key=lambda x: (x["distance_km"] is None, x["distance_km"]))
         return stops[:results_to_return]

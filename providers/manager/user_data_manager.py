@@ -8,6 +8,13 @@ from providers.helpers import logger
 class UserDataManager:
     CACHE_TTL = 300
 
+    FAVORITE_TYPE_ORDER = {
+        TransportType.METRO.value: 0,
+        TransportType.BUS.value: 1,
+        TransportType.TRAM.value: 2,
+        TransportType.RODALIES.value: 3
+    }
+
     def __init__(self, spreadsheet_name: str = "TMB", credentials_file: str = "credentials.json"):
         logger.info("Initializing UserDataManager...")
         try:
@@ -176,7 +183,12 @@ class UserDataManager:
     def get_favorites_by_user(self, user_id: int):
         logger.debug(f"Fetching favorites for user_id={user_id}")
         favorites = self._load_favorites()
-        return [f for f in favorites if str(f["user_id"]) == str(user_id)]
+        user_fav = [f for f in favorites if str(f["user_id"]) == str(user_id)]
+    
+        return sorted(
+            user_fav,
+            key=lambda f: self.FAVORITE_TYPE_ORDER.get(f.get("type"), 999)
+        )
 
     def has_favorite(self, user_id, type, item_id):
         logger.debug(f"Checking if user_id={user_id} has favorite {type}:{item_id}")

@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from typing import Tuple
 
+from domain.metro import MetroLine
+
 @dataclass
 class MetroStation:
     CODI_GRUP_ESTACIO: int
@@ -20,11 +22,7 @@ class MetroStation:
     PICTO: str
     PICTO_GRUP: str
     EMOJI_NOM_LINIA: str
-
     coordinates: Tuple[float, float]
-
-    def __str__(self):
-        return f"{self.NOM_ESTACIO} - ID_ESTACIO:{self.ID_ESTACIO} (CODI_ESTACIO:{self.CODI_ESTACIO}) - Coord: {self.coordinates}"
 
 def create_metro_station(feature: dict) -> MetroStation:
     props = feature['properties']
@@ -39,16 +37,24 @@ def create_metro_station(feature: dict) -> MetroStation:
         CODI_LINIA=props.get('CODI_LINIA', ''),
         NOM_LINIA=props.get('NOM_LINIA', ''),
         ORDRE_LINIA=props.get('ORDRE_LINIA', ''),
+        COLOR_LINIA=props.get('COLOR_LINIA', ''),
+        EMOJI_NOM_LINIA=_set_emoji_at_name(props.get('NOM_LINIA', '')),
         DESC_SERVEI=props.get('DESC_SERVEI', ''),
         ORIGEN_SERVEI=props.get('ORIGEN_SERVEI', ''),
         DESTI_SERVEI=props.get('DESTI_SERVEI', ''),
         DATA=props.get('DATA', ''),
-        COLOR_LINIA=props.get('COLOR_LINIA', ''),
         PICTO=props.get('PICTO', ''),
         PICTO_GRUP=props.get('PICTO_GRUP', ''),
         coordinates=(coords[0], coords[1]),
-        EMOJI_NOM_LINIA=_set_emoji_at_name(props.get('NOM_LINIA', ''))
     )
+
+def update_metro_station_with_line_info(metro_station: MetroStation, metro_line: MetroLine) -> MetroStation:
+    metro_station.ID_LINIA = metro_line.ID_LINIA
+    metro_station.CODI_LINIA = metro_line.CODI_LINIA
+    metro_station.NOM_LINIA = metro_line.ORIGINAL_NOM_LINIA
+    metro_station.ORDRE_LINIA = metro_line.ORDRE_LINIA
+    metro_station.EMOJI_NOM_LINIA = _set_emoji_at_name(metro_station.NOM_LINIA)
+    return metro_station
 
 
 def _set_emoji_at_name(name):

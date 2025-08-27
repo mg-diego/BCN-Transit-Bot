@@ -1,4 +1,5 @@
 from domain.transport_type import TransportType
+from providers.helpers import BoolConverter
 from telegram import Update
 from telegram.ext import ContextTypes
 
@@ -48,7 +49,7 @@ class FavoritesHandler:
 
         user_id = query.from_user.id
         data = query.data
-        _, item_type, line_id, item_id = data.split(":")
+        _, item_type, line_id, item_id, previous_callback, has_connections = data.split(":")
 
         # Añadir favorito
         if item_type == TransportType.METRO.value:
@@ -95,7 +96,7 @@ class FavoritesHandler:
             }
 
         self.user_data_manager.add_favorite(user_id, item_type, new_fav_item)
-        keyboard = self.keyboard_factory.update_menu(is_favorite=True, item_type=item_type, item_id=item_id, line_id=line_id)
+        keyboard = self.keyboard_factory.update_menu(is_favorite=True, item_type=item_type, item_id=item_id, line_id=line_id, previous_callback=previous_callback, has_connections=BoolConverter.from_string(has_connections))
 
         await query.edit_message_reply_markup(reply_markup=keyboard)
 
@@ -105,9 +106,9 @@ class FavoritesHandler:
 
         user_id = query.from_user.id
         data = query.data
-        _, item_type, line_id, item_id = data.split(":")
+        _, item_type, line_id, item_id, previous_callback, has_connections = data.split(":")
 
         self.user_data_manager.remove_favorite(user_id, item_type, item_id)
-        keyboard = self.keyboard_factory.update_menu(is_favorite=False, item_type=item_type, item_id=item_id, line_id=line_id)
+        keyboard = self.keyboard_factory.update_menu(is_favorite=False, item_type=item_type, item_id=item_id, line_id=line_id, previous_callback=previous_callback, has_connections=BoolConverter.from_string(has_connections))
 
         await query.edit_message_reply_markup(reply_markup=keyboard)

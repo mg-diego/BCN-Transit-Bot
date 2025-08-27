@@ -163,7 +163,7 @@ class TramApiService:
 
         return [TramStop(**stop) for stop in stops]
 
-    async def get_tram_stops(
+    async def get_stops(
         self,
         name: str = "",
         description: str = "",

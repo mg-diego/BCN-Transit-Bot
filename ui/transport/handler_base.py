@@ -30,6 +30,8 @@ class HandlerBase:
         self.INTERVAL = 60  # segundos
         self.UPDATE_LIMIT = int(self.ALERT_THRESHOLD * 0.8)
 
+        self.UPDATE_INTERVAL = 5
+
 
     async def show_transport_lines(
         self,
@@ -154,15 +156,11 @@ class HandlerBase:
 
         await self.message_service.send_new_message_from_callback(
             update=update,
-            text=self.language_manager.t("common.open.map", line_name=line_name),
+            text=self.language_manager.t("common.map.open", line_name=line_name),
             reply_markup=keyboard_menu_builder(encoded_map),
         )
     
-    async def show_stop_intro(self, update: Update, context, transport_type: str, line_id, stop_id, stop_lat, stop_lon, stop_name, keyboard_reply = None):        
-        #sub_key = "station" if transport_type in [TransportType.METRO.value, TransportType.RODALIES.value] else "stop"
-        #await self.message_service.handle_interaction(update, self.language_manager.t(f"{transport_type}.{sub_key}.name", name=stop_name.upper()))
-        #await self.message_service.send_location(update, stop_lat, stop_lon, reply_markup=keyboard_reply)
-
+    async def show_stop_intro(self, update: Update, context, transport_type: str, line_id, stop_id, stop_name):        
         message = await self.update_manager.start_loading(update, context, self.language_manager.t("common.stop.loading"))
         self.user_data_manager.register_search(transport_type, line_id, stop_id, stop_name)
 
@@ -182,7 +180,7 @@ class HandlerBase:
                     if can_send:
                         text, reply_markup = await get_text_callable()
                         await self.message_service.edit_message_by_id(chat_id, message_id, text, reply_markup)
-                        await asyncio.sleep(1)
+                        await asyncio.sleep(5)
                     if send_alert:
                         await self.message_service.edit_message_by_id(chat_id, message_id, self.language_manager.t('common.reload.message'), reply_markup=self.keyboard_factory.restart_search_button(previous_callback))
                         self.reset_user_counter(user_id)

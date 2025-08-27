@@ -8,6 +8,8 @@ class RodaliesStation:
     latitude: float
     longitude: float
     is_accessible: bool
+    line_id: Optional[int] = None
+    line_name: Optional[int] = None
 
 def create_rodalies_station(station_data):
     return RodaliesStation(

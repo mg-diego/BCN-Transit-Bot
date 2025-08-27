@@ -10,7 +10,7 @@ from domain.transport_type import TransportType
 from domain.callbacks import Callbacks
 
 from providers.manager import LanguageManager
-from providers.helpers import DistanceHelper
+from providers.helpers import DistanceHelper, GoogleMapsHelper
 
 class KeyboardFactory:
 
@@ -92,9 +92,9 @@ class KeyboardFactory:
             InlineKeyboardButton('🔵 H', callback_data=Callbacks.BUS_CATEGORY_H.value),
             InlineKeyboardButton('🟢 V', callback_data=Callbacks.BUS_CATEGORY_V.value),
             InlineKeyboardButton('🔴 M', callback_data=Callbacks.BUS_CATEGORY_M.value),
-            InlineKeyboardButton('⚫ X', callback_data=Callbacks.BUS_CATEGORY_M.value),
-            InlineKeyboardButton('🔴 1-60 ', callback_data=Callbacks.BUS_CATEGORY_X.value),
-            InlineKeyboardButton('🔴 61-100 ', callback_data=Callbacks.BUS_CATEGORY_1_60.value),
+            InlineKeyboardButton('⚫ X', callback_data=Callbacks.BUS_CATEGORY_X.value),
+            InlineKeyboardButton('🔴 1-60 ', callback_data=Callbacks.BUS_CATEGORY_1_60.value),
+            InlineKeyboardButton('🔴 61-100 ', callback_data=Callbacks.BUS_CATEGORY_61_100.value),
             InlineKeyboardButton('🔴 101-120 ', callback_data=Callbacks.BUS_CATEGORY_101_120.value),
             InlineKeyboardButton('🔴 121-140 ', callback_data=Callbacks.BUS_CATEGORY_121_140.value),
             InlineKeyboardButton('🔴 141-200 ', callback_data=Callbacks.BUS_CATEGORY_141_200.value)
@@ -145,7 +145,10 @@ class KeyboardFactory:
     
     def metro_station_access_menu(self, station_accesses: List[MetroAccess]):
         buttons = [
-            InlineKeyboardButton(f"{"🛗 " if access.NUM_ASCENSORS > 0 else "🚶‍♂️"}{access.NOM_ACCES}", url=f"https://maps.google.com/?q={access.coordinates[1]},{access.coordinates[0]}")
+            InlineKeyboardButton(
+                f"{"🛗 " if access.NUM_ASCENSORS > 0 else "🚶‍♂️"}{access.NOM_ACCES}",
+                url = GoogleMapsHelper.build_directions_url(latitude=access.coordinates[1], longitude=access.coordinates[0])
+            )
             for access in station_accesses
         ]
         rows = self._chunk_buttons(buttons, 2)
@@ -169,19 +172,38 @@ class KeyboardFactory:
     def help_menu(self):
         return InlineKeyboardMarkup([self._back_button(self.BACK_TO_MENU_CALLBACK)])
     
-    def update_menu(self, is_favorite: bool, item_type:str, item_id: str, line_id: str, previous_callback: str):
+    def update_menu(self, is_favorite: bool, item_type:str, item_id: str, line_id: str, previous_callback: str, has_connections: bool = False):
+        stop_type = "station" if item_type == TransportType.METRO.value or item_type == TransportType.RODALIES.value else "stop"
         if is_favorite:
-            fav_button = InlineKeyboardButton(self.language_manager.t('keyboard.favorites.remove'), callback_data=Callbacks.REMOVE_FAVORITE.format(item_type=item_type, line_id=line_id, item_id=item_id))
+            fav_button = InlineKeyboardButton(
+                self.language_manager.t('keyboard.favorites.remove'),
+                callback_data=Callbacks.REMOVE_FAVORITE.format(
+                    item_type=item_type,
+                    line_id=line_id,
+                    item_id=item_id,
+                    previous_callback=previous_callback.split(":")[0],
+                    has_connections=has_connections
+                )
+            )
         else:
-            fav_button = InlineKeyboardButton(self.language_manager.t('keyboard.favorites.add'), callback_data=Callbacks.ADD_FAVORITE.format(item_type=item_type, line_id=line_id, item_id=item_id))
+            fav_button = InlineKeyboardButton(
+                self.language_manager.t('keyboard.favorites.add'),
+                callback_data=Callbacks.ADD_FAVORITE.format(
+                    item_type=item_type,
+                    line_id=line_id,
+                    item_id=item_id,
+                    previous_callback=previous_callback.split(":")[0],
+                    has_connections=has_connections
+                )
+            )
         
         inline_buttons = []
-        if "station" not in previous_callback and "stop" not in previous_callback:
-            inline_buttons.append(InlineKeyboardButton('🕒 Próximos  ', callback_data=f"{item_type}_station:{line_id}:{item_id}"))
-        if "location" not in previous_callback:
-            inline_buttons.append(InlineKeyboardButton('🚶‍♂️ Accesos  ', callback_data=f"{item_type}_location:{line_id}:{item_id}"))
-        if "connections" not in previous_callback:
-            inline_buttons.append(InlineKeyboardButton('🔄 Conexiones  ', callback_data=f"{item_type}_connections:{line_id}:{item_id}"))
+        if stop_type not in previous_callback:
+            inline_buttons.append(InlineKeyboardButton(f'{self.language_manager.t('common.next')}  ', callback_data=f"{item_type}_{stop_type}:{line_id}:{item_id}"))
+        if item_type == TransportType.METRO.value and "access" not in previous_callback:
+            inline_buttons.append(InlineKeyboardButton(f'{self.language_manager.t('common.access')}  ', callback_data=f"{item_type}_access:{line_id}:{item_id}:{has_connections}"))
+        if has_connections and "connections" not in previous_callback:
+            inline_buttons.append(InlineKeyboardButton(f'{self.language_manager.t('common.connections')}  ', callback_data=f"{item_type}_connections:{line_id}:{item_id}:{has_connections}"))
 
         keyboard = InlineKeyboardMarkup([
             inline_buttons,
@@ -301,22 +323,28 @@ class KeyboardFactory:
 
             # Build text and callback depending on type
             if stop["type"] == "metro":
-                text = f"🚇 {stop['line']} - {stop['name']}{distance_str}"
+                text = f"🚇 {stop['line_name']} - {stop['station_name']}{distance_str}"
                 callback = Callbacks.METRO_STATION.format(
-                    line_code=stop["code_line"],
-                    station_code=stop["code_station"]
+                    line_code=stop["line_code"],
+                    station_code=stop["station_code"]
                 )
             elif stop["type"] == "bus":
-                text = f"🚌 ({stop['code_stop']}) - {stop['name']}{distance_str}"
+                text = f"🚌 ({stop['stop_code']}) - {stop['stop_name']}{distance_str}"
                 callback = Callbacks.BUS_STOP.format(
-                    line_code=stop["line"],
-                    stop_code=stop["code_stop"]
+                    line_code=stop["line_code"],
+                    stop_code=stop["stop_code"]
                 )
             elif stop["type"] == "tram":
-                text = f"🚋 ({stop['code_stop']}) - {stop['name']}{distance_str}"
+                text = f"🚋 {stop['line_name']} - {stop['stop_name']}{distance_str}"
                 callback = Callbacks.TRAM_STOP.format(
-                    line_code=stop["line"],
-                    stop_code=stop["code_stop"]
+                    line_code=stop["line_code"],
+                    stop_code=stop["stop_code"]
+                )
+            elif stop["type"] == "rodalies":
+                text = f"🚋 {stop['line_name']} - {stop['station_name']}{distance_str}"
+                callback = Callbacks.RODALIES_STATION.format(
+                    line_code=stop["line_code"],
+                    station_code=stop["station_code"]
                 )
             else:
                 continue  # ignore unknown types

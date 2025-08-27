@@ -115,25 +115,45 @@ class BotApp:
         logger.info("Handlers initialized")
 
     async def run_seeder(self):
-        """Preload all data that changes poco (days) to cache."""
         logger.info("Initializing Seeder...")
-        start = datetime.now()
+        total_start = datetime.now()
+
+        service_times = []
 
         try:
-            # Preload async services
-            await self.metro_service.get_all_lines()
-            await self.metro_service.get_all_stations()
-            await self.bus_service.get_all_lines()
-            await self.bus_service.get_all_stops()
+            preload_tasks = [
+                ("Metro", self.metro_service, ["get_all_lines", "get_all_stations"]),
+                ("Bus", self.bus_service, ["get_all_lines", "get_all_stops"]),
+                ("Tram", self.tram_service, ["get_all_lines", "get_all_stops"]),
+                ("Rodalies", self.rodalies_service, ["get_all_lines", "get_all_stations"]),
+            ]
 
-            end = datetime.now()
-            elapsed = int((end - start).total_seconds())
-            minutes, seconds = divmod(elapsed, 60)
-            logger.info(f"Seeder finalized in {minutes}m {seconds}s" if minutes > 0 else f"Seeder finalized in {seconds}s")
+            for name, service, methods in preload_tasks:
+                start = datetime.now()
+                for method_name in methods:
+                    method = getattr(service, method_name)
+                    await method()
+                elapsed = int((datetime.now() - start).total_seconds())
+                service_times.append((name, elapsed))
+
+            # Total elapsed
+            total_elapsed = int((datetime.now() - total_start).total_seconds())
+            total_minutes, total_seconds = divmod(total_elapsed, 60)
+            logger.info(
+                f"Seeder completed in {total_minutes}m {total_seconds}s" if total_minutes > 0 else f"Seeder completed in {total_seconds}s"
+            )
+
+            # Detailed per-service logs
+            for name, elapsed in service_times:
+                minutes, seconds = divmod(elapsed, 60)
+                logger.info(
+                    f"{name} seeder finalized in {minutes}m {seconds}s" if minutes > 0 else f"{name} seeder finalized in {seconds}s"
+                )
+
         except Exception as e:
             logger.error(f"Error running seeder: {e}")
-            # Dependiendo de tu lógica, puedes decidir si continuar o no
             raise
+
 
     def register_handlers(self):
         """Register Telegram handlers."""
@@ -151,6 +171,8 @@ class BotApp:
         self.application.add_handler(CallbackQueryHandler(self.metro_handler.show_list, pattern=r"^metro_list"))
         self.application.add_handler(CallbackQueryHandler(self.metro_handler.show_map, pattern=r"^metro_map"))
         self.application.add_handler(CallbackQueryHandler(self.metro_handler.show_station, pattern=r"^metro_station"))
+        self.application.add_handler(CallbackQueryHandler(self.metro_handler.show_station_access, pattern=r"^metro_access"))
+        self.application.add_handler(CallbackQueryHandler(self.metro_handler.show_station_connections, pattern=r"^metro_connections"))
         self.application.add_handler(CallbackQueryHandler(self.metro_handler.ask_search_method, pattern=r"^metro_line"))
         self.application.add_handler(CallbackQueryHandler(self.metro_handler.show_list, pattern=r"^metro_page"))
         self.application.add_handler(CallbackQueryHandler(self.metro_handler.show_lines, pattern=r"^metro$"))

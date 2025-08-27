@@ -35,7 +35,6 @@ class MenuHandler:
 
         msg = await self.message_service.send_message_direct(self.message_service.get_chat_id(update), context, self.language_manager.t('main.menu.message'), reply_markup=self.keyboard_factory.create_main_menu_replykeyboard())
             
-
     async def close_updates(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_id = int(self.message_service.get_user_id(update))
         logger.info(f"Stopping updates for user {user_id}")

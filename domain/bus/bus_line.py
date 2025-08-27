@@ -46,15 +46,3 @@ class BusLine:
         else:
             if self.NOM_LINIA.isdigit():
                 self.NOM_LINIA = f"🔴 {self.NOM_LINIA}"
-
-    def __str__(self):
-        return (
-            f"🚌 Línia {self.NOM_LINIA} ({self.NOM_TIPUS_TRANSPORT})\n"
-            f"🔁 Ruta: {self.ORIGEN_LINIA} ➝ {self.DESTI_LINIA}\n"
-            f"🏷️ Descripció: {self.DESC_LINIA}\n"
-            f"🎨 Colors: #{self.COLOR_LINIA}, #{self.COLOR_TEXT_LINIA}\n"
-            f"🚩 Operador: {self.NOM_OPERADOR} ({self.CODI_OPERADOR})\n"
-            f"📅 Calendari: {self.NOM_TIPUS_CALENDARI}\n"
-            f"📁 Família: {self.NOM_FAMILIA}\n"
-            f"📆 Data: {self.DATA}"
-        )

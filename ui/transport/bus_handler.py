@@ -1,6 +1,7 @@
 from telegram import Update
 from telegram.ext import ContextTypes
 
+from providers.helpers.google_maps_helper import GoogleMapsHelper
 from ui.keyboard_factory import KeyboardFactory
 from application import BusService, MessageService, UpdateManager
 from providers.manager import UserDataManager, LanguageManager
@@ -61,10 +62,13 @@ class BusHandler(HandlerBase):
         """Display a specific bus stop with next arrivals."""
         user_id, chat_id, line_id, bus_stop_id = self.message_service.extract_context(update, context)
         logger.info(f"Showing stop info for user {user_id}, line {line_id}, stop {bus_stop_id}")
-        callback = f"bus_stop:{line_id}:{bus_stop_id}"
+
+        default_callback = f"bus_stop:{line_id}:{bus_stop_id}"
 
         bus_stop = await self.bus_service.get_stop_by_id(bus_stop_id)
-        message = await self.show_stop_intro(update, context, TransportType.BUS.value, line_id, bus_stop_id, bus_stop.coordinates[1], bus_stop.coordinates[0], bus_stop.NOM_PARADA)
+
+        message = await self.show_stop_intro(update, context, TransportType.BUS.value, line_id, bus_stop_id, bus_stop.NOM_PARADA)
+        
         await self.bus_service.get_stop_routes(bus_stop_id)
         await self.update_manager.stop_loading(update, context)
 
@@ -73,10 +77,12 @@ class BusHandler(HandlerBase):
             is_fav = self.user_data_manager.has_favorite(user_id, TransportType.BUS.value, bus_stop_id)
             text = (
                 f"{self.language_manager.t(f'{TransportType.BUS.value}.stop.name', name=bus_stop.NOM_PARADA.upper())}\n\n"
-                f"{self.language_manager.t(f'{TransportType.BUS.value}.stop.next')}\n{next_buses}"
+                f"<a href='{GoogleMapsHelper.build_directions_url(latitude=bus_stop.coordinates[1], longitude=bus_stop.coordinates[0])}'>{self.language_manager.t('common.map.view.location')}</a>\n\n"
+                f"{self.language_manager.t(f'{TransportType.BUS.value}.stop.next')}\n{next_buses}\n\n"
+                f"{self.language_manager.t('common.updates.every_x_seconds', seconds=self.UPDATE_INTERVAL)}"
             )
-            keyboard = self.keyboard_factory.update_menu(is_fav, TransportType.BUS.value, bus_stop_id, line_id)
+            keyboard = self.keyboard_factory.update_menu(is_fav, TransportType.BUS.value, bus_stop_id, line_id, default_callback, has_connections=False)
             return text, keyboard
 
-        self.start_update_loop(user_id, chat_id, message.message_id, get_text_callable=update_text, previous_callback=callback)
+        self.start_update_loop(user_id, chat_id, message.message_id, update_text, default_callback)
         logger.info(f"Started update loop task for user {user_id}, station {bus_stop_id}")

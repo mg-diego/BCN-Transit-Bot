@@ -52,6 +52,41 @@ class ServiceBase:
         # --- Combine exact + fuzzy ---
         return exact_matches + fuzzy_filtered
 
+    async def _get_from_cache_or_data(
+        self,
+        cache_key: str,
+        data: Any,
+        cache_ttl: int = 3600
+    ) -> Any:
+        """
+        Generic method to fetch data from cache or use the provided data,
+        then store it in cache if needed.
+
+        Args:
+            cache_key: Key to use for caching.
+            data: Pre-fetched or pre-computed data.
+            cache_ttl: Time to live for the cache in seconds.
+
+        Returns:
+            The data, either from cache or the provided one.
+        """
+        class_name = self.__class__.__name__
+
+        if self.cache_service:
+            cached_data = await self.cache_service.get(cache_key)
+            if cached_data:
+                logger.info(f"[{class_name}] Cache hit: {cache_key}")
+                return cached_data
+            else:
+                logger.info(f"[{class_name}] Cache miss: {cache_key}")
+
+        # Store provided data in cache
+        if self.cache_service and data is not None:
+            await self.cache_service.set(cache_key, data, ttl=cache_ttl)
+            logger.info(f"[{class_name}] Cached data for key: {cache_key} (TTL={cache_ttl}s)")
+
+        return data
+
     async def _get_from_cache_or_api(
         self,
         cache_key: str,
@@ -59,27 +94,35 @@ class ServiceBase:
         cache_ttl: int = 3600
     ) -> Any:
         """
-        Generic method to fetch data from cache or API with logging.
+        Fetch data from cache or, if not present, call the API function
+        and store the result in cache using the base helper.
+
+        Args:
+            cache_key: Key to use for caching.
+            api_call: Async callable that fetches the data.
+            cache_ttl: Time to live for the cache in seconds.
+
+        Returns:
+            Data from cache or API.
         """
-        data = None
         class_name = self.__class__.__name__
 
+        # Try cache first
         if self.cache_service:
-            data = await self.cache_service.get(cache_key)
-            if data:
+            cached_data = await self.cache_service.get(cache_key)
+            if cached_data:
                 logger.info(f"[{class_name}] Cache hit: {cache_key}")
-                return data
+                return cached_data
             else:
                 logger.info(f"[{class_name}] Cache miss: {cache_key}")
 
+        # Fetch data from API
         try:
             data = await api_call()
             logger.info(f"[{class_name}] Fetched data from API for key: {cache_key}")
-            if self.cache_service:
-                await self.cache_service.set(cache_key, data, ttl=cache_ttl)
-                logger.info(f"[{class_name}] Cached data for key: {cache_key} (TTL={cache_ttl}s)")
         except Exception as e:
             logger.error(f"[{class_name}] Error fetching data for key {cache_key}: {e}")
             data = []
 
-        return data
+        # Use the generic method to cache and return
+        return await self._get_from_cache_or_data(cache_key, data, cache_ttl)

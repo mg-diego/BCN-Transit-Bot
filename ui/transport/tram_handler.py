@@ -9,7 +9,7 @@ from ui.keyboard_factory import KeyboardFactory
 from application import TramService, UpdateManager, MessageService
 
 from providers.manager import UserDataManager, LanguageManager
-from providers.helpers import TransportDataCompressor, logger
+from providers.helpers import TransportDataCompressor, logger, GoogleMapsHelper
 
 from ui.transport.handler_base import HandlerBase
 
@@ -67,10 +67,12 @@ class TramHandler(HandlerBase):
         """Show details for a specific tram stop and start update loop."""
         user_id, chat_id, line_id, stop_id = self.message_service.extract_context(update, context)
         logger.info(f"Showing stop info for user {user_id}, line {line_id}, stop {stop_id}")
-        callback = f"tram_stop:{line_id}:{stop_id}"
+
+        default_callback = f"tram_stop:{line_id}:{stop_id}"
 
         stop = await self.tram_service.get_stop_by_id(stop_id, line_id)
-        message = await self.show_stop_intro(update, context, TransportType.TRAM.value, line_id, stop_id, stop.latitude, stop.longitude, stop.name)
+        message = await self.show_stop_intro(update, context, TransportType.TRAM.value, line_id, stop_id, stop.name)
+
         await self.tram_service.get_stop_routes(stop.outboundCode, stop.returnCode)
         await self.update_manager.stop_loading(update, context)
 
@@ -79,11 +81,13 @@ class TramHandler(HandlerBase):
             grouped_routes = TramLineRoute.group_by_line(routes)
             text = (
                 f"{self.language_manager.t(f'{TransportType.TRAM.value}.stop.name', name=stop.name.upper())}\n\n"
-                f"{self.language_manager.t(f'{TransportType.TRAM.value}.stop.next')}\n{grouped_routes} \n\n"
+                f"<a href='{GoogleMapsHelper.build_directions_url(latitude=stop.latitude, longitude=stop.longitude)}'>{self.language_manager.t('common.map.view.location')}</a>\n\n"
+                f"{self.language_manager.t(f'{TransportType.TRAM.value}.stop.next')}\n{grouped_routes}\n\n"
+                f"{self.language_manager.t('common.updates.every_x_seconds', seconds=self.UPDATE_INTERVAL)}"
             )
             is_fav = self.user_data_manager.has_favorite(user_id, TransportType.TRAM.value, stop_id)
-            keyboard = self.keyboard_factory.update_menu(is_fav, TransportType.TRAM.value, stop_id, line_id)
+            keyboard = self.keyboard_factory.update_menu(is_fav, TransportType.TRAM.value, stop_id, line_id, default_callback, has_connections=False)
             return text, keyboard
         
-        self.start_update_loop(user_id, chat_id, message.message_id, update_text, callback)
+        self.start_update_loop(user_id, chat_id, message.message_id, update_text, default_callback)
         logger.info(f"Started update loop task for user {user_id}, stop {stop_id}")

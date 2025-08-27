@@ -18,6 +18,7 @@ class BusService(ServiceBase):
         self.tmb_api_service = tmb_api_service        
         logger.info(f"[{self.__class__.__name__}] BusService initialized")
 
+    # === CACHE CALLS ===
     async def get_all_lines(self) -> List[BusLine]:
         """
         Retrieve all bus lines. Uses cache if available.
@@ -28,13 +29,41 @@ class BusService(ServiceBase):
             cache_ttl=3600*24
         )
     
-    async def get_all_stops(self) -> List[BusLine]:        
-        return await self._get_from_cache_or_api(
+    async def get_all_stops(self) -> List[BusLine]:
+        lines = await self.get_all_lines()
+        stops = []
+        for line in lines:
+            line_stops = await self.get_stops_by_line(line.CODI_LINIA)
+            stops += line_stops
+
+        return await self._get_from_cache_or_data(
             "bus_stops",
-            self.tmb_api_service.get_bus_stops,
+            stops,
             cache_ttl=3600*24
+        )    
+
+    async def get_stops_by_line(self, line_id) -> List[BusStop]:
+        """
+        Retrieve stops for a specific bus line.
+        """
+        return await self._get_from_cache_or_api(
+            f"bus_line_{line_id}_stops",
+            lambda: self.tmb_api_service.get_bus_line_stops(line_id),
+            cache_ttl=3600*24
+        )    
+
+    async def get_stop_routes(self, stop_id: str) -> str:
+        """
+        Retrieve the next buses for a specific stop. Uses cache if available.
+        """
+        routes = await self._get_from_cache_or_api(
+            f"bus_stop_{stop_id}_routes",
+            lambda: self.tmb_api_service.get_next_bus_at_stop(stop_id),
+            cache_ttl=10
         )
+        return "\n\n".join(str(route) for route in routes)
     
+    # === OTHER CALLS ===
     async def get_stops_by_name(self, stop_name) -> List[BusLine]:
         stops = await self.get_all_stops()
         return self.fuzzy_search(
@@ -64,36 +93,14 @@ class BusService(ServiceBase):
                 if bus_category == line.NOM_FAMILIA
             ]
 
-    async def get_stops_by_line(self, line_id) -> List[BusStop]:
-        """
-        Retrieve stops for a specific bus line.
-        """
-        return await self._get_from_cache_or_api(
-            f"bus_line_{line_id}_stops",
-            lambda: self.tmb_api_service.get_bus_line_stops(line_id),
-            cache_ttl=3600*24
-        )
-
     async def get_stop_by_id(self, stop_id) -> BusStop:
         """
         Retrieve a stop by its CODI_PARADA.
         """
         stops = await self.get_all_stops()
         filtered_stops = [
-            stop
-            for stop in stops
+            stop for stop in stops
             if int(stop_id) == int(stop.CODI_PARADA)
         ]
 
         return filtered_stops[0] if any(filtered_stops) else None
-
-    async def get_stop_routes(self, stop_id: str) -> str:
-        """
-        Retrieve the next buses for a specific stop. Uses cache if available.
-        """
-        routes = await self._get_from_cache_or_api(
-            f"bus_stop_{stop_id}_routes",
-            lambda: self.tmb_api_service.get_next_bus_at_stop(stop_id),
-            cache_ttl=10
-        )
-        return "\n\n".join(str(route) for route in routes)

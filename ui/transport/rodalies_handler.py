@@ -5,7 +5,7 @@ from telegram.ext import ContextTypes
 from application import RodaliesService, MessageService, UpdateManager
 
 from providers.manager import UserDataManager, LanguageManager
-from providers.helpers import TransportDataCompressor, logger
+from providers.helpers import TransportDataCompressor, logger, GoogleMapsHelper
 
 from ui.keyboard_factory import KeyboardFactory
 from .handler_base import HandlerBase
@@ -13,7 +13,7 @@ from .handler_base import HandlerBase
 
 class RodaliesHandler(HandlerBase):
     """
-    Handles metro-related user interactions in the bot.
+    Handles rodalies-related user interactions in the bot.
     """
 
     def __init__(
@@ -58,10 +58,11 @@ class RodaliesHandler(HandlerBase):
         """Display a specific rodalies station with next arrivals."""
         user_id, chat_id, line_id, rodalies_station_id = self.message_service.extract_context(update, context)
         logger.info(f"Showing station info for user {user_id}, line {line_id}, stop {rodalies_station_id}")
-        callback = f"rodalies_station:{line_id}:{rodalies_station_id}"
+
+        default_callback = f"rodalies_station:{line_id}:{rodalies_station_id}"
 
         rodalies_station = await self.rodalies_service.get_station_by_id(rodalies_station_id, line_id)
-        message = await self.show_stop_intro(update, context, TransportType.RODALIES.value, line_id, rodalies_station_id, rodalies_station.latitude, rodalies_station.longitude, rodalies_station.name)
+        message = await self.show_stop_intro(update, context, TransportType.RODALIES.value, line_id, rodalies_station_id, rodalies_station.name)
         await self.rodalies_service.get_station_routes(rodalies_station_id, line_id)
         await self.update_manager.stop_loading(update, context)
         
@@ -70,11 +71,13 @@ class RodaliesHandler(HandlerBase):
             is_fav = self.user_data_manager.has_favorite(user_id, TransportType.RODALIES.value, rodalies_station_id)
             text = (
                 f"{self.language_manager.t(f'{TransportType.RODALIES.value}.station.name', name=rodalies_station.name.upper())}\n\n"
-                f"{self.language_manager.t(f'{TransportType.RODALIES.value}.station.next')}\n{next_rodalies}"
+                f"<a href='{GoogleMapsHelper.build_directions_url(latitude=rodalies_station.latitude, longitude=rodalies_station.longitude, travel_mode='transit')}'>{self.language_manager.t('common.map.view.location')}</a>\n\n"
+                f"{self.language_manager.t(f'{TransportType.RODALIES.value}.station.next')}\n{next_rodalies}\n\n"
+                f"{self.language_manager.t('common.updates.every_x_seconds', seconds=self.UPDATE_INTERVAL)}"
             ) 
-            keyboard = self.keyboard_factory.update_menu(is_fav, TransportType.RODALIES.value, rodalies_station_id, line_id)
+            keyboard = self.keyboard_factory.update_menu(is_fav, TransportType.RODALIES.value, rodalies_station_id, line_id, default_callback, has_connections=False)
             return text, keyboard
 
-        self.start_update_loop(user_id, chat_id, message.message_id, get_text_callable=update_text, previous_callback=callback)
+        self.start_update_loop(user_id, chat_id, message.message_id, get_text_callable=update_text, previous_callback=default_callback)
         logger.info(f"Started update loop task for user {user_id}, station {rodalies_station_id}")
         
