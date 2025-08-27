@@ -17,7 +17,12 @@ class MenuHandler:
         self.update_manager = update_manager
 
     async def back_to_menu(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        await self.show_menu(update, context, False)
+        try:
+            await self.close_updates(update, context)
+        except Exception as e:
+            logger.error(f"Error closing updates: {e}")
+        finally:
+            await self.show_menu(update, context, False)
 
     async def show_menu(self, update: Update, context: ContextTypes.DEFAULT_TYPE, is_first_message = True):
         if is_first_message:
@@ -32,12 +37,10 @@ class MenuHandler:
             
 
     async def close_updates(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        _, user_id_str = self.message_service.get_callback_data(update)
-        user_id = int(user_id_str)
+        user_id = int(self.message_service.get_user_id(update))
         logger.info(f"Stopping updates for user {user_id}")
 
         self.update_manager.cancel_task(user_id)
-        await self.message_service.edit_inline_message(update, self.language_manager.t('search.cleaning'))
+        await self.message_service.handle_interaction(update, self.language_manager.t('search.cleaning'))
         await self.message_service.clear_user_messages(user_id)
         logger.info(f"Updates stopped and messages cleared for user {user_id}")
-        await self.back_to_menu(update, context)

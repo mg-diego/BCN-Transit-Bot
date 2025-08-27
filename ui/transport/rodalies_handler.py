@@ -72,7 +72,7 @@ class RodaliesHandler(HandlerBase):
                 f"{self.language_manager.t(f'{TransportType.RODALIES.value}.station.name', name=rodalies_station.name.upper())}\n\n"
                 f"{self.language_manager.t(f'{TransportType.RODALIES.value}.station.next')}\n{next_rodalies}"
             ) 
-            keyboard = self.keyboard_factory.update_menu(is_fav, TransportType.RODALIES.value, rodalies_station_id, line_id, user_id)
+            keyboard = self.keyboard_factory.update_menu(is_fav, TransportType.RODALIES.value, rodalies_station_id, line_id)
             return text, keyboard
 
         self.start_update_loop(user_id, chat_id, message.message_id, get_text_callable=update_text, previous_callback=callback)

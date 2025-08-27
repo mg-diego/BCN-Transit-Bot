@@ -26,13 +26,16 @@ class MetroService(ServiceBase):
             self.tmb_api_service.get_metro_lines,
             cache_ttl=3600*24
         )
-
-    async def get_stations_by_name(self, station_name) -> List[MetroStation]:
-        stations = await self._get_from_cache_or_api(
+    
+    async def get_all_stations(self) -> List[MetroStation]:
+        return await self._get_from_cache_or_api(
             "metro_stations",
             self.tmb_api_service.get_metro_stations,
             cache_ttl=3600*24
         )
+
+    async def get_stations_by_name(self, station_name) -> List[MetroStation]:
+        stations = await self.get_all_stations()
         return self.fuzzy_search(
             query=station_name,
             items=stations,
@@ -66,12 +69,7 @@ class MetroService(ServiceBase):
         )
 
     async def get_station_by_id(self, station_id) -> MetroStation:        
-        stations = await self._get_from_cache_or_api(
-            "metro_stations",
-            self.tmb_api_service.get_metro_stations,
-            cache_ttl=3600*24
-        )
-
+        stations = await self.get_all_stations()
         filtered_stations = [
             station for station in stations
             if int(station_id) == int(station.ID_ESTACIO)

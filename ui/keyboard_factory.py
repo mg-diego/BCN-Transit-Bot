@@ -169,34 +169,25 @@ class KeyboardFactory:
     def help_menu(self):
         return InlineKeyboardMarkup([self._back_button(self.BACK_TO_MENU_CALLBACK)])
     
-    def update_menu(self, is_favorite: bool, item_type:str, item_id: str, line_id: str, user_id: str):
+    def update_menu(self, is_favorite: bool, item_type:str, item_id: str, line_id: str, previous_callback: str):
         if is_favorite:
             fav_button = InlineKeyboardButton(self.language_manager.t('keyboard.favorites.remove'), callback_data=Callbacks.REMOVE_FAVORITE.format(item_type=item_type, line_id=line_id, item_id=item_id))
         else:
             fav_button = InlineKeyboardButton(self.language_manager.t('keyboard.favorites.add'), callback_data=Callbacks.ADD_FAVORITE.format(item_type=item_type, line_id=line_id, item_id=item_id))
+        
+        inline_buttons = []
+        if "station" not in previous_callback and "stop" not in previous_callback:
+            inline_buttons.append(InlineKeyboardButton('🕒 Próximos  ', callback_data=f"{item_type}_station:{line_id}:{item_id}"))
+        if "location" not in previous_callback:
+            inline_buttons.append(InlineKeyboardButton('🚶‍♂️ Accesos  ', callback_data=f"{item_type}_location:{line_id}:{item_id}"))
+        if "connections" not in previous_callback:
+            inline_buttons.append(InlineKeyboardButton('🔄 Conexiones  ', callback_data=f"{item_type}_connections:{line_id}:{item_id}"))
 
         keyboard = InlineKeyboardMarkup([
-            [
-                fav_button,
-                self._close_button(user_id)
-            ]
+            inline_buttons,
+            [fav_button]
         ])
         return keyboard
-    
-    def error_menu(self, user_id):
-        keyboard = InlineKeyboardMarkup([
-            [
-                self._close_button(user_id)
-            ]
-        ])
-        return keyboard
-    
-    def _close_button(self, user_id: str):
-        """Devuelve el botón de cerrar menú."""
-        return InlineKeyboardButton(
-            self.language_manager.t('keyboard.close'),
-            callback_data=f"close_updates:{user_id}"
-    )
     
     def favorites_menu(self, favs):
         TRANSPORT_CONFIG = {

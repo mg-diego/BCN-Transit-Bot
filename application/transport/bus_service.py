@@ -28,12 +28,15 @@ class BusService(ServiceBase):
             cache_ttl=3600*24
         )
     
-    async def get_stops_by_name(self, stop_name) -> List[BusLine]:
-        stops = await self._get_from_cache_or_api(
+    async def get_all_stops(self) -> List[BusLine]:        
+        return await self._get_from_cache_or_api(
             "bus_stops",
             self.tmb_api_service.get_bus_stops,
             cache_ttl=3600*24
         )
+    
+    async def get_stops_by_name(self, stop_name) -> List[BusLine]:
+        stops = await self.get_all_stops()
         return self.fuzzy_search(
             query=stop_name,
             items=stops,
@@ -75,12 +78,7 @@ class BusService(ServiceBase):
         """
         Retrieve a stop by its CODI_PARADA.
         """
-        stops = await self._get_from_cache_or_api(
-            "bus_stops",
-            self.tmb_api_service.get_bus_stops,
-            cache_ttl=3600*24
-        )
-
+        stops = await self.get_all_stops()
         filtered_stops = [
             stop
             for stop in stops

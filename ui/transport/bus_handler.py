@@ -75,7 +75,7 @@ class BusHandler(HandlerBase):
                 f"{self.language_manager.t(f'{TransportType.BUS.value}.stop.name', name=bus_stop.NOM_PARADA.upper())}\n\n"
                 f"{self.language_manager.t(f'{TransportType.BUS.value}.stop.next')}\n{next_buses}"
             )
-            keyboard = self.keyboard_factory.update_menu(is_fav, TransportType.BUS.value, bus_stop_id, line_id, user_id)
+            keyboard = self.keyboard_factory.update_menu(is_fav, TransportType.BUS.value, bus_stop_id, line_id)
             return text, keyboard
 
         self.start_update_loop(user_id, chat_id, message.message_id, get_text_callable=update_text, previous_callback=callback)

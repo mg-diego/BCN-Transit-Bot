@@ -169,6 +169,9 @@ class MessageService:
 
         return user_id, chat_id, line_id, stop_id
     
+    def get_callback_query(self, update):
+        return update.callback_query.data if update.callback_query else None
+    
     def check_query_callback(self, update, expected_callback):
         """Check if callback_query data starts with the expected callback string."""
         return update.callback_query.data.startswith(expected_callback)

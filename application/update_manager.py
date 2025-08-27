@@ -1,4 +1,5 @@
 import asyncio
+from application.message_service import MessageService
 from telegram import Update
 from telegram.ext import ContextTypes
 from providers.helpers import logger
@@ -10,7 +11,8 @@ class UpdateManager:
     Now also handles animated loading messages (⏳., ⏳.., ⏳...).
     """
 
-    def __init__(self):
+    def __init__(self, message_service: MessageService):
+        self.message_service = message_service
         # user_id -> asyncio.Task
         self.tasks: dict[int, asyncio.Task] = {}
         # user_id -> message_id (for loading animations)
@@ -70,7 +72,7 @@ class UpdateManager:
         await self.stop_loading(update, context)
 
         # Enviar mensaje inicial
-        message = await context.bot.send_message(chat_id=chat_id, text=f"⏳ {base_text}", reply_markup=reply_markup)
+        message = await self.message_service.send_message_direct(chat_id, context, text=f"⏳ {base_text}", reply_markup=reply_markup)
         self.loading_messages[user_id] = message.message_id
 
         # Crear tarea de animación usando start_task existente

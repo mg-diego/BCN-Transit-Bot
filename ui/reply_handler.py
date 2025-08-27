@@ -155,5 +155,6 @@ class ReplyHandler:
         )
 
     async def location_handler(self, update, context):
-        await self.reply_to_user(update, context, update.message.location)
+        if self.previous_search is not None:
+            await self.reply_to_user(update, context, update.message.location)
                 

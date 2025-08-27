@@ -66,7 +66,8 @@ class MetroHandler(HandlerBase):
     async def show_station(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_id, chat_id, line_id, metro_station_id = self.message_service.extract_context(update, context)        
         logger.info(f"Showing station info for user {user_id}, line {line_id}, station {metro_station_id}")
-        callback = f"metro_station:{line_id}:{metro_station_id}"
+        default_callback = f"metro_station:{line_id}:{metro_station_id}"
+        callback = self.message_service.get_callback_query(update)
 
         station = await self.metro_service.get_station_by_id(metro_station_id)      
         station_accesses = await self.metro_service.get_station_accesses(station.CODI_GRUP_ESTACIO)  
@@ -84,13 +85,14 @@ class MetroHandler(HandlerBase):
             routes = await self.metro_service.get_station_routes(metro_station_id)
             text = (
                 f"{self.language_manager.t(f'{TransportType.METRO.value}.station.name', name=station.NOM_ESTACIO.upper())}\n\n"
+                f"<a href='https://maps.google.com/?q={station.coordinates[1]},{station.coordinates[0]}'>{self.language_manager.t('common.map.view.location')}</a>\n\n"
                 f"{alerts_message}"
                 f"{self.language_manager.t(f'{TransportType.METRO.value}.station.next')}\n{routes} \n\n"
                 f"{self.language_manager.t('common.connections')}\n{station_connections}\n\n"
             )
             is_fav = self.user_data_manager.has_favorite(user_id, TransportType.METRO.value, metro_station_id)
-            keyboard = self.keyboard_factory.update_menu(is_fav, TransportType.METRO.value, metro_station_id, line_id, user_id)
+            keyboard = self.keyboard_factory.update_menu(is_fav, TransportType.METRO.value, metro_station_id, line_id, callback)
             return text, keyboard
 
-        self.start_update_loop(user_id, chat_id, message.message_id, update_text, callback)
+        self.start_update_loop(user_id, chat_id, message.message_id, update_text, default_callback)
         logger.info(f"Started update loop task for user {user_id}, station {metro_station_id}")
