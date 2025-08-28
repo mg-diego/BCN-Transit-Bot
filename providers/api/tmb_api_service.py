@@ -6,6 +6,7 @@ import inspect
 from domain.metro import MetroLine, MetroLineRoute, NextMetro, MetroConnection, MetroStation, create_metro_station, create_metro_access
 from domain.bus import BusStop, BusLine, create_bus_stop, BusLineRoute, NextBus
 
+from domain.transport_type import TransportType
 from providers.helpers import logger
 
 
@@ -222,17 +223,8 @@ class TmbApiService:
                 connections.append(connection) 
 
         return connections
-
-    async def get_station_alerts(self, metro_line, metro_station_id, language):
-        url = f"https://api.tmb.cat/v1/alerts/metro/channels/WEB/routes/{metro_line}"
+    
+    async def get_line_alerts(self, transport_type: TransportType, line_name):
+        url = f"https://api.tmb.cat/v1/alerts/{transport_type.value}/channels/WEB/routes/{line_name}"
         data = await self._get(url)
-        alerts = data['data']['alerts']
-
-        station_alerts = []
-        for alert in alerts:
-            for entity in alert['entities']:
-                if entity['station_code'] == str(metro_station_id):
-                    for publication in alert['publications']:
-                        station_alerts.append(publication[f'text{str(language).capitalize()}'])
-
-        return station_alerts
+        return data['data']['alerts']

@@ -92,15 +92,4 @@ class UpdateManager:
 
         # Cancelar animación si está activa
         self.cancel_task(user_id)
-
-        '''
-        # Borrar mensaje de carga si existe
-        message_id = self.loading_messages.pop(user_id, None)
-        if message_id:
-            try:
-                await context.bot.delete_message(chat_id=chat_id, message_id=message_id)
-            except Exception as e:
-                logger.warning(
-                    f"[{self.__class__.__name__}] Could not delete loading message for user {user_id}: {e}"
-                )
-        '''
+        

@@ -50,15 +50,6 @@ class HandlerBase:
         """
         logger.info(f"Showing {transport_type.value.lower()} lines menu")
         type_name = transport_type.value.capitalize()
-        
-        '''
-        # Mensaje de carga
-        await self.message_service.send_new_message(
-            update,
-            self.language_manager.t('common.loading.lines', type=type_name),
-            reply_markup=self.keyboard_factory._back_reply_button()
-        )
-        '''
 
         await self.update_manager.start_loading(update, context, self.language_manager.t('common.loading.lines', type=type_name), self.keyboard_factory._back_reply_button())
         

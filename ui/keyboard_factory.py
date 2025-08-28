@@ -79,7 +79,7 @@ class KeyboardFactory:
     def metro_lines_menu(self, metro_lines: List[MetroLine]) -> InlineKeyboardMarkup:
         sorted_lines = sorted(metro_lines, key=self._custom_sort_key)
         buttons = [
-            InlineKeyboardButton(f"{line.NOM_LINIA}  ", callback_data=Callbacks.METRO_LINE.format(line_code=line.CODI_LINIA, line_name=line.ORIGINAL_NOM_LINIA))
+            InlineKeyboardButton(f"{line.NOM_LINIA} {'⚠️' if line.has_alerts else ''}  ", callback_data=Callbacks.METRO_LINE.format(line_code=line.CODI_LINIA, line_name=line.ORIGINAL_NOM_LINIA))
             for line in sorted_lines
         ]
 
@@ -129,7 +129,7 @@ class KeyboardFactory:
 
     def metro_stations_menu(self, metro_stations: List[MetroStation], line_id):
         buttons = [
-            InlineKeyboardButton(f"{metro_station.ORDRE_ESTACIO}. {metro_station.NOM_ESTACIO}  ", callback_data=Callbacks.METRO_STATION.format(line_code=line_id, station_code=metro_station.CODI_ESTACIO))
+            InlineKeyboardButton(f"{metro_station.ORDRE_ESTACIO}. {metro_station.NOM_ESTACIO} {'⚠️' if metro_station.has_alerts else ''}  ", callback_data=Callbacks.METRO_STATION.format(line_code=line_id, station_code=metro_station.CODI_ESTACIO))
             for metro_station in metro_stations
         ]
         rows = self._chunk_buttons(buttons, 2)

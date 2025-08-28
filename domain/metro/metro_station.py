@@ -1,5 +1,7 @@
-from dataclasses import dataclass
-from typing import Tuple
+from collections import defaultdict
+from dataclasses import dataclass, field
+from typing import Optional, Tuple
+import json
 
 from domain.metro import MetroLine
 
@@ -23,6 +25,8 @@ class MetroStation:
     PICTO_GRUP: str
     EMOJI_NOM_LINIA: str
     coordinates: Tuple[float, float]
+    has_alerts: Optional[bool] = False
+    alerts: Optional[list] = field(default_factory=lambda: defaultdict(list))
 
 def create_metro_station(feature: dict) -> MetroStation:
     props = feature['properties']
@@ -54,8 +58,25 @@ def update_metro_station_with_line_info(metro_station: MetroStation, metro_line:
     metro_station.NOM_LINIA = metro_line.ORIGINAL_NOM_LINIA
     metro_station.ORDRE_LINIA = metro_line.ORDRE_LINIA
     metro_station.EMOJI_NOM_LINIA = _set_emoji_at_name(metro_station.NOM_LINIA)
+    if metro_line.has_alerts:
+        line_alerts = json.loads(metro_line.raw_alerts)
+        for alert in line_alerts:
+            for entity in alert.get('entities', []):
+                if entity.get('station_code') == str(metro_station.CODI_ESTACIO):
+                    metro_station.has_alerts = True
+                    metro_station.alerts = alert.get('publications', [])
+
     return metro_station
 
+@staticmethod
+def get_alert_by_language(metro_station: MetroStation, language: str):
+    raw_alerts = []
+    if metro_station.has_alerts:
+        text_key = f'text{language.capitalize()}'
+        for alert in metro_station.alerts:
+            raw_alerts.append(f"{alert.get(text_key)}")
+
+    return "\n".join(f"<pre>{alert}</pre>" for alert in raw_alerts)
 
 def _set_emoji_at_name(name):
     emojis = {

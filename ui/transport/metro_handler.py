@@ -1,4 +1,5 @@
 from domain.transport_type import TransportType
+from domain.metro import get_alert_by_language
 from telegram import Update
 from telegram.ext import ContextTypes
 
@@ -76,11 +77,10 @@ class MetroHandler(HandlerBase):
 
         await self.metro_service.get_station_routes(metro_station_id)
         station_connections = await self.metro_service.get_station_connections(metro_station_id)
-        station_alerts = await self.metro_service.get_station_alerts(line_id, metro_station_id, self.user_data_manager.get_user_language(user_id))
+        station_alerts = get_alert_by_language(station, self.user_data_manager.get_user_language(user_id))
+        alerts_message = f"{self.language_manager.t("common.alerts")}\n{station_alerts}\n\n" if any(station_alerts) else ""
 
         await self.update_manager.stop_loading(update, context)
-
-        alerts_message = f"{self.language_manager.t("common.alerts")}\n{station_alerts}\n\n" if any(station_alerts) else ""
 
         async def update_text():
             routes = await self.metro_service.get_station_routes(metro_station_id)
@@ -110,6 +110,8 @@ class MetroHandler(HandlerBase):
         _, line_id, station_id, has_connections = self.message_service.get_callback_data(update)
         station = await self.metro_service.get_station_by_id(station_id)        
         station_accesses = await self.metro_service.get_station_accesses(station.CODI_GRUP_ESTACIO)
+        station_alerts = get_alert_by_language(station, self.user_data_manager.get_user_language(user_id))
+        alerts_message = f"{self.language_manager.t("common.alerts")}\n{station_alerts}\n\n" if any(station_alerts) else ""
         logger.info(f"[MetroHandler] Showing accesses for station ID: {station_id}")
 
         access_text = ''
@@ -118,6 +120,7 @@ class MetroHandler(HandlerBase):
 
         text = (
             f"{self.language_manager.t(f"metro.station.name", name=station.NOM_ESTACIO.upper())}\n\n"
+            f"{alerts_message}"
             f"<a href='{GoogleMapsHelper.build_directions_url(latitude=station.coordinates[1], longitude=station.coordinates[0])}'>{self.language_manager.t('common.map.view.location')}</a>\n\n"
             f"<b><u>Accesos</u></b>\n{access_text} \n\n"
         )
@@ -143,10 +146,13 @@ class MetroHandler(HandlerBase):
         _, line_id, station_id, has_connections = self.message_service.get_callback_data(update)
         station = await self.metro_service.get_station_by_id(station_id)        
         station_connections = await self.metro_service.get_station_connections(station.ID_ESTACIO)
+        station_alerts = get_alert_by_language(station, self.user_data_manager.get_user_language(user_id))
+        alerts_message = f"{self.language_manager.t("common.alerts")}\n{station_alerts}\n\n" if any(station_alerts) else ""
         logger.info(f"[MetroHandler] Showing connections for station ID: {station_id}")
 
         text = (
             f"{self.language_manager.t(f"metro.station.name", name=station.NOM_ESTACIO.upper())}\n\n"
+            f"{alerts_message}"
             f"<a href='{GoogleMapsHelper.build_directions_url(latitude=station.coordinates[1], longitude=station.coordinates[0])}'>{self.language_manager.t('common.map.view.location')}</a>\n\n"
             f"<b><u>Connections</u></b>\n{station_connections} \n\n"
         )
