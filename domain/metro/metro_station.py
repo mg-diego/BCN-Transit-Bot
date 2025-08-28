@@ -68,7 +68,6 @@ def update_metro_station_with_line_info(metro_station: MetroStation, metro_line:
 
     return metro_station
 
-@staticmethod
 def get_alert_by_language(metro_station: MetroStation, language: str):
     raw_alerts = []
     if metro_station.has_alerts:

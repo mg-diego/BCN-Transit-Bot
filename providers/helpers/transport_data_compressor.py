@@ -126,6 +126,7 @@ class TransportDataCompressor:
                 "lon": station.coordinates[0],
                 "name": f"{station.CODI_ESTACIO} - {self._normalize_name(station.NOM_ESTACIO)}",
                 "color": station.COLOR_LINIA,
+                "alert": '⚠️' if station.has_alerts else ''
             }
             for station in stations
         ]
@@ -169,8 +170,9 @@ class TransportDataCompressor:
                 {
                     "lat": stop.coordinates[1],
                     "lon": stop.coordinates[0],
-                    "name": f"{stop.CODI_PARADA} - {self._normalize_name(stop.NOM_PARADA)}",
+                    "name": f"{stop.CODI_PARADA} - {self._normalize_name(stop.NOM_PARADA)} {'⚠️' if stop.has_alerts else ''}",
                     "color": stop.COLOR_REC,
+                    "alert": '⚠️' if stop.has_alerts else '',
                     "direction": stop.DESTI_SENTIT
                 }
                 for stop in stops
@@ -203,6 +205,7 @@ class TransportDataCompressor:
                 "lat": stop.latitude,
                 "lon": stop.longitude,
                 "name": f"{stop.id} - {self._normalize_name(stop.name)}",
+                "alert": '',
                 "color": "008E78",
             }
             for stop in stops
@@ -244,6 +247,7 @@ class TransportDataCompressor:
                 "lat": station.latitude,
                 "lon": station.longitude,
                 "name": f"{station.id} - {self._normalize_name(station.name)}",
+                "alert": '',
                 "color": line.color,
             }
             for station in stations

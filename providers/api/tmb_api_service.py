@@ -224,6 +224,11 @@ class TmbApiService:
 
         return connections
     
+    async def get_global_alerts(self, transport_type: TransportType):
+        url = f"https://api.tmb.cat/v1/alerts/{transport_type.value}/channels/WEB"
+        data = await self._get(url)
+        return data['data']['alerts']
+    
     async def get_line_alerts(self, transport_type: TransportType, line_name):
         url = f"https://api.tmb.cat/v1/alerts/{transport_type.value}/channels/WEB/routes/{line_name}"
         data = await self._get(url)

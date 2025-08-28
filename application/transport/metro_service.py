@@ -1,3 +1,4 @@
+from collections import defaultdict
 from typing import List
 import json
 
@@ -34,8 +35,20 @@ class MetroService(ServiceBase):
             return cached_lines
 
         lines = await self.tmb_api_service.get_metro_lines()
+        alerts = await self.tmb_api_service.get_global_alerts(TransportType.METRO)
+        result = defaultdict(list)
+
+        for alert in alerts:
+            seen_lines = set()
+            for entity in alert.get('entities', []):
+                line_name = entity.get('line_name')
+                if line_name and line_name not in seen_lines:
+                    result[line_name].append(alert)
+                    seen_lines.add(line_name)
+
+        alerts_dict = dict(result)
         for line in lines:
-            line_alerts = await self.tmb_api_service.get_line_alerts(transport_type=TransportType.METRO, line_name=line.ORIGINAL_NOM_LINIA)
+            line_alerts = alerts_dict.get(line.ORIGINAL_NOM_LINIA, [])
             line.has_alerts = any(line_alerts)
             line.raw_alerts = json.dumps(line_alerts) if any(line_alerts) else ''
 

@@ -1,6 +1,7 @@
 from telegram import Update
 from telegram.ext import ContextTypes
 
+from domain.bus.bus_stop import get_alert_by_language
 from providers.helpers.google_maps_helper import GoogleMapsHelper
 from ui.keyboard_factory import KeyboardFactory
 from application import BusService, MessageService, UpdateManager
@@ -54,7 +55,7 @@ class BusHandler(HandlerBase):
 
         await self.message_service.send_new_message_from_callback(
             update,
-            text=self.language_manager.t('common.line.only.map', line=line_name),
+            text=self.language_manager.t('common.line.only.map', line=line_name),  # INVESTIGATE TELEGRAPH TO SHOW ALERTS
             reply_markup=self.keyboard_factory.bus_stops_map_menu(encoded)
         )
 
@@ -66,7 +67,9 @@ class BusHandler(HandlerBase):
         default_callback = f"bus_stop:{line_id}:{bus_stop_id}"
 
         bus_stop = await self.bus_service.get_stop_by_id(bus_stop_id)
-
+        station_alerts = get_alert_by_language(bus_stop, self.user_data_manager.get_user_language(user_id))
+        alerts_message = f"{self.language_manager.t("common.alerts")}\n{station_alerts}\n\n" if any(station_alerts) else ""
+        
         message = await self.show_stop_intro(update, context, TransportType.BUS.value, line_id, bus_stop_id, bus_stop.NOM_PARADA)
         
         await self.bus_service.get_stop_routes(bus_stop_id)
@@ -77,6 +80,7 @@ class BusHandler(HandlerBase):
             is_fav = self.user_data_manager.has_favorite(user_id, TransportType.BUS.value, bus_stop_id)
             text = (
                 f"{self.language_manager.t(f'{TransportType.BUS.value}.stop.name', name=bus_stop.NOM_PARADA.upper())}\n\n"
+                f"{alerts_message}"
                 f"<a href='{GoogleMapsHelper.build_directions_url(latitude=bus_stop.coordinates[1], longitude=bus_stop.coordinates[0])}'>{self.language_manager.t('common.map.view.location')}</a>\n\n"
                 f"{self.language_manager.t(f'{TransportType.BUS.value}.stop.next')}\n{next_buses}\n\n"
                 f"{self.language_manager.t('common.updates.every_x_seconds', seconds=self.UPDATE_INTERVAL)}"

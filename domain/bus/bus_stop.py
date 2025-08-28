@@ -1,6 +1,11 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+import json
 from typing import Optional
 from typing import Tuple
+
+import re
+from domain.bus.bus_line import BusLine
+from providers.helpers.html_helper import HtmlHelper
 
 @dataclass
 class BusStop:
@@ -45,8 +50,9 @@ class BusStop:
     DATA_FI: Optional[str]
     COLOR_REC: str
     PUNTS_PARADA: int
-
     coordinates: Tuple[float, float]
+    has_alerts: Optional[bool] = False
+    alerts: Optional[list] = field(default_factory=list)
 
     def __str__(self):
         return f"{self.ORDRE}. {self.NOM_PARADA}"
@@ -98,5 +104,28 @@ def create_bus_stop(feature) -> BusStop:
         PUNTS_PARADA=props.get("PUNTS_PARADA", ""),
         coordinates=coords
     )
+
+def update_bus_stop_with_line_info(bus_stop: BusStop, bus_line: BusLine) -> BusStop:
+    if bus_line.has_alerts:
+        line_alerts = json.loads(bus_line.raw_alerts)
+        for alert in line_alerts:
+            for line in alert.get("linesAffected", []):
+                if line.get("commercialLineId") == bus_stop.NOM_LINIA:
+                    for way in line.get('ways'):
+                        for stop in way.get('stops'):
+                            if stop.get('stopId') == bus_stop.CODI_PARADA:
+                                bus_stop.has_alerts = True
+                                bus_stop.alerts.append(alert.get('channelInfoTO'))
+
+    return bus_stop
+
+def get_alert_by_language(bus_stop: BusStop, language: str):
+    raw_alerts = []
+    if bus_stop.has_alerts:
+        text_key = f'text{language.capitalize()}'
+        for alert in bus_stop.alerts:
+            raw_alerts.append(HtmlHelper.clean_text(f"{alert.get(text_key)}"))
+
+    return "\n".join(f"<pre>{alert}</pre>" for alert in raw_alerts)
 
 

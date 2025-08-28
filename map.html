@@ -215,6 +215,7 @@
             lon: stop.lon,
             name: stop.name.split(" - ").slice(1).join(" - "),
             color: stop.color,
+            alertIcon: stop.alert,
             direction: stop.direction,
           }));
         }
@@ -259,7 +260,7 @@
         popupContent.style.textAlign = "center";
         popupContent.innerHTML = `<p style="margin:0 0 8px 0; font-weight: 600; font-size: 16px;">📍(${
           stop.id
-        }) - ${stop.name || "Parada"}</p>`;
+        }) - ${stop.name || "Parada"} ${stop.alertIcon || ''}</p>`;
 
         const btn = document.createElement("button");
         btn.textContent = "Seleccionar parada";
@@ -366,10 +367,10 @@
 
         filteredStops.forEach((stop, index) => {
           const li = document.createElement("li");
-          li.textContent = stop.name || `Parada ${stop.id}`;
+          li.textContent = `${stop.name} ${stop.alertIcon}` || `Parada ${stop.id}`;
           li.tabIndex = 0;
           li.setAttribute("role", "button");
-          li.setAttribute("aria-label", `Centrar mapa en parada ${stop.name}`);
+          li.setAttribute("aria-label", `Centrar mapa en parada ${stop.name} ${stop.alertIcon}`);
 
           // Estilo para dejar espacio al círculo
           li.style.position = "relative";
