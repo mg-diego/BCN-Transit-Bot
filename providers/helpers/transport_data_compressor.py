@@ -170,7 +170,7 @@ class TransportDataCompressor:
                 {
                     "lat": stop.coordinates[1],
                     "lon": stop.coordinates[0],
-                    "name": f"{stop.CODI_PARADA} - {self._normalize_name(stop.NOM_PARADA)} {'⚠️' if stop.has_alerts else ''}",
+                    "name": f"{stop.CODI_PARADA} - {self._normalize_name(stop.NOM_PARADA)}",
                     "color": stop.COLOR_REC,
                     "alert": '⚠️' if stop.has_alerts else '',
                     "direction": stop.DESTI_SENTIT

@@ -29,15 +29,26 @@ class MetroService(ServiceBase):
 
     # ===== CACHE CALLS ====
     async def get_all_lines(self) -> List[MetroLine]:
-        cache_key = f"metro_lines"
-        cached_lines = await self._get_from_cache_or_data(cache_key, None, cache_ttl=3600*24)
+        static_key = "metro_lines_static"
+        alerts_key = "metro_lines_alerts"
+
+        cached_lines = await self._get_from_cache_or_data(static_key, None, cache_ttl=3600*24)
+        cached_alerts = await self._get_from_cache_or_data(alerts_key, None, cache_ttl=3600)
+
+        # Lines cache already exist, update only alerts
         if cached_lines is not None and cached_lines:
+            if cached_alerts:
+                for line in cached_lines:
+                    line_alerts = cached_alerts.get(line.ORIGINAL_NOM_LINIA, [])
+                    line.has_alerts = bool(line_alerts)
+                    line.raw_alerts = json.dumps(line_alerts) if line_alerts else ''
             return cached_lines
 
+        # No lines and no alerts in cache
         lines = await self.tmb_api_service.get_metro_lines()
         alerts = await self.tmb_api_service.get_global_alerts(TransportType.METRO)
-        result = defaultdict(list)
 
+        result = defaultdict(list)
         for alert in alerts:
             seen_lines = set()
             for entity in alert.get('entities', []):
@@ -47,38 +58,46 @@ class MetroService(ServiceBase):
                     seen_lines.add(line_name)
 
         alerts_dict = dict(result)
+
         for line in lines:
             line_alerts = alerts_dict.get(line.ORIGINAL_NOM_LINIA, [])
-            line.has_alerts = any(line_alerts)
-            line.raw_alerts = json.dumps(line_alerts) if any(line_alerts) else ''
+            line.has_alerts = bool(line_alerts)
+            line.raw_alerts = json.dumps(line_alerts) if line_alerts else ''
 
-        return await self._get_from_cache_or_data(cache_key, lines, cache_ttl=3600*24)
+        await self._get_from_cache_or_data(static_key, lines, cache_ttl=3600*24)
+        await self._get_from_cache_or_data(alerts_key, alerts_dict, cache_ttl=3600)
+
+        return lines
     
     async def get_all_stations(self) -> List[MetroStation]:
-        lines = await self.get_all_lines()
-        stations = []
-        for line in lines:
-            stations += await self.get_stations_by_line(line.CODI_LINIA)
+        static_stations = await self.cache_service.get("metro_stations_static")
+        alerts_by_station = await self.cache_service.get("metro_stations_alerts")
 
-        return await self._get_from_cache_or_data(
-            "metro_stations",
-            stations,
-            cache_ttl=3600*24
-        )   
+        if not static_stations:
+            static_stations = await self._build_and_cache_static_stations()
+        if not alerts_by_station:
+            alerts_by_station = await self._build_and_cache_station_alerts()
+
+        for station in static_stations:
+            station_alerts = alerts_by_station.get(station.CODI_ESTACIO, [])
+            station.has_alerts = any(station_alerts)
+            station.alerts = station_alerts if any(station_alerts) else []
+
+        return static_stations
             
     async def get_stations_by_line(self, line_id) -> List[MetroStation]:
         cache_key = f"metro_line_{line_id}_stations"
         cached_stations = await self._get_from_cache_or_data(cache_key, None, cache_ttl=3600*24)
-        if cached_stations is not None and cached_stations:
+        if cached_stations:
             return cached_stations
-        
-        line_stations = []
+
         line = await self.get_line_by_id(line_id)
+
         api_stations = await self.tmb_api_service.get_stations_by_metro_line(line_id)
-        for api_station in api_stations:
-            updated_station = update_metro_station_with_line_info(api_station, line)
-            line_stations.append(updated_station)
+        line_stations = [update_metro_station_with_line_info(s, line) for s in api_stations]
+
         return await self._get_from_cache_or_data(cache_key, line_stations, cache_ttl=3600*24)
+
 
     async def get_station_accesses(self, group_code_id) -> List[MetroAccess]:
         return await self._get_from_cache_or_api(
@@ -137,3 +156,32 @@ class MetroService(ServiceBase):
         line = next((l for l in lines if str(l.ORIGINAL_NOM_LINIA) == str(line_name)), None)
         logger.debug(f"[{self.__class__.__name__}] get_line_by_name({line_name}) -> {line}")
         return line
+    
+    async def _build_and_cache_static_stations(self):
+        lines = await self.get_all_lines()
+        stations = []
+
+        for line in lines:
+            line_stations = await self.tmb_api_service.get_stations_by_metro_line(line.CODI_LINIA)
+            for api_station in line_stations:
+                station = update_metro_station_with_line_info(api_station, line)
+                stations.append(station)
+
+        await self.cache_service.set("metro_stations_static", stations, ttl=3600*24)
+        return stations
+    
+    async def _build_and_cache_station_alerts(self):
+        station_alerts = defaultdict(list)
+
+        lines = await self.get_all_lines()
+        for line in lines:
+            if not line.has_alerts:
+                continue
+
+            stations = await self.get_stations_by_line(line.CODI_LINIA)
+            for station in stations:
+                station_alerts[station.CODI_ESTACIO].extend(station.alerts)
+
+        alerts_dict = dict(station_alerts)
+        await self.cache_service.set("metro_stations_alerts", alerts_dict, ttl=3600)
+        return alerts_dict
