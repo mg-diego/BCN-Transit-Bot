@@ -82,8 +82,8 @@ class TramHandler(HandlerBase):
             text = (
                 f"{self.language_manager.t(f'{TransportType.TRAM.value}.stop.name', name=stop.name.upper())}\n\n"
                 f"<a href='{GoogleMapsHelper.build_directions_url(latitude=stop.latitude, longitude=stop.longitude)}'>{self.language_manager.t('common.map.view.location')}</a>\n\n"
-                f"{self.language_manager.t(f'{TransportType.TRAM.value}.stop.next')}\n{grouped_routes}\n\n"
-                f"{self.language_manager.t('common.updates.every_x_seconds', seconds=self.UPDATE_INTERVAL)}"
+                f"{self.language_manager.t(f'{TransportType.TRAM.value}.stop.next')}\n{grouped_routes}"
+                f"{self.language_manager.t('common.updates.every_x_seconds', seconds=self.UPDATE_INTERVAL)}\n\n"
             )
             is_fav = self.user_data_manager.has_favorite(user_id, TransportType.TRAM.value, stop_id)
             keyboard = self.keyboard_factory.update_menu(is_fav, TransportType.TRAM.value, stop_id, line_id, default_callback, has_connections=False)

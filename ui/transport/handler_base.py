@@ -174,13 +174,31 @@ class HandlerBase:
         """       
 
         async def loop():
+            current_text = None
+            current_reply_markup = None
+            
             while True:
                 try:
                     can_send, send_alert = self.should_send_update(user_id)
                     if can_send:
+                        # Si tenemos texto previo, mostrar versión con carga
+                        if current_text is not None:
+                            loading_text = current_text.replace(
+                                self.language_manager.t('common.updates.every_x_seconds', seconds=self.UPDATE_INTERVAL),
+                                self.language_manager.t('common.loading.routes', '🔄 Cargando rutas...')
+                            )
+                            await self.message_service.edit_message_by_id(chat_id, message_id, loading_text, current_reply_markup)
+                        
+                        # Obtener los nuevos datos (puede ser lento)
                         text, reply_markup = await get_text_callable()
+                        
+                        # Actualizar con el contenido real y guardar para la próxima iteración
                         await self.message_service.edit_message_by_id(chat_id, message_id, text, reply_markup)
+                        current_text = text
+                        current_reply_markup = reply_markup
+                        
                         await asyncio.sleep(5)
+                        
                     if send_alert:
                         await self.message_service.edit_message_by_id(chat_id, message_id, self.language_manager.t('common.reload.message'), reply_markup=self.keyboard_factory.restart_search_button(previous_callback))
                         self.reset_user_counter(user_id)

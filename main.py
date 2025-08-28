@@ -221,7 +221,7 @@ class BotApp:
         self.init_services()
         
         # Run the async seeder
-        await self.run_seeder()
+        #await self.run_seeder()
 
         # Telegram application
         self.application = ApplicationBuilder().token(self.telegram_token).build()
@@ -259,5 +259,4 @@ async def main():
 
 
 if __name__ == "__main__":
-    # Run the async main function
     asyncio.run(main())

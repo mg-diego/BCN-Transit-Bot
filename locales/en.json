@@ -36,7 +36,8 @@
   "common.access": "🚶‍♂️ Entrances",
   "common.connections": "🔄 Connections",
   "common.next": "🕒 Next",
-  "common.updates.every_x_seconds": "⏱️ Auto-update every {seconds} seconds",
+  "common.updates.every_x_seconds": "⏱️ Next update in {seconds} seconds",
+  "common.loading.routes": "🔄 Updating real-time information...",
   
   "metro.station.name": "🚏 <b>'{name}' STATION</b> 🚏",
   "metro.station.next": "🚇 <u>Next Metros:</u>",

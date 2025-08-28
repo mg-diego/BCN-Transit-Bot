@@ -37,7 +37,8 @@
   "common.access": "🚶‍♂️ Accesos",
   "common.connections": "🔄 Conexiones",
   "common.next": "🕒 Próximos",
-  "common.updates.every_x_seconds": "⏱️ Actualización automática cada {seconds} segundos",
+  "common.updates.every_x_seconds": "⏱️ Próxima actualización en {seconds} segundos",
+  "common.loading.routes": "🔄 Actualizando información en tiempo real...",
 
   "metro.station.name": "🚏 <b>ESTACIÓN '{name}'</b> 🚏",
   "metro.station.next": "🚇 <u>Próximos Metros:</u>",
