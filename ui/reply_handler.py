@@ -107,10 +107,10 @@ class ReplyHandler:
                 bus_stops.append(stop)
 
         else: # METRO STATIONS | BUS STOPS | TRAM STOPS | RODALIES STATIONS
-            tram_stops = [] #await tram_service.get_stops_by_name(search_text)
-            metro_stations = [] # await metro_service.get_stations_by_name(search_text)
-            bus_stops = [] #await bus_service.get_stops_by_name(search_text)
-            rodalies_stations =[] # await rodalies_service.get_stations_by_name(search_text)
+            tram_stops = await tram_service.get_stops_by_name(search_text)
+            metro_stations = await metro_service.get_stations_by_name(search_text)
+            bus_stops = await bus_service.get_stops_by_name(search_text)
+            rodalies_stations = await rodalies_service.get_stations_by_name(search_text)
             bicing_stations = await bicing_service.get_stations_by_name(search_text)
         
         await update_manager.stop_loading(update, context)
