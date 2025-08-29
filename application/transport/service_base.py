@@ -1,6 +1,6 @@
 from typing import Callable, Any, List
 from rapidfuzz import process, fuzz
-from providers.helpers import logger
+from providers.helpers import logger, HtmlHelper
 from application.cache_service import CacheService
 
 class ServiceBase:
@@ -36,8 +36,12 @@ class ServiceBase:
         # --- Exact matches (substring, case-insensitive) ---
         exact_matches = [item for item in items if query_lower in key(item).lower()]
 
-        # --- Prepare fuzzy search excluding exact matches ---
+        # --- Matches without special chars ---
         remaining_items = [item for item in items if item not in exact_matches]
+        normalized_matches = [item for item in remaining_items if HtmlHelper.normalize_text(query_lower) in HtmlHelper.normalize_text(key(item).lower())]
+
+        # --- Prepare fuzzy search excluding exact matches ---
+        remaining_items = [item for item in items if item not in (exact_matches + normalized_matches)]
         item_dict = {key(item): item for item in remaining_items}
 
         # --- Fuzzy matches ---
@@ -49,8 +53,8 @@ class ServiceBase:
 
         fuzzy_filtered = [item_dict[name] for name, score, _ in fuzzy_matches if score >= threshold]
 
-        # --- Combine exact + fuzzy ---
-        return exact_matches + fuzzy_filtered
+        # --- Combine exact + normalized + fuzzy ---
+        return exact_matches + normalized_matches + fuzzy_filtered
 
     async def _get_from_cache_or_data(
         self,

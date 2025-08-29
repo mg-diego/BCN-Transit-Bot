@@ -42,3 +42,7 @@ class BicingService(ServiceBase):
         station = filtered_stations[0] if any(filtered_stations) else None
         logger.debug(f"[{self.__class__.__name__}] get_station_by_id({station_id}) -> {station}")
         return station
+    
+    async def get_stations_with_availability(self) -> List[BicingStation]:
+        stations = await self.get_all_stations()
+        return [station for station in stations if station.disponibilidad > 0]

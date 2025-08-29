@@ -34,36 +34,39 @@ class ReplyHandler:
         self.bicing_handler = bicing_handler
 
         self.previous_search = None
+        self.current_search = None
 
     async def reply_router(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        btn_text = str(update.message.text)
+        self.current_search = str(update.message.text)
 
-        if btn_text == "🚇 Metro":
+        if self.current_search == "🚇 Metro":
             await self.metro_handler.show_lines(update, context)
-        elif btn_text == "🚌 Bus":
+        elif self.current_search == "🚌 Bus":
             await self.bus_handler.show_lines(update, context)
-        elif btn_text == "🚋 Tram":
+        elif self.current_search == "🚋 Tram":
             await self.tram_handler.show_lines(update, context)
-        elif btn_text == "🚆 Rodalies":
+        elif self.current_search == "🚆 Rodalies":
             await self.rodalies_handler.show_lines(update, context)        
-        elif btn_text == '🚲 Bicing':
+        elif self.current_search == '🚴 Bicing':
             await self.bicing_handler.show_instructions(update, context)
-        elif '⭐' in btn_text:
+        elif '⭐' in self.current_search:
             await self.favorites_handler.show_favorites(update, context)
-        elif '🌐' in btn_text:
+        elif '🌐' in self.current_search:
             await self.language_handler.show_languages(update, context)
-        elif '📘' in btn_text:
+        elif '📘' in self.current_search:
             await self.help_handler.show_help(update, context)
-        elif '⚙️' in btn_text:
+        elif '⚙️' in self.current_search:
             await self.settings_handler.show_settings(update, context)
-        elif '🔔' in btn_text:
+        elif '🔔' in self.current_search:
             pass
-        elif '🔙' in btn_text:
+        elif '🔙' in self.current_search:
             await self.menu_handler.back_to_menu(update, context)
         else:
             await self.handle_reply_from_user(update, context)
+        
+        self.previous_search = self.current_search
 
-    async def handle_reply_from_user(self, update: Update, context: ContextTypes.DEFAULT_TYPE, user_location = None):
+    async def handle_reply_from_user(self, update: Update, context: ContextTypes.DEFAULT_TYPE, user_location = None, only_bicing = False):
         message_service = self.menu_handler.message_service
         update_manager = self.menu_handler.update_manager
         language_manager = self.menu_handler.language_manager
@@ -77,15 +80,13 @@ class ReplyHandler:
 
         if user_location is None:
             await message_service.send_new_message(update, language_manager.t('results.location.ask'), keyboard_factory.location_keyboard())
-            search_text = str(update.message.text)            
+            self.current_search = str(update.message.text)            
         else:
             await message_service.send_new_message(update, language_manager.t('results.location.received'), keyboard_factory._back_reply_button())
-            search_text = self.previous_search
-
-        self.previous_search = search_text
+            self.current_search = self.previous_search
         message_service.set_bot_instance(context.bot)
 
-        if len(search_text) < 3:
+        if len(self.current_search) < 3:
             await update.message.reply_text(language_manager.t('results.minimum.letters'))
             return
         
@@ -98,20 +99,25 @@ class ReplyHandler:
         rodalies_stations = []
         bicing_stations = []
 
-        if search_text.isdigit(): # ONLY FOR BUS STOPS AND BICING
-            bicing = await bicing_service.get_station_by_id(search_text)
-            if bicing is not None:
-                bicing_stations.append(bicing)
-            stop = await bus_service.get_stop_by_id(search_text)
-            if stop is not None:
-                bus_stops.append(stop)
+        if not only_bicing:
+            if self.current_search.isdigit(): # ONLY FOR BUS STOPS AND BICING
+                bicing = await bicing_service.get_station_by_id(self.current_search)
+                if bicing is not None:
+                    bicing_stations.append(bicing)
+                
+                stop = await bus_service.get_stop_by_id(self.current_search)
+                if stop is not None:
+                    bus_stops.append(stop)
 
-        else: # METRO STATIONS | BUS STOPS | TRAM STOPS | RODALIES STATIONS
-            tram_stops = await tram_service.get_stops_by_name(search_text)
-            metro_stations = await metro_service.get_stations_by_name(search_text)
-            bus_stops = await bus_service.get_stops_by_name(search_text)
-            rodalies_stations = await rodalies_service.get_stations_by_name(search_text)
-            bicing_stations = await bicing_service.get_stations_by_name(search_text)
+            else: # METRO STATIONS | BUS STOPS | TRAM STOPS | RODALIES STATIONS
+                tram_stops = await tram_service.get_stops_by_name(self.current_search)
+                metro_stations = await metro_service.get_stations_by_name(self.current_search)
+                bus_stops = await bus_service.get_stops_by_name(self.current_search)
+                rodalies_stations = await rodalies_service.get_stations_by_name(self.current_search)
+                bicing_stations = await bicing_service.get_stations_by_name(self.current_search)
+
+        else: 
+            bicing_stations = await bicing_service.get_stations_with_availability()
         
         await update_manager.stop_loading(update, context)
 
@@ -122,23 +128,30 @@ class ReplyHandler:
         rodalies_count = len([s for s in stops_with_distance if s["type"] == TransportType.RODALIES.value])
         bicing_count = len([s for s in stops_with_distance if s["type"] == TransportType.BICING.value])
 
-        await message_service.edit_message_by_id(
-            chat_id,
-            message.message_id,
-            language_manager.t(
+        if not only_bicing:
+            msg = language_manager.t(
                 "results.found",
                 count=len(stops_with_distance),
-                search_value=search_text,
+                search_value=self.current_search,
                 metro_results=metro_count,
                 bus_results=bus_count,
                 tram_results=tram_count,
                 rodalies_results=rodalies_count,
                 bicing_results=bicing_count
-            ),
+            )
+        else:
+            msg = language_manager.t('bicing.station.near')
+
+        await message_service.edit_message_by_id(
+            chat_id,
+            message.message_id,
+            msg,
             keyboard_factory.reply_keyboard_stations_menu(stops_with_distance)
         )
 
     async def location_handler(self, update, context):
-        if self.previous_search is not None:
+        if self.previous_search == "🚴 Bicing":
+            await self.handle_reply_from_user(update, context, update.message.location, only_bicing=True)
+        elif self.previous_search is not None:
             await self.handle_reply_from_user(update, context, update.message.location)
                 

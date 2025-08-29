@@ -28,7 +28,7 @@ class BicingHandler(HandlerBase):
     async def show_instructions(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         self.message_service.set_bot_instance(context.bot)
 
-        await self.message_service.send_new_message(update, self.language_manager.t('bicing.search.instructions'))
+        await self.message_service.send_new_message(update, self.language_manager.t('bicing.search.instructions'), reply_markup=self.keyboard_factory.location_keyboard())
 
         # PENDING TO FIX MAP VIEW
         '''

@@ -110,6 +110,9 @@ class DistanceHelper:
                 "station_name": b.streetName,
                 "station_code": b.id,
                 "coordinates": (b.latitude, b.longitude),
+                "slots": b.slots,
+                "mechanical": b.mechanical_bikes,
+                "electrical": b.electrical_bikes,
                 "distance_km": distance_km
             })
 

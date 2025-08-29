@@ -161,7 +161,6 @@ class BotApp:
             logger.error(f"Error running seeder: {e}")
             raise
 
-
     def register_handlers(self):
         """Register Telegram handlers."""
         self.application.add_handler(CommandHandler("start", self.menu_handler.show_menu))
