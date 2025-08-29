@@ -23,7 +23,47 @@ class BusService(ServiceBase):
         logger.info(f"[{self.__class__.__name__}] BusService initialized")
 
     # === CACHE CALLS ===
-    async def get_all_lines(self) -> List[BusLine]:    
+    async def get_all_lines(self) -> List[BusLine]:
+        static_key = "bus_lines_static"
+        alerts_key = "bus_lines_alerts"
+
+        cached_lines = await self._get_from_cache_or_data(static_key, None, cache_ttl=3600*24)
+        cached_alerts = await self._get_from_cache_or_data(alerts_key, None, cache_ttl=3600)
+
+        # Lines cache already exist, update only alerts
+        if cached_lines is not None and cached_lines:
+            if cached_alerts:
+                for line in cached_lines:
+                    line_alerts = cached_alerts.get(line.ORIGINAL_NOM_LINIA, [])
+                    line.has_alerts = bool(line_alerts)
+                    line.raw_alerts = json.dumps(line_alerts) if line_alerts else ''
+            return cached_lines
+
+        # No lines and no alerts in cache
+        lines = await self.tmb_api_service.get_bus_lines()
+        alerts = await self.tmb_api_service.get_global_alerts(TransportType.BUS)
+        
+        result = defaultdict(list)
+        for alert in alerts:
+            seen_lines = set()
+            for line in alert.get("linesAffected", []):
+                line_id = line.get("commercialLineId")
+                if line_id and line_id not in seen_lines:
+                    result[line_id].append(alert)
+                    seen_lines.add(line_id)
+        alerts_dict = dict(result)
+
+        for line in lines:
+            line_alerts = alerts_dict.get(line.ORIGINAL_NOM_LINIA, [])
+            line.has_alerts = bool(line_alerts)
+            line.raw_alerts = json.dumps(line_alerts) if line_alerts else ''
+
+        await self._get_from_cache_or_data(static_key, lines, cache_ttl=3600*24)
+        await self._get_from_cache_or_data(alerts_key, alerts_dict, cache_ttl=3600)
+
+        return lines
+
+        '''
         static_lines = await self.cache_service.get("bus_lines_static")
         alerts_dict = await self.cache_service.get("bus_lines_alerts")
 
@@ -51,6 +91,7 @@ class BusService(ServiceBase):
             line.raw_alerts = json.dumps(line_alerts) if line_alerts else ""
 
         return static_lines
+        '''
     
     async def get_all_stops(self) -> List[BusStop]:
         static_stops = await self.cache_service.get("bus_stops_static")
@@ -64,8 +105,8 @@ class BusService(ServiceBase):
 
         for stop in static_stops:
             stop_alerts = alerts_by_stop.get(stop.CODI_PARADA, [])
-            stop.has_alerts = bool(stop_alerts)
-            stop.alerts = json.dumps(stop_alerts) if stop_alerts else ""
+            stop.has_alerts = any(stop_alerts)
+            stop.alerts = stop_alerts if any(stop_alerts) else []
 
         return static_stops 
 
@@ -78,9 +119,8 @@ class BusService(ServiceBase):
         line_stops = []
         line = await self.get_line_by_id(line_id)
         api_stops = await self.tmb_api_service.get_bus_line_stops(line_id)
-        for api_stop in api_stops:
-            updated_stop = update_bus_stop_with_line_info(api_stop, line)
-            line_stops.append(updated_stop)
+
+        line_stops = [update_bus_stop_with_line_info(s, line) for s in api_stops]
         return await self._get_from_cache_or_data(cache_key, line_stops, cache_ttl=3600*24)
     
     async def get_stop_routes(self, stop_id: str) -> str:
@@ -159,8 +199,7 @@ class BusService(ServiceBase):
 
             stops = await self.get_stops_by_line(line.CODI_LINIA)
             for stop in stops:
-                alerts = json.loads(line.raw_alerts)
-                alerts_by_stop[stop.CODI_PARADA].extend(alerts)
+                alerts_by_stop[stop.CODI_PARADA].extend(stop.alerts)
 
         alerts_dict = dict(alerts_by_stop)
         await self.cache_service.set("bus_stops_alerts", alerts_dict, ttl=3600)

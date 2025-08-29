@@ -13,7 +13,7 @@ class NextMetro:
         delta_ms = self.temps_arribada - now
 
         if delta_ms <= 40000:
-            return "🔜 Entrando"
+            return "🔜"
 
         total_seconds = int(delta_ms / 1000)
         minutes, seconds = divmod(total_seconds, 60)

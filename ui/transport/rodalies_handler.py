@@ -72,7 +72,7 @@ class RodaliesHandler(HandlerBase):
             text = (
                 f"{self.language_manager.t(f'{TransportType.RODALIES.value}.station.name', name=rodalies_station.name.upper())}\n\n"
                 f"<a href='{GoogleMapsHelper.build_directions_url(latitude=rodalies_station.latitude, longitude=rodalies_station.longitude, travel_mode='transit')}'>{self.language_manager.t('common.map.view.location')}</a>\n\n"
-                f"{self.language_manager.t(f'{TransportType.RODALIES.value}.station.next')}\n{next_rodalies}\n\n"
+                f"{self.language_manager.t(f'{TransportType.RODALIES.value}.station.next')}\n{next_rodalies.replace('🔜', self.language_manager.t('common.arriving'))}\n\n"
                 f"{self.language_manager.t('common.updates.every_x_seconds', seconds=self.UPDATE_INTERVAL)}"
             ) 
             keyboard = self.keyboard_factory.update_menu(is_fav, TransportType.RODALIES.value, rodalies_station_id, line_id, default_callback, has_connections=False)

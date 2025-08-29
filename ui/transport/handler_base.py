@@ -114,8 +114,6 @@ class HandlerBase:
 
         self.message_service.set_bot_instance(context.bot)
 
-        #await self.message_service.send_map_image(update, context, line_name)
-
         await self.message_service.edit_inline_message(
             update,
             self.language_manager.t("common.line.stops.list", line=line_name),

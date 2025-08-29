@@ -88,7 +88,7 @@ class MetroHandler(HandlerBase):
                 f"{self.language_manager.t(f'{TransportType.METRO.value}.station.name', name=station.NOM_ESTACIO.upper())}\n\n"
                 f"{alerts_message}"
                 f"<a href='{GoogleMapsHelper.build_directions_url(latitude=station.coordinates[1], longitude=station.coordinates[0])}'>{self.language_manager.t('common.map.view.location')}</a>\n\n"
-                f"{self.language_manager.t(f'{TransportType.METRO.value}.station.next')}\n{routes}\n\n"
+                f"{self.language_manager.t(f'{TransportType.METRO.value}.station.next')}\n{routes.replace('🔜', self.language_manager.t('common.arriving'))}\n\n"
                 f"{self.language_manager.t('common.updates.every_x_seconds', seconds=self.UPDATE_INTERVAL)}"
             )
             is_fav = self.user_data_manager.has_favorite(user_id, TransportType.METRO.value, metro_station_id)

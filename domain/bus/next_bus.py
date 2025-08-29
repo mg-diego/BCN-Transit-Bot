@@ -13,7 +13,7 @@ class NextBus:
         delta_ms = self.temps_arribada - now
 
         if delta_ms <= 60000:
-            return "🔜 Llegando"
+            return "🔜"
 
         total_seconds = int(delta_ms / 1000)
         minutes, seconds = divmod(total_seconds, 60)

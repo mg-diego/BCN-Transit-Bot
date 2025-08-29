@@ -38,6 +38,7 @@
   "common.next": "🕒 Propers",
   "common.updates.every_x_seconds": "⏱️ Propera actualització en {seconds} segons",
   "common.loading.routes": "🔄 Actualitzant informació en temps real...",
+  "common.arriving": "🔜 Arribant",
 
   "metro.station.name": "🚏 <b>ESTACIÓ '{name}'</b> 🚏",
   "metro.station.next": "🚇 <u>Propers Metros:</u>",

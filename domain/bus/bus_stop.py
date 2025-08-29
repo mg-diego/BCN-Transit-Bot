@@ -115,7 +115,7 @@ def update_bus_stop_with_line_info(bus_stop: BusStop, bus_line: BusLine) -> BusS
                         for stop in way.get('stops'):
                             if stop.get('stopId') == bus_stop.CODI_PARADA:
                                 bus_stop.has_alerts = True
-                                bus_stop.alerts.append(alert.get('channelInfoTO'))
+                                bus_stop.alerts.append(alert.get('channelInfoTO', []))
 
     return bus_stop
 

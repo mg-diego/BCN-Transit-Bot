@@ -28,7 +28,7 @@ class NextRodalies:
         remaining_sec = (arrival_time - now).total_seconds()
 
         if remaining_sec < 40:
-            return "🔜 Entrando"
+            return "🔜"
 
         hours, remainder = divmod(int(remaining_sec), 3600)
         minutes, seconds = divmod(remainder, 60)

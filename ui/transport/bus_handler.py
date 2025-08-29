@@ -82,7 +82,7 @@ class BusHandler(HandlerBase):
                 f"{self.language_manager.t(f'{TransportType.BUS.value}.stop.name', name=bus_stop.NOM_PARADA.upper())}\n\n"
                 f"{alerts_message}"
                 f"<a href='{GoogleMapsHelper.build_directions_url(latitude=bus_stop.coordinates[1], longitude=bus_stop.coordinates[0])}'>{self.language_manager.t('common.map.view.location')}</a>\n\n"
-                f"{self.language_manager.t(f'{TransportType.BUS.value}.stop.next')}\n{next_buses}\n\n"
+                f"{self.language_manager.t(f'{TransportType.BUS.value}.stop.next')}\n{next_buses.replace('🔜', self.language_manager.t('common.arriving'))}\n\n"
                 f"{self.language_manager.t('common.updates.every_x_seconds', seconds=self.UPDATE_INTERVAL)}"
             )
             keyboard = self.keyboard_factory.update_menu(is_fav, TransportType.BUS.value, bus_stop_id, line_id, default_callback, has_connections=False)
