@@ -65,7 +65,7 @@ class MetroHandler(HandlerBase):
 
     async def show_station(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_id, chat_id, line_id, metro_station_id = self.message_service.extract_context(update, context)        
-        logger.info(f"Showing station info for user {user_id}, line {line_id}, station {metro_station_id}")
+        logger.info(f"Showing metro station info for user {user_id}, line {line_id}, station {metro_station_id}")
         
         default_callback = f"metro_station:{line_id}:{metro_station_id}"
         callback = self.message_service.get_callback_query(update)

@@ -209,7 +209,7 @@
         if (jsonData && jsonData.stops) {
           type = jsonData.type;
           if (type === "bicing") {
-            fetch("https://www.bicing.barcelona/es/get-stations", {
+            fetch("https://cors-anywhere.herokuapp.com/https://www.bicing.barcelona/es/get-stations", {
             method: "POST",
             headers: {
               "Content-Type": "application/json"

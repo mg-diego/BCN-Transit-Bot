@@ -53,6 +53,9 @@
   "tram.stop.next": "🚋 <u>Próximos Trams:</u>",
   "rodalies.station.name": "🚏 <b>ESTACIÓN '{name}'</b> 🚏",
   "rodalies.station.next": "🚆 <u>Próximos Rodalies:</u>",
+  "bicing.search.instructions": "🔍 Para buscar una parada de Bicing, escribe el nombre de la calle o el ID de la estación.",
+  "bicing.station.name": "🚲 <b><u>Parada Bicing #{station_id}</u></b>",
+  "bicing.station.details": "🅿️ Plazas disponibles: {slots}\n🚲 Bicis disponibles: {available_bikes}\n  -🔋 Eléctricas: {electrical_bikes}\n  ⚙️ Mecánicas: {mechanical_bikes}\n\n📊 Disponibilidad general: ({availability}%)\n🔄 Estado: {status}",
 
   "search.cleaning": "🧹 Limpiando mensajes antiguos... un momento, por favor.",
 
@@ -67,9 +70,10 @@
 
   "help.text": "📘 <b><u>Ayuda del BCN Transit Bot</u></b> 📘\n\nEste bot te permite consultar información actualizada sobre el <b>Metro</b> y <b>Bus</b> de la ciudad de Barcelona de forma rápida.\n\n📋 <u>Comandos disponibles:</u>\n  • /start – Inicia una nueva búsqueda\n  • /help – Muestra este mensaje de ayuda\n\n🚇 <u>Para ver los próximos metros:</u>\n  1. Pulsa en 'Metro' en el menú.\n  2. Selecciona una línea.\n  3. Selecciona una estación.\n  4. Verás los horarios actualizados y más detalles.\n\n🚌 <u>Para ver los próximos buses:</u>\n  1. Pulsa en 'Bus' en el menú.\n  2. Selecciona una línea.\n  3. Selecciona una estación desde el mapa interactivo.\n  4. Verás los horarios actualizados y más detalles.\n\n⭐ <u>Para ver tus favoritos:</u>\n  1. Pulsa en 'Favoritos' en el menú.\n  2. Selecciona uno de tus favoritos (necesitas haberlo guardado previamente).\n  3. Verás los horarios actualizados y más detalles.\n\n🌐 <u>Para seleccionar el Idioma:</u>\n  1. Pulsa en 'Idioma' en el menú.\n  2. Selecciona uno de los idiomas disponibles (Inglés, Español o Catalán).\n  3. Verás la aplicación actualizada al nuevo idioma.\n\n¿Tienes dudas o sugerencias? ¡Estoy aquí para ayudarte!\n\n📬 <b>Contacto:</b> <a href='https://github.com/mg-diego/BCN-Transit-Bot'>github.com/mg-diego/BCN-Transit-Bot</a>\n\n 🔖 <b>Versión:</b> <code>v1.4</code>",
 
-  "results.found": "🔍 He encontrado {count} resultado{s} que coinciden con tu búsqueda '{search_value}':\n\n -🚇 <b>Metro:</b> {metro_results}\n - 🚌 <b>Bus:</b> {bus_results}\n - 🚋 <b>Tram:</b> {tram_results}\n - 🚆 <b>Rodalies:</b> {rodalies_results}",
+  "results.found": "🔍 He encontrado {count} resultado{s} que coinciden con tu búsqueda '{search_value}':\n\n -🚇 <b>Metro:</b> {metro_results}\n - 🚌 <b>Bus:</b> {bus_results}\n - 🚋 <b>Tram:</b> {tram_results}\n - 🚆 <b>Rodalies:</b> {rodalies_results}\n - 🚲 <b>Bicing:</b> {bicing_results}",
   "results.searching": "Buscando resultados",
   "results.location.ask": "📍 Puedes enviar tu ubicación para mejorar los resultados de la búsqueda",
   "results.location.btn": "📍 Compartir mi ubicación",
-  "results.location.received": "🎯 Ubicación recibida correctamente. Se mostrarán los 10 resultados más cercanos."
+  "results.location.received": "🎯 Ubicación recibida correctamente. Se mostrarán los 10 resultados más cercanos.",
+  "results.minimum.letters": "⚠️ Escribe al menos 3 letras para realizar una búsqueda."
 }

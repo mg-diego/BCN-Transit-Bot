@@ -5,6 +5,7 @@ from domain.bus import BusStop
 from domain.metro import MetroStation
 from domain.tram import TramStop
 from domain.rodalies import RodaliesStation
+from domain.bicing import BicingStation
 
 class DistanceHelper:
     """
@@ -19,6 +20,7 @@ class DistanceHelper:
         bus_stops: List[BusStop],
         tram_stops: List[TramStop],
         rodalies_stations: List[RodaliesStation],
+        bicing_stations: List[BicingStation],
         user_location: Optional[object] = None
     ) -> List[Dict]:
         """
@@ -89,6 +91,25 @@ class DistanceHelper:
                 "station_name": t.name,
                 "station_code": t.id,
                 "coordinates": (t.latitude, t.longitude),
+                "distance_km": distance_km
+            }) 
+            
+        # --- Bicing ---
+        for b in bicing_stations:
+            distance_km = None
+            if user_location:
+                distance_km = DistanceHelper.haversine_distance(
+                    b.latitude, b.longitude,
+                    user_location.latitude, user_location.longitude
+                )
+
+            stops.append({
+                "type": "bicing",
+                "line_name": '',
+                "line_code": '',
+                "station_name": b.streetName,
+                "station_code": b.id,
+                "coordinates": (b.latitude, b.longitude),
                 "distance_km": distance_km
             })
 

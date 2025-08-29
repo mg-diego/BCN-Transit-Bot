@@ -287,7 +287,14 @@ class TransportDataCompressor:
 
         data = {
             "type": TransportType.BICING.value,
-            "stops": []
+            "stops": [
+                {
+                    "a": station.latitude,
+                    "o": station.longitude,
+                    "n": f"{station.id} - {self._normalize_name(html.escape(station.streetName))}",
+                }
+                for station in stations
+            ]
         }
 
         compressed = self._compress_data(data)

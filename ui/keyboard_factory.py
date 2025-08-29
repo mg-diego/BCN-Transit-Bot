@@ -175,7 +175,7 @@ class KeyboardFactory:
         return InlineKeyboardMarkup([self._back_button(self.BACK_TO_MENU_CALLBACK)])
     
     def update_menu(self, is_favorite: bool, item_type:str, item_id: str, line_id: str, previous_callback: str, has_connections: bool = False):
-        stop_type = "station" if item_type == TransportType.METRO.value or item_type == TransportType.RODALIES.value else "stop"
+        stop_type = "station" if item_type == TransportType.METRO.value or item_type == TransportType.RODALIES.value or item_type == TransportType.BICING.value else "stop"
         if is_favorite:
             fav_button = InlineKeyboardButton(
                 self.language_manager.t('keyboard.favorites.remove'),
@@ -244,6 +244,13 @@ class KeyboardFactory:
                 "name_fmt": "{nom_linia} - {name}",
                 "callback": lambda item: Callbacks.RODALIES_STATION.format(
                     line_code=item.get("codi_linia"),
+                    station_code=item.get("code")
+                ),
+            },
+            TransportType.BICING.value: {
+                "emoji": "🚲",
+                "name_fmt": "({code}) {name}",
+                "callback": lambda item: Callbacks.BICING_STATION.format(
                     station_code=item.get("code")
                 ),
             },
@@ -346,6 +353,11 @@ class KeyboardFactory:
                 text = f"🚋 {stop['line_name']} - {stop['station_name']}{distance_str}"
                 callback = Callbacks.RODALIES_STATION.format(
                     line_code=stop["line_code"],
+                    station_code=stop["station_code"]
+                )            
+            elif stop["type"] == "bicing":
+                text = f"🚲 ({stop['station_code']}) - {stop['station_name']}{distance_str}"
+                callback = Callbacks.BICING_STATION.format(
                     station_code=stop["station_code"]
                 )
             else:
