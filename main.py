@@ -4,11 +4,11 @@ from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandle
 
 from ui import (
     MenuHandler, MetroHandler, BusHandler, TramHandler, FavoritesHandler, HelpHandler, 
-    LanguageHandler, KeyboardFactory, WebAppHandler, RodaliesHandler, ReplyHandler, AdminHandler
+    LanguageHandler, KeyboardFactory, WebAppHandler, RodaliesHandler, ReplyHandler, AdminHandler, SettingsHandler, BicingHandler
 )
-from application import MessageService, MetroService, BusService, TramService, RodaliesService, CacheService, UpdateManager
+from application import MessageService, MetroService, BusService, TramService, RodaliesService, BicingService, CacheService, UpdateManager
 from providers.manager import SecretsManager, UserDataManager, LanguageManager
-from providers.api import TmbApiService, TramApiService, RodaliesApiService
+from providers.api import TmbApiService, TramApiService, RodaliesApiService, BicingApiService
 from providers.helpers import logger
 
 
@@ -35,12 +35,14 @@ class BotApp:
         self.tmb_api_service = None
         self.tram_api_service = None
         self.rodalies_api_service = None
+        self.bicing_api_service = None
 
         # Domain services
         self.metro_service = None
         self.bus_service = None
         self.tram_service = None
         self.rodalies_service = None
+        self.bicing_service = None
 
         # Handlers
         self.admin_handler = None
@@ -89,12 +91,14 @@ class BotApp:
         self.tmb_api_service = TmbApiService(app_id=tmb_app_id, app_key=tmb_app_key)
         self.tram_api_service = TramApiService(client_id=tram_client_id, client_secret=tram_client_secret)
         self.rodalies_api_service = RodaliesApiService()
+        self.bicing_api_service = BicingApiService()
 
         # Domain services
         self.metro_service = MetroService(self.tmb_api_service, self.language_manager, self.cache_service)
         self.bus_service = BusService(self.tmb_api_service, self.cache_service)
         self.tram_service = TramService(self.tram_api_service, self.language_manager, self.cache_service)
         self.rodalies_service = RodaliesService(self.rodalies_api_service, self.language_manager, self.cache_service)
+        self.bicing_service = BicingService(self.bicing_api_service, self.cache_service)
 
         logger.info("Transport services initialized")
 
@@ -105,12 +109,15 @@ class BotApp:
         self.bus_handler = BusHandler(self.keyboard_factory, self.bus_service, self.update_manager, self.user_data_manager, self.message_service, self.language_manager)
         self.tram_handler = TramHandler(self.keyboard_factory, self.tram_service, self.update_manager, self.user_data_manager, self.message_service, self.language_manager)
         self.rodalies_handler = RodaliesHandler(self.keyboard_factory, self.rodalies_service, self.update_manager, self.user_data_manager, self.message_service, self.language_manager)
+        self.bicing_handler = BicingHandler(self.keyboard_factory, self.bicing_service, self.update_manager, self.user_data_manager, self.message_service, self.language_manager)
+
         self.favorites_handler = FavoritesHandler(self.message_service, self.user_data_manager, self.keyboard_factory, self.metro_service, self.bus_service, self.tram_service, self.rodalies_service, self.language_manager)
         self.help_handler = HelpHandler(self.message_service, self.keyboard_factory, self.language_manager)
         self.language_handler = LanguageHandler(self.keyboard_factory, self.user_data_manager, self.message_service, self.language_manager, self.update_manager)
         self.web_app_handler = WebAppHandler(self.metro_handler, self.bus_handler, self.tram_handler, self.rodalies_handler)
+        self.settings_handler = SettingsHandler(self.message_service, self.keyboard_factory, self.language_manager)
         self.reply_handler = ReplyHandler(self.menu_handler, self.metro_handler, self.bus_handler, self.tram_handler, self.rodalies_handler,
-                                          self.favorites_handler, self.language_handler, self.help_handler)
+                                          self.favorites_handler, self.language_handler, self.help_handler, self.settings_handler, self.bicing_handler)
 
         logger.info("Handlers initialized")
 
@@ -163,10 +170,6 @@ class BotApp:
         self.application.add_handler(CallbackQueryHandler(self.menu_handler.close_updates, pattern=r"^close_updates:"))
         self.application.add_handler(MessageHandler(filters.StatusUpdate.WEB_APP_DATA, self.web_app_handler.web_app_data_router))
 
-        # HELP
-        self.application.add_handler(CommandHandler("help", self.help_handler.show_help))
-        self.application.add_handler(CallbackQueryHandler(self.help_handler.show_help, pattern=r"^help$"))
-
         # METRO
         self.application.add_handler(CallbackQueryHandler(self.metro_handler.show_list, pattern=r"^metro_list"))
         self.application.add_handler(CallbackQueryHandler(self.metro_handler.show_map, pattern=r"^metro_map"))
@@ -195,14 +198,20 @@ class BotApp:
         self.application.add_handler(CallbackQueryHandler(self.rodalies_handler.show_line_stops, pattern=r"^rodalies_line"))
         self.application.add_handler(CallbackQueryHandler(self.rodalies_handler.show_lines, pattern=r"^rodalies$"))
 
+        # BICING
+
         # FAVORITES
         self.application.add_handler(CallbackQueryHandler(self.favorites_handler.add_favorite, pattern=r"^add_fav"))
         self.application.add_handler(CallbackQueryHandler(self.favorites_handler.remove_favorite, pattern=r"^remove_fav"))
         self.application.add_handler(CallbackQueryHandler(self.favorites_handler.show_favorites, pattern=r"^favorites$"))
 
-        # LANGUAGES
+        # SETTINGS
+        ### LANGUAGES 
         self.application.add_handler(CallbackQueryHandler(self.language_handler.show_languages, pattern=r"^language"))
         self.application.add_handler(CallbackQueryHandler(self.language_handler.update_language, pattern=r"^set_language"))
+        ### HELP
+        self.application.add_handler(CommandHandler("help", self.help_handler.show_help))
+        self.application.add_handler(CallbackQueryHandler(self.help_handler.show_help, pattern=r"^help$"))
 
         # SEARCH
         self.application.add_handler(MessageHandler(filters.LOCATION, self.reply_handler.location_handler))
@@ -221,7 +230,7 @@ class BotApp:
         self.init_services()
         
         # Run the async seeder
-        await self.run_seeder()
+        #await self.run_seeder()
 
         # Telegram application
         self.application = ApplicationBuilder().token(self.telegram_token).build()

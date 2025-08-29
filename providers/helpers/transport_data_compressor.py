@@ -9,6 +9,7 @@ from domain.bus import BusStop
 from domain.metro import MetroStation
 from domain.rodalies import RodaliesLine, RodaliesStation
 from domain.tram import TramStop
+from domain.bicing import BicingStation
 from domain.transport_type import TransportType
 
 from .logger import logger
@@ -268,4 +269,27 @@ class TransportDataCompressor:
 
         compressed = self._compress_data(data)
         self._log_mapping_end(TransportType.RODALIES.value, line.id)
+        return compressed
+    
+    def map_bicing_stations(self, stations: List[BicingStation]):
+        """
+        Maps a list of bus stops into a compressed JSON format.
+
+        Args:
+            stops (list): List of BusStop objects.
+            line_id (str): Bus line ID.
+            line_name (str): Bus line name.
+
+        Returns:
+            str: Compressed JSON string representing mapped bus stops.
+        """
+        self._log_mapping_start(TransportType.BICING.value, len(stations), '', '')
+
+        data = {
+            "type": TransportType.BICING.value,
+            "stops": []
+        }
+
+        compressed = self._compress_data(data)
+        self._log_mapping_end(TransportType.BICING.value, '')
         return compressed

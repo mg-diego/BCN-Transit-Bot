@@ -1,8 +1,7 @@
-import time
 import aiohttp
 import inspect
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any, List
 
 from providers.helpers import logger
 from domain.rodalies import RodaliesLine, RodaliesStation, RodaliesLineRoute, NextRodalies, create_rodalies_line, create_rodalies_station

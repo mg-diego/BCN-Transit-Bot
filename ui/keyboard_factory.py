@@ -17,7 +17,7 @@ class KeyboardFactory:
     BACK_TO_MENU_CALLBACK = "back_to_menu"
 
     def location_keyboard(self):
-        keyboard = [[KeyboardButton("📍 Enviar mi ubicación", request_location=True)], [KeyboardButton(self.language_manager.t('keyboard.back'))]]
+        keyboard = [[KeyboardButton(self.language_manager.t('results.location.btn'), request_location=True)], [KeyboardButton(self.language_manager.t('keyboard.back'))]]
         return ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=True)
 
     def __init__(self, language_manager: LanguageManager):
@@ -38,20 +38,6 @@ class KeyboardFactory:
         # Queremos que los que no tienen sufijo vayan después de N/S
         suffix_order = {"N": 0, "S": 1, "": 2}
         return (num, suffix_order.get(suffix, 3))
-
-    def create_main_menu(self):
-        """Teclado del menú principal."""
-        keyboard = [
-            InlineKeyboardButton(self.language_manager.t('main.menu.metro'), callback_data=Callbacks.MENU_METRO_CALLBACK.value),
-            InlineKeyboardButton(self.language_manager.t('main.menu.bus'), callback_data=Callbacks.MENU_BUS_CALLBACK.value),
-            InlineKeyboardButton(self.language_manager.t('main.menu.tram'), callback_data=Callbacks.MENU_TRAM_CALLBACK.value),
-            InlineKeyboardButton(self.language_manager.t('main.menu.rodalies'), callback_data=Callbacks.MENU_RODALIES_CALLBACK.value),
-            InlineKeyboardButton(self.language_manager.t('main.menu.favorites'), callback_data=Callbacks.MENU_FAVORITES_CALLBACK.value),
-            InlineKeyboardButton(self.language_manager.t('main.menu.language'), callback_data=Callbacks.MENU_LANGUAGE_CALLBACK.value)
-        ]
-        rows = self._chunk_buttons(keyboard, 2)
-        rows.append([InlineKeyboardButton(self.language_manager.t('main.menu.help'),callback_data=Callbacks.MENU_HELP_CALLBACK.value)])
-        return InlineKeyboardMarkup(rows)
     
     def create_main_menu_replykeyboard(self):
         """Teclado principal como ReplyKeyboard."""
@@ -60,12 +46,28 @@ class KeyboardFactory:
             KeyboardButton(self.language_manager.t('main.menu.bus'))],
             
             [KeyboardButton(self.language_manager.t('main.menu.tram')),
-            KeyboardButton(self.language_manager.t('main.menu.rodalies'))],
+            KeyboardButton(self.language_manager.t('main.menu.bicing'))],
             
-            [KeyboardButton(self.language_manager.t('main.menu.favorites')),
-            KeyboardButton(self.language_manager.t('main.menu.language'))],
+            [KeyboardButton(self.language_manager.t('main.menu.rodalies')),
+            KeyboardButton(self.language_manager.t('main.menu.favorites'))],
             
-            [KeyboardButton(self.language_manager.t('main.menu.help'))]
+            [KeyboardButton(self.language_manager.t('main.menu.settings'))]
+        ]
+
+        return ReplyKeyboardMarkup(
+            keyboard,
+            resize_keyboard=True,
+            one_time_keyboard=False
+        )
+    
+    def settings_replykeyboard(self):
+        keyboard = [
+            [KeyboardButton(self.language_manager.t('settings.notifications')),
+            KeyboardButton(self.language_manager.t('settings.language'))],
+
+            [KeyboardButton(self.language_manager.t('settings.help'))],
+
+            [KeyboardButton(self.language_manager.t('keyboard.back'))]
         ]
 
         return ReplyKeyboardMarkup(

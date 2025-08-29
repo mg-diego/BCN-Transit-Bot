@@ -5,3 +5,4 @@ class TransportType(str, Enum):
     METRO = "metro"
     TRAM = "tram"
     RODALIES = "rodalies"
+    BICING = "bicing"

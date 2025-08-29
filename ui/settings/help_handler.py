@@ -1,7 +1,7 @@
 from telegram import Update
 from telegram.ext import ContextTypes
 
-from .keyboard_factory import KeyboardFactory
+from ui.keyboard_factory import KeyboardFactory
 
 class HelpHandler:
 

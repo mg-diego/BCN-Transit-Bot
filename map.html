@@ -205,19 +205,52 @@
         const decompressed =
           LZString.decompressFromEncodedURIComponent(compressed);
         const jsonData = JSON.parse(decompressed);
+        console.log(jsonData)
         if (jsonData && jsonData.stops) {
           type = jsonData.type;
-          line_id = jsonData.line_id;
-          line_name = jsonData.line_name;
-          coordsList = jsonData.stops.map((stop) => ({
-            id: stop.name.split(" - ")[0],
-            lat: stop.lat,
-            lon: stop.lon,
-            name: stop.name.split(" - ").slice(1).join(" - "),
-            color: stop.color,
-            alertIcon: stop.alert,
-            direction: stop.direction,
-          }));
+          if (type === "bicing") {
+            fetch("https://www.bicing.barcelona/es/get-stations", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: "{}"
+          })
+            .then(response => response.json())
+            .then(data => {
+              const coordsList = data.stations.map(station => ({
+                id: station.id,
+                lat: station.latitude,
+                lon: station.longitude,
+                name: station.streetName,
+                slots: station.slots,
+                bikes: station.bikes,
+                mechanical_bikes: station.mechanical_bikes,
+                electrical_bikes: station.electrical_bikes,
+                status: station.status,
+                icon: station.icon
+              }));
+
+              console.log("bicing coordsList:", coordsList);
+              // Puedes usar coordsList aquí para renderizar un mapa o lo que necesites
+            })
+            .catch(error => {
+              console.error("Error al obtener estaciones:", error);
+            });
+          }
+          else {
+            line_id = jsonData.line_id;
+            line_name = jsonData.line_name;
+            coordsList = jsonData.stops.map((stop) => ({
+              id: stop.name.split(" - ")[0],
+              lat: stop.lat,
+              lon: stop.lon,
+              name: stop.name.split(" - ").slice(1).join(" - "),
+              color: stop.color,
+              alertIcon: stop.alert,
+              direction: stop.direction,
+            }));
+          }
         }
       }
       console.log(type)

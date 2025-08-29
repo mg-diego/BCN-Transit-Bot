@@ -1,5 +1,3 @@
-import re
-import copy
 from domain.transport_type import TransportType
 from providers.helpers.distance_helper import DistanceHelper
 from telegram import Update
@@ -7,7 +5,7 @@ from telegram.ext import (
     ContextTypes
 )
 
-from ui import MetroHandler, BusHandler, TramHandler, RodaliesHandler, FavoritesHandler, LanguageHandler, HelpHandler, MenuHandler
+from ui import MetroHandler, BusHandler, TramHandler, RodaliesHandler, FavoritesHandler, LanguageHandler, HelpHandler, MenuHandler, SettingsHandler, BicingHandler
 
 class ReplyHandler:
     def __init__(
@@ -20,6 +18,8 @@ class ReplyHandler:
             favorites_handler: FavoritesHandler,
             language_handler: LanguageHandler,
             help_handler: HelpHandler,
+            settings_handler: SettingsHandler,
+            bicing_handler: BicingHandler
         ):
 
         self.menu_handler = menu_handler
@@ -30,6 +30,8 @@ class ReplyHandler:
         self.favorites_handler = favorites_handler
         self.language_handler = language_handler
         self.help_handler = help_handler
+        self.settings_handler = settings_handler
+        self.bicing_handler = bicing_handler
 
         self.previous_search = None
 
@@ -43,13 +45,19 @@ class ReplyHandler:
         elif btn_text == "🚋 Tram":
             await self.tram_handler.show_lines(update, context)
         elif btn_text == "🚆 Rodalies":
-            await self.rodalies_handler.show_lines(update, context)
+            await self.rodalies_handler.show_lines(update, context)        
+        elif btn_text == '🚲 Bicing':
+            await self.bicing_handler.show_stations(update, context)
         elif '⭐' in btn_text:
             await self.favorites_handler.show_favorites(update, context)
         elif '🌐' in btn_text:
             await self.language_handler.show_languages(update, context)
-        elif 'ℹ️' in btn_text:
+        elif '📘' in btn_text:
             await self.help_handler.show_help(update, context)
+        elif '⚙️' in btn_text:
+            await self.settings_handler.show_settings(update, context)
+        elif '🔔' in btn_text:
+            pass
         elif '🔙' in btn_text:
             await self.menu_handler.back_to_menu(update, context)
         else:

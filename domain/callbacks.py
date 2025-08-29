@@ -1,17 +1,7 @@
 from enum import Enum
 
-from domain.transport_type import TransportType
-
-
 class Callbacks(Enum):
     MENU_CALLBACK = "menu"
-    MENU_METRO_CALLBACK = TransportType.METRO.value
-    MENU_BUS_CALLBACK = TransportType.BUS.value
-    MENU_TRAM_CALLBACK = TransportType.TRAM.value
-    MENU_RODALIES_CALLBACK = TransportType.RODALIES.value
-    MENU_FAVORITES_CALLBACK = "favorites"
-    MENU_LANGUAGE_CALLBACK = "language"
-    MENU_HELP_CALLBACK = "help"
     BACK_TO_MENU_CALLBACK = "back_to_menu"
 
     METRO_LINE = "metro_line:{line_code}:{line_name}"
@@ -23,6 +13,7 @@ class Callbacks(Enum):
     BUS_STOP = "bus_stop:{line_code}:{stop_code}"
     TRAM_STOP = "tram_stop:{line_code}:{stop_code}"
     RODALIES_STATION = "rodalies_station:{line_code}:{station_code}"
+    BICING_STATION = "bicing_station:{station_code}"
 
     BUS_CATEGORY_D = "bus_category:Diagonals"
     BUS_CATEGORY_H = "bus_category:Horitzontals"
