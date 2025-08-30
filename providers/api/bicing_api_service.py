@@ -6,6 +6,7 @@ from providers.helpers import logger
 
 class BicingApiService:
     BASE_URL = "https://www.bicing.barcelona"
+    # https://barcelona-sp.publicbikesystem.net/customer/ube/gbfs/v1/
 
     def __init__(self):
         self.logger = logger.getChild(self.__class__.__name__)

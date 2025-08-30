@@ -1,185 +1,176 @@
 <!DOCTYPE html>
 <html lang="es">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" href="docs/favicon.ico" type="image/x-icon" />
-    <title>BCN Transit Bot</title>
-    <link
-      rel="stylesheet"
-      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    />
-    <style>
-      html,
-      body {
-        height: 100%;
-        margin: 0;
-        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-      }
 
-      #map {
-        height: 100%;
-        width: 100%;
-        transition: margin-left 0.3s;
-      }
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" href="docs/favicon.ico" type="image/x-icon" />
+  <title>BCN Transit Bot</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    html,
+    body {
+      height: 100%;
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    }
 
-      /* Sidebar */
-      #sidebar {
-        position: fixed;
-        top: 0;
-        left: 0;
-        height: 100%;
-        width: 250px;
-        max-width: 80vw;
-        background: #f8f9fa;
-        box-shadow: 2px 0 5px rgba(0, 0, 0, 0.15);
-        overflow-y: auto;
-        transform: translateX(-100%);
-        transition: transform 0.3s ease;
-        z-index: 1000;
-        padding: 10px 15px;
-      }
+    #map {
+      height: 100%;
+      width: 100%;
+      transition: margin-left 0.3s;
+    }
 
-      #sidebar.open {
-        transform: translateX(0);
-      }
+    /* Sidebar */
+    #sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 100%;
+      width: 250px;
+      max-width: 80vw;
+      background: #f8f9fa;
+      box-shadow: 2px 0 5px rgba(0, 0, 0, 0.15);
+      overflow-y: auto;
+      transform: translateX(-100%);
+      transition: transform 0.3s ease;
+      z-index: 1000;
+      padding: 10px 15px;
+    }
 
-      #sidebar h2 {
-        margin-top: 0;
-        font-size: 1.25rem;
-        text-align: center;
-        border-bottom: 1px solid #ddd;
-        padding-bottom: 8px;
-        color: #333;
-      }
+    #sidebar.open {
+      transform: translateX(0);
+    }
 
-      #sidebar ul {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-      }
+    #sidebar h2 {
+      margin-top: 0;
+      font-size: 1.25rem;
+      text-align: center;
+      border-bottom: 1px solid #ddd;
+      padding-bottom: 8px;
+      color: #333;
+    }
 
-      #sidebar ul li {
-        padding: 8px 10px;
-        border-bottom: 1px solid #ddd;
-        cursor: pointer;
-        color: #007bff;
-        user-select: none;
-        transition: background-color 0.2s ease;
-      }
+    #sidebar ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
 
-      #sidebar ul li:hover {
-        background-color: #e2e6ea;
-      }
+    #sidebar ul li {
+      padding: 8px 10px;
+      border-bottom: 1px solid #ddd;
+      cursor: pointer;
+      color: #007bff;
+      user-select: none;
+      transition: background-color 0.2s ease;
+    }
 
-      /* Toggle Button */
-      #sidebarToggle {
-        position: fixed;
-        top: 15px;
-        left: 15px;
-        z-index: 1100;
-        background: #007bff;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        padding: 8px 12px;
-        cursor: pointer;
-        font-size: 16px;
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-        user-select: none;
-        transition: left 0.3s ease;
-      }
+    #sidebar ul li:hover {
+      background-color: #e2e6ea;
+    }
 
-      #sidebar.open + #sidebarToggle {
-        left: 280px;
-      }
+    /* Toggle Button */
+    #sidebarToggle {
+      position: fixed;
+      top: 15px;
+      left: 15px;
+      z-index: 1100;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 8px 12px;
+      cursor: pointer;
+      font-size: 16px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+      user-select: none;
+      transition: left 0.3s ease;
+    }
 
-      #sidebarToggle:focus {
-        outline: none;
-      }
+    #sidebar.open+#sidebarToggle {
+      left: 280px;
+    }
 
-      /* Zoom control */
-      .leaflet-control-zoom {
-        top: 10px !important;
-        right: 10px !important;
-        left: auto !important;
-        bottom: auto !important;
-      }
-    </style>
-  </head>
-  <body>
-    <div id="sidebar" aria-label="Menú lateral de paradas">
-      <div
-        style="
+    #sidebarToggle:focus {
+      outline: none;
+    }
+
+    /* Zoom control */
+    .leaflet-control-zoom {
+      top: 10px !important;
+      right: 10px !important;
+      left: auto !important;
+      bottom: auto !important;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="sidebar" aria-label="Menú lateral de paradas">
+    <div style="
           display: flex;
           align-items: center;
           gap: 8px;
           margin-bottom: 12px;
-        "
-      >
-        <img id="lineIcon" src="" alt="Icono línea" style="height: 28px" />
-        <h2 id="sidebarTitle" style="margin: 0; font-size: 1.4rem"></h2>
-      </div>
-      <label
-        for="directionSelect"
-        style="
+        ">
+      <img id="lineIcon" src="" alt="Icono línea" style="height: 28px" />
+      <h2 id="sidebarTitle" style="margin: 0; font-size: 1.4rem"></h2>
+    </div>
+    <label for="directionSelect" style="
           font-size: 14px;
           font-weight: 600;
           display: block;
           margin-bottom: 4px;
-        "
-      >
-        Seleccione un destino:
-      </label>
-      <select
-        id="directionSelect"
-        style="width: 100%; padding: 6px; font-size: 14px"
-      ></select>
-      <ul id="stopsList"></ul>
-    </div>
-    <button id="sidebarToggle">☰ Paradas</button>
-    <div id="map"></div>
+        ">
+      Seleccione un destino:
+    </label>
+    <select id="directionSelect" style="width: 100%; padding: 6px; font-size: 14px"></select>
+    <ul id="stopsList"></ul>
+  </div>
+  <button id="sidebarToggle">☰ Paradas</button>
+  <div id="map"></div>
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/lz-string@1.4.4/libs/lz-string.min.js"></script>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lz-string@1.4.4/libs/lz-string.min.js"></script>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-    <script>
-      function getQueryParam(name) {
-        const params = new URLSearchParams(window.location.search);
-        return params.get(name);
+  <script>
+    function getQueryParam(name) {
+      const params = new URLSearchParams(window.location.search);
+      return params.get(name);
+    }
+
+    function escapeForSVG(text) {
+      return text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    function createNumberedIcon(stop, type, hexColor, showText = true) {
+      if (type === "bicing") {
+        return new L.Icon({
+          iconUrl: stop.availability > 0
+            ? "https://www.bicing.barcelona/modules/custom/mapa_disponibilitat/assets/icons/ubicacio.png"
+            : "https://www.bicing.barcelona/modules/custom/mapa_disponibilitat/assets/icons/ubicacio3.png",
+          iconSize: [36, 36], // tamaño del iconos
+          iconAnchor: [16, 32], // punto de anclaje
+          popupAnchor: [0, -32], // desplazamiento del popup
+        });
       }
 
-      function escapeForSVG(text) {
-          return text
-              .replace(/&/g, "&amp;")
-              .replace(/</g, "&lt;")
-              .replace(/>/g, "&gt;")
-              .replace(/"/g, "&quot;")
-              .replace(/'/g, "&#39;");
-      }
+      const id = type === "bus" ? stop.id : stop.name
+      const estimatedCharWidth = 6.5; // ancho promedio por carácter
+      const padding = 10; // padding extra
+      const textLength = id.length * estimatedCharWidth + padding;
+      const svgWidth = Math.max(28, textLength); // mínimo 28 para los ID cortos
+      const centerX = svgWidth / 2;
 
-      function createNumberedIcon(stop, type, hexColor, showText = true) {
-        if (type === "bicing") {
-            return new L.Icon({
-                iconUrl: stop.availability > 0
-                  ? "https://www.bicing.barcelona/modules/custom/mapa_disponibilitat/assets/icons/ubicacio.png" 
-                  : "https://www.bicing.barcelona/modules/custom/mapa_disponibilitat/assets/icons/ubicacio3.png", 
-                iconSize: [40, 40], // tamaño del iconos
-                iconAnchor: [16, 32], // punto de anclaje
-                popupAnchor: [0, -32], // desplazamiento del popup
-            });
-        }
-
-        const id = type === "bus" ? stop.id : stop.name
-        const estimatedCharWidth = 6.5; // ancho promedio por carácter
-        const padding = 10; // padding extra
-        const textLength = id.length * estimatedCharWidth + padding;
-        const svgWidth = Math.max(28, textLength); // mínimo 28 para los ID cortos
-        const centerX = svgWidth / 2;
-
-        const textElement = showText
-            ? `<text x="${centerX}" y="10"
+      const textElement = showText
+        ? `<text x="${centerX}" y="10"
                     text-anchor="middle"
                     font-size="10"
                     font-weight="bold"
@@ -188,377 +179,388 @@
                     stroke="white" stroke-width="2" paint-order="stroke">
                 ${escapeForSVG(id)}
               </text>`
-            : "";
+        : "";
 
-        const svg = `
+      const svg = `
           <svg xmlns="http://www.w3.org/2000/svg" width="${svgWidth}" height="36" viewBox="0 0 ${svgWidth} 36">
             ${textElement}
             <circle cx="${centerX}" cy="26" r="6" fill="white" stroke="${hexColor}" stroke-width="2"/>
           </svg>
         `;
 
-        const svgUrl = "data:image/svg+xml;base64," + btoa(svg);
+      const svgUrl = "data:image/svg+xml;base64," + btoa(svg);
 
-        return new L.Icon({
-          iconUrl: svgUrl,
-          iconSize: [svgWidth, 36],
-          iconAnchor: [centerX, 26],
-          popupAnchor: [0, -28],
-        });
-      }
+      return new L.Icon({
+        iconUrl: svgUrl,
+        iconSize: [svgWidth, 36],
+        iconAnchor: [centerX, 26],
+        popupAnchor: [0, -28],
+      });
+    }
 
-      const compressed = getQueryParam("data");
-      let coordsList = [];
-      let line_id = "";
-      let line_name = "";
-      let type = ""
-      let user_location = ""
+    const compressed = getQueryParam("data");
+    let coordsList = [];
+    let line_id = "";
+    let line_name = "";
+    let type = ""
+    let user_location = ""
 
-      if (compressed) {
-        const decompressed = LZString.decompressFromEncodedURIComponent(compressed);
-        console.log(`decompressed: ${decompressed}`)    
-        const jsonData = JSON.parse(decompressed);
-        console.log(`jsonData: ${jsonData}`)
-        if (jsonData && jsonData.stops) {
-          type = jsonData.type;
-          if (type === "bicing") {
-            user_location = jsonData.user_location
-            line_id = 'bicing',
+    if (compressed) {
+      const decompressed = LZString.decompressFromEncodedURIComponent(compressed);
+      console.log(`decompressed: ${decompressed}`)
+      const jsonData = JSON.parse(decompressed);
+      if (jsonData && jsonData.stops) {
+        type = jsonData.type;
+        if (type === "bicing") {
+          user_location = jsonData.user_location
+          line_id = 'bicing',
             line_name = 'bicing',
             user_location.lat = user_location.latitude,
             user_location.lon = user_location.longitude,
-            coordsList = jsonData.stops.map((stop) => ({
-                id: stop.name.split(" - ")[0],
-                lat: stop.lat,
-                lon: stop.lon,
-                name: stop.name.split(" - ").slice(1).join(" - "),
-                slots: stop.slots,
-                electrical: stop.electrical_bikes,
-                mechanical: stop.mechanical_bikes,
-                availability: stop.availability
-            }));
-          }
-          else {
-            line_id = jsonData.line_id;
-            line_name = jsonData.line_name;
             coordsList = jsonData.stops.map((stop) => ({
               id: stop.name.split(" - ")[0],
               lat: stop.lat,
               lon: stop.lon,
               name: stop.name.split(" - ").slice(1).join(" - "),
-              color: stop.color,
-              alertIcon: stop.alert,
-              direction: stop.direction,
+              slots: stop.slots,
+              electrical: stop.electrical_bikes,
+              mechanical: stop.mechanical_bikes,
+              availability: stop.availability
             }));
-          }
+        }
+        else {
+          line_id = jsonData.line_id;
+          line_name = jsonData.line_name;
+          coordsList = jsonData.stops.map((stop) => ({
+            id: stop.name.split(" - ")[0],
+            lat: stop.lat,
+            lon: stop.lon,
+            name: stop.name.split(" - ").slice(1).join(" - "),
+            color: stop.color,
+            alertIcon: stop.alert,
+            direction: stop.direction,
+            connections: type === "metro" ? stop.connections : ''
+          }));
         }
       }
-      console.log(type)
+    }
+    console.log(coordsList)
 
-      const destinations = [...new Set(coordsList.map(stop => stop.direction))]; // Direcciones únicas
-      const sidebarTitle = document.getElementById("sidebarTitle");
-      sidebarTitle.textContent = `${destinations[0]} / ${destinations[1]}` || "";
+    const destinations = [...new Set(coordsList.map(stop => stop.direction))]; // Direcciones únicas
+    const sidebarTitle = document.getElementById("sidebarTitle");
+    sidebarTitle.textContent = `${destinations[0]} / ${destinations[1]}` || "";
 
-      const lineIcon = document.getElementById("lineIcon");
-      lineIcon.src = `https://cdn.tmb.cat/icons/raw/svg/${line_name}.svg`;
-      lineIcon.alt = `Icono línea ${line_name}`;
+    const lineIcon = document.getElementById("lineIcon");
+    lineIcon.src = `https://cdn.tmb.cat/icons/raw/svg/${line_name}.svg`;
+    lineIcon.alt = `Icono línea ${line_name}`;
 
-      const avgLat =
-        coordsList.reduce((sum, c) => sum + c.lat, 0) / coordsList.length;
-      const avgLon =
-        coordsList.reduce((sum, c) => sum + c.lon, 0) / coordsList.length;
+    const avgLat =
+      coordsList.reduce((sum, c) => sum + c.lat, 0) / coordsList.length;
+    const avgLon =
+      coordsList.reduce((sum, c) => sum + c.lon, 0) / coordsList.length;
 
-      const map = L.map("map", { zoomControl: false }).setView(
-        [avgLat, avgLon],
-        13
-      );
+    const map = L.map("map", { zoomControl: false }).setView(
+      [avgLat, avgLon],
+      13
+    );
 
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: "© OpenStreetMap contributors",
-      }).addTo(map);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "© OpenStreetMap contributors",
+    }).addTo(map);
 
-      const bounds = [];
-      let prevStop = null;
-      const markers = [];
+    const bounds = [];
+    let prevStop = null;
+    const markers = [];
 
-      // Add user location:
+    // Add user location:
+    if (type === "bicing") {
+      console.log(`user marker: ${user_location.lat} | ${user_location.lon}`)
+      // Crear un grupo para manejar el marcador y el círculo juntos
+      const userLocationGroup = L.layerGroup().addTo(map);
+
+      // Crear el círculo grande semitransparente (precisión)
+      const accuracyCircle = L.circle([user_location.lat, user_location.lon], {
+        radius: 25, // Ajusta el radio según quieras simular precisión
+        color: "#4285F4", // Azul Google Maps
+        weight: 1,
+        opacity: 0.4,
+        fillColor: "#4285F4",
+        fillOpacity: 0.15,
+      }).addTo(userLocationGroup);
+
+      // Crear el punto central azul
+      const userMarker = L.circleMarker([user_location.lat, user_location.lon], {
+        radius: 8,
+        fillColor: "#4285F4", // Azul Google Maps
+        color: "#fff", // Borde blanco
+        weight: 2,
+        opacity: 1,
+        fillOpacity: 1,
+      }).addTo(userLocationGroup);
+    }
+
+    coordsList.forEach((stop) => {
+      const icon = createNumberedIcon(stop, type, `#${stop.color}`);
+      const marker = L.marker([stop.lat, stop.lon], { icon }).addTo(map);
+
+      const popupContent = document.createElement("div");
+      popupContent.style.fontFamily =
+        "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
+      popupContent.style.fontSize = "14px";
+      popupContent.style.color = "#222";
+      popupContent.style.textAlign = "center";
+
       if (type === "bicing") {
-        console.log(`user marker: ${user_location.lat} | ${user_location.lon}`)
-        // Crear un grupo para manejar el marcador y el círculo juntos
-        const userLocationGroup = L.layerGroup().addTo(map);
+        popupContent.innerHTML = `
+              <div style="
+                  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+                  color: #222;
+                  text-align: center;
+                  padding: 4px 6px; /* menos padding que antes */
+                  min-width: 160px; /* opcional, más compacto */
+              ">
+                  <!-- Título -->
+                  <p style="
+                      margin: 0 0 4px 0; /* reduce margen inferior */
+                      font-weight: 700;
+                      font-size: 16px;
+                      color: #1a1a1a;
+                  ">
+                      📍 (${stop.id}) - ${stop.name || "Parada"} ${stop.alertIcon || ''}
+                  </p>
 
-        // Crear el círculo grande semitransparente (precisión)
-        const accuracyCircle = L.circle([user_location.lat, user_location.lon], {
-            radius: 25, // Ajusta el radio según quieras simular precisión
-            color: "#4285F4", // Azul Google Maps
-            weight: 1,
-            opacity: 0.4,
-            fillColor: "#4285F4",
-            fillOpacity: 0.15,
-        }).addTo(userLocationGroup);
+                  <!-- Slots -->
+                  <p style="
+                      margin: 2px 0; /* menos margen vertical */
+                      font-size: 14px;
+                      color: #444;
+                  ">
+                      <strong>🅿️ Slots:</strong> ${stop.slots}
+                  </p>
 
-        // Crear el punto central azul
-        const userMarker = L.circleMarker([user_location.lat, user_location.lon], {
-            radius: 8,
-            fillColor: "#4285F4", // Azul Google Maps
-            color: "#fff", // Borde blanco
-            weight: 2,
-            opacity: 1,
-            fillOpacity: 1,
-        }).addTo(userLocationGroup);
-      }
+                  <!-- Bicis eléctricas -->
+                  <p style="
+                      margin: 2px 0;
+                      font-size: 14px;
+                      color: #0a84ff;
+                      font-weight: 600;
+                  ">
+                      ⚡ Bicis Eléctricas: ${stop.electrical}
+                  </p>
 
-      coordsList.forEach((stop) => {
-        const icon = createNumberedIcon(stop, type, `#${stop.color}`);
-        const marker = L.marker([stop.lat, stop.lon], { icon }).addTo(map);
-
-        const popupContent = document.createElement("div");
-        popupContent.style.fontFamily =
-          "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
-        popupContent.style.fontSize = "14px";
-        popupContent.style.color = "#222";
-        popupContent.style.textAlign = "center";
-
-        if (type === "bicing") {
-popupContent.innerHTML = `
-    <div style="
-        font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-        color: #222;
-        text-align: center;
-        padding: 4px 6px; /* menos padding que antes */
-        min-width: 160px; /* opcional, más compacto */
-    ">
-        <!-- Título -->
-        <p style="
-            margin: 0 0 4px 0; /* reduce margen inferior */
-            font-weight: 700;
-            font-size: 16px;
-            color: #1a1a1a;
-        ">
-            📍 (${stop.id}) - ${stop.name || "Parada"} ${stop.alertIcon || ''}
-        </p>
-
-        <!-- Slots -->
-        <p style="
-            margin: 2px 0; /* menos margen vertical */
-            font-size: 14px;
-            color: #444;
-        ">
-            <strong>🅿️ Slots:</strong> ${stop.slots}
-        </p>
-
-        <!-- Bicis eléctricas -->
-        <p style="
-            margin: 2px 0;
-            font-size: 14px;
-            color: #0a84ff;
-            font-weight: 600;
-        ">
-            ⚡ Bicis Eléctricas: ${stop.electrical}
-        </p>
-
-        <!-- Bicis mecánicas -->
-        <p style="
-            margin: 2px 0;
-            font-size: 14px;
-            color: #34a853;
-            font-weight: 600;
-        ">
-            🚲 Bicis Mecánicas: ${stop.mechanical}
-        </p>
-    </div>
-`;
-
-        } else {
-            popupContent.innerHTML = `
+                  <!-- Bicis mecánicas -->
+                  <p style="
+                      margin: 2px 0;
+                      font-size: 14px;
+                      color: #34a853;
+                      font-weight: 600;
+                  ">
+                      🚲 Bicis Mecánicas: ${stop.mechanical}
+                  </p>
+              </div>
+          `;
+      } else {
+        popupContent.innerHTML = `
                 <p style="margin:0 0 8px 0; font-weight:600; font-size:16px;">
                     📍(${stop.id}) - ${stop.name || "Parada"} ${stop.alertIcon || ''}
                 </p>
             `;
+      }
+
+      const btn = document.createElement("button");
+      btn.textContent = "Seleccionar parada";
+      btn.style.cursor = "pointer";
+      btn.style.marginTop = "8px";
+      btn.style.padding = "8px 16px";
+      btn.style.border = "none";
+      btn.style.borderRadius = "6px";
+      btn.style.backgroundColor = "#007bff";
+      btn.style.color = "white";
+      btn.style.fontWeight = "600";
+      btn.style.fontSize = "14px";
+      btn.style.transition = "background-color 0.3s ease";
+
+      btn.onmouseenter = () => (btn.style.backgroundColor = "#0056b3");
+      btn.onmouseleave = () => (btn.style.backgroundColor = "#007bff");
+
+      btn.addEventListener("click", () => {
+        if (window.Telegram?.WebApp) {
+          window.Telegram.WebApp.sendData(
+            JSON.stringify({
+              type: type,
+              stop_id: stop.id,
+              line_id: line_id,
+              lat: stop.lat,
+              lon: stop.lon,
+              stop_name: stop.name,
+              color: stop.color,
+            })
+          );
+          marker.closePopup();
+          window.Telegram.WebApp.close();
+        } else {
+          alert(
+            "Esta función solo funciona dentro de la WebApp de Telegram."
+          );
         }
+      });
 
-        const btn = document.createElement("button");
-        btn.textContent = "Seleccionar parada";
-        btn.style.cursor = "pointer";
-        btn.style.marginTop = "8px";
-        btn.style.padding = "8px 16px";
-        btn.style.border = "none";
-        btn.style.borderRadius = "6px";
-        btn.style.backgroundColor = "#007bff";
-        btn.style.color = "white";
-        btn.style.fontWeight = "600";
-        btn.style.fontSize = "14px";
-        btn.style.transition = "background-color 0.3s ease";
+      popupContent.appendChild(btn);
+      marker.bindPopup(popupContent);
+      markers.push(marker);
+      bounds.push([stop.lat, stop.lon]);
 
-        btn.onmouseenter = () => (btn.style.backgroundColor = "#0056b3");
-        btn.onmouseleave = () => (btn.style.backgroundColor = "#007bff");
+      if (prevStop) {
+        L.polyline(
+          [
+            [prevStop.lat, prevStop.lon],
+            [stop.lat, stop.lon],
+          ],
+          {
+            color: `#${prevStop.color}`,
+            weight: 4,
+            opacity: 0.8,
+          }
+        ).addTo(map);
+      }
 
-        btn.addEventListener("click", () => {
-          if (window.Telegram?.WebApp) {
-            window.Telegram.WebApp.sendData(
-              JSON.stringify({
-                type: type,
-                stop_id: stop.id,
-                line_id: line_id,
-                lat: stop.lat,
-                lon: stop.lon,
-                stop_name: stop.name,
-                color: stop.color,
-              })
-            );
-            marker.closePopup();
-            window.Telegram.WebApp.close();
-          } else {
-            alert(
-              "Esta función solo funciona dentro de la WebApp de Telegram."
-            );
+      prevStop = stop;
+    });
+
+    if (bounds.length > 0) {
+      map.fitBounds(bounds);
+    }
+
+    // Sidebar logic
+    const sidebar = document.getElementById("sidebar");
+    const toggleBtn = document.getElementById("sidebarToggle");
+    const stopsList = document.getElementById("stopsList");
+    const directionSelect = document.getElementById("directionSelect");
+
+    // Llenar select con direcciones únicas y seleccionar la primera por defecto
+    directionSelect.innerHTML = ""; // Limpiar contenido
+
+    destinations.forEach((direction, index) => {
+      const option = document.createElement("option");
+      option.value = direction;
+      option.textContent = direction;
+      if (index === 0) option.selected = true;
+      directionSelect.appendChild(option);
+    });
+
+    // Renderizar lista filtrada según dirección seleccionada (por defecto la primera)
+    function renderStopsList(selectedDirection = "") {
+      stopsList.innerHTML = "";
+
+      // Crear contenedor para la línea lateral
+      stopsList.style.position = "relative";
+      stopsList.style.paddingLeft = "30px"; // espacio para línea + círculos
+
+      // Crear la línea vertical que recorre todas las paradas
+      const line = document.createElement("div");
+      line.style.position = "absolute";
+      line.style.top = "0";
+      line.style.left = "15px"; // centrado con los círculos (que serán de 14px)
+      line.style.width = "2px";
+      line.style.height = "100%";
+      line.style.backgroundColor = "#ccc"; // color línea, lo puedes cambiar
+      stopsList.appendChild(line);
+
+      let filteredStops = coordsList.filter(
+        (stop) => stop.direction === selectedDirection
+      );
+
+      filteredStops.forEach((stop, index) => {
+        const li = document.createElement("li");
+        let connections = stop.connections != ''
+          ? `<img 
+                  src="https://tmb-barcelona.github.io/TMB-Icons/svg/${line_name}${stop.connections}.svg"
+                  alt="Icono conexión" 
+                  style="width: 35px; height: 35px; vertical-align: middle; margin-left: 6px;"
+              />`
+          : ''
+        li.innerHTML = `
+              ${stop.name || `Parada ${stop.id}`} 
+              ${connections}           
+              ${stop.alertIcon || ''} 
+          `;
+        li.tabIndex = 0;
+        li.setAttribute("role", "button");
+        li.setAttribute("aria-label", `Centrar mapa en parada ${stop.name} ${stop.alertIcon}`);
+
+        // Estilo para dejar espacio al círculo
+        li.style.position = "relative";
+        li.style.paddingLeft = "30px";
+
+        // Crear el círculo de color a la izquierda
+        const circle = document.createElement("span");
+        circle.style.position = "absolute";
+        circle.style.left = "6px"; // dentro del padding-left
+        circle.style.top = "50%";
+        circle.style.transform = "translateY(-50%)";
+        circle.style.width = "14px";
+        circle.style.height = "14px";
+        circle.style.borderRadius = "50%";
+        circle.style.backgroundColor = `#${stop.color}`;
+        circle.style.border = "2px solid white";
+        circle.style.boxSizing = "border-box";
+        circle.style.boxShadow = "0 0 2px rgba(0,0,0,0.3)";
+
+        li.prepend(circle);
+
+        li.addEventListener("click", () => {
+          // Centrar mapa en la parada con animación
+          map.flyTo([stop.lat, stop.lon], 16, { animate: true });
+
+          // Abrir popup del marcador correspondiente
+          markers[coordsList.indexOf(stop)].openPopup();
+
+          // Cerrar sidebar y ajustar botón
+          sidebar.classList.remove("open");
+          toggleBtn.style.left = "15px";
+        });
+
+        li.addEventListener("keydown", (e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            li.click();
           }
         });
 
-        popupContent.appendChild(btn);
-        marker.bindPopup(popupContent);
-        markers.push(marker);
-        bounds.push([stop.lat, stop.lon]);
-
-        if (prevStop) {
-          L.polyline(
-            [
-              [prevStop.lat, prevStop.lon],
-              [stop.lat, stop.lon],
-            ],
-            {
-              color: `#${prevStop.color}`,
-              weight: 4,
-              opacity: 0.8,
-            }
-          ).addTo(map);
-        }
-
-        prevStop = stop;
+        stopsList.appendChild(li);
       });
+    }
 
-      if (bounds.length > 0) {
-        map.fitBounds(bounds);
-      }
+    // Inicializa lista con la primera dirección
+    renderStopsList(destinations[0]);
 
-      // Sidebar logic
-      const sidebar = document.getElementById("sidebar");
-      const toggleBtn = document.getElementById("sidebarToggle");
-      const stopsList = document.getElementById("stopsList");
-      const directionSelect = document.getElementById("directionSelect");
+    // Manejar cambio de dirección
+    directionSelect.addEventListener("change", (e) => {
+      renderStopsList(e.target.value);
+    });
 
-      // Llenar select con direcciones únicas y seleccionar la primera por defecto
-      directionSelect.innerHTML = ""; // Limpiar contenido
+    toggleBtn.addEventListener("click", () => {
+      sidebar.classList.toggle("open");
 
-      destinations.forEach((direction, index) => {
-        const option = document.createElement("option");
-        option.value = direction;
-        option.textContent = direction;
-        if (index === 0) option.selected = true;
-        directionSelect.appendChild(option);
-      });
-
-      // Renderizar lista filtrada según dirección seleccionada (por defecto la primera)
-      function renderStopsList(selectedDirection = "") {
-        stopsList.innerHTML = "";
-
-        // Crear contenedor para la línea lateral
-        stopsList.style.position = "relative";
-        stopsList.style.paddingLeft = "30px"; // espacio para línea + círculos
-
-        // Crear la línea vertical que recorre todas las paradas
-        const line = document.createElement("div");
-        line.style.position = "absolute";
-        line.style.top = "0";
-        line.style.left = "15px"; // centrado con los círculos (que serán de 14px)
-        line.style.width = "2px";
-        line.style.height = "100%";
-        line.style.backgroundColor = "#ccc"; // color línea, lo puedes cambiar
-        stopsList.appendChild(line);
-
-        let filteredStops = coordsList.filter(
-          (stop) => stop.direction === selectedDirection
-        );
-
-        filteredStops.forEach((stop, index) => {
-          const li = document.createElement("li");
-          li.textContent = `${stop.name} ${stop.alertIcon}` || `Parada ${stop.id}`;
-          li.tabIndex = 0;
-          li.setAttribute("role", "button");
-          li.setAttribute("aria-label", `Centrar mapa en parada ${stop.name} ${stop.alertIcon}`);
-
-          // Estilo para dejar espacio al círculo
-          li.style.position = "relative";
-          li.style.paddingLeft = "30px";
-
-          // Crear el círculo de color a la izquierda
-          const circle = document.createElement("span");
-          circle.style.position = "absolute";
-          circle.style.left = "6px"; // dentro del padding-left
-          circle.style.top = "50%";
-          circle.style.transform = "translateY(-50%)";
-          circle.style.width = "14px";
-          circle.style.height = "14px";
-          circle.style.borderRadius = "50%";
-          circle.style.backgroundColor = `#${stop.color}`;
-          circle.style.border = "2px solid white";
-          circle.style.boxSizing = "border-box";
-          circle.style.boxShadow = "0 0 2px rgba(0,0,0,0.3)";
-
-          li.prepend(circle);
-
-          li.addEventListener("click", () => {
-            // Centrar mapa en la parada con animación
-            map.flyTo([stop.lat, stop.lon], 16, { animate: true });
-
-            // Abrir popup del marcador correspondiente
-            markers[coordsList.indexOf(stop)].openPopup();
-
-            // Cerrar sidebar y ajustar botón
-            sidebar.classList.remove("open");
-            toggleBtn.style.left = "15px";
-          });
-
-          li.addEventListener("keydown", (e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              li.click();
-            }
-          });
-
-          stopsList.appendChild(li);
-        });
-      }
-
-      // Inicializa lista con la primera dirección
-      renderStopsList(destinations[0]);
-
-      // Manejar cambio de dirección
-      directionSelect.addEventListener("change", (e) => {
-        renderStopsList(e.target.value);
-      });
-
-      toggleBtn.addEventListener("click", () => {
-        sidebar.classList.toggle("open");
-
-        // Toggle left position of the button
-        if (sidebar.classList.contains("open")) {
-          toggleBtn.style.left = "280px";
-        } else {
-          toggleBtn.style.left = "15px";
-        }
-      });
-
-      // Leyenda
-      L.control.zoom({ position: "topright" }).addTo(map);
-
-      const button = document.getElementById("sidebarToggle");      
-      if (type === "bicing") {
-        button.style.display = "none";
+      // Toggle left position of the button
+      if (sidebar.classList.contains("open")) {
+        toggleBtn.style.left = "280px";
       } else {
-        button.style.display = "block";
+        toggleBtn.style.left = "15px";
       }
+    });
 
-    </script>
-  </body>
+    // Leyenda
+    L.control.zoom({ position: "topright" }).addTo(map);
+
+    const button = document.getElementById("sidebarToggle");
+    if (type === "bicing") {
+      button.style.display = "none";
+    } else {
+      button.style.display = "block";
+    }
+
+  </script>
+</body>
+
 </html>

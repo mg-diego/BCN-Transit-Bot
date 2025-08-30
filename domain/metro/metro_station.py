@@ -1,9 +1,10 @@
 from collections import defaultdict
 from dataclasses import dataclass, field
-from typing import Optional, Tuple
+from typing import List, Optional, Tuple
 import json
 
-from domain.metro import MetroLine
+from domain.metro import MetroLine, MetroConnection
+from providers.helpers.html_helper import HtmlHelper
 
 @dataclass
 class MetroStation:
@@ -26,7 +27,8 @@ class MetroStation:
     EMOJI_NOM_LINIA: str
     coordinates: Tuple[float, float]
     has_alerts: Optional[bool] = False
-    alerts: Optional[list] = field(default_factory=lambda: defaultdict(list))
+    alerts: Optional[list] = field(default_factory=lambda: defaultdict(list))    
+    connections: Optional[list[MetroConnection]] = field(default_factory=lambda: defaultdict(list))
 
 def create_metro_station(feature: dict) -> MetroStation:
     props = feature['properties']
@@ -68,6 +70,10 @@ def update_metro_station_with_line_info(metro_station: MetroStation, metro_line:
 
     return metro_station
 
+def update_metro_station_with_connections(metro_station: MetroStation, connections: List[MetroConnection]) -> MetroStation:
+    metro_station.connections = sorted(connections, key=lambda c: HtmlHelper.custom_sort_key(c.NOM_LINIA))
+    return metro_station
+ 
 def get_alert_by_language(metro_station: MetroStation, language: str):
     raw_alerts = []
     if metro_station.has_alerts:

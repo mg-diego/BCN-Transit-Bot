@@ -2,7 +2,7 @@ from collections import defaultdict
 from typing import List
 import json
 
-from domain.metro import MetroLine, MetroStation, MetroAccess, MetroConnection, update_metro_station_with_line_info
+from domain.metro import MetroLine, MetroStation, MetroAccess, update_metro_station_with_line_info, update_metro_station_with_connections
 
 from domain.transport_type import TransportType
 from providers.api import TmbApiService
@@ -92,9 +92,13 @@ class MetroService(ServiceBase):
             return cached_stations
 
         line = await self.get_line_by_id(line_id)
-
+        line_stations = []
         api_stations = await self.tmb_api_service.get_stations_by_metro_line(line_id)
-        line_stations = [update_metro_station_with_line_info(s, line) for s in api_stations]
+        for api_station in api_stations:
+            connections = await self.tmb_api_service.get_station_connections(api_station.CODI_ESTACIO)
+            station = update_metro_station_with_line_info(api_station, line)
+            station = update_metro_station_with_connections(station, connections)
+            line_stations.append(station)
 
         return await self._get_from_cache_or_data(cache_key, line_stations, cache_ttl=3600*24)
 
@@ -105,16 +109,6 @@ class MetroService(ServiceBase):
             lambda: self.tmb_api_service.get_metro_station_accesses(group_code_id),
             cache_ttl=3600*24
         )
-
-    async def get_station_connections(self, station_id) -> List[MetroConnection]:
-        connections = await self._get_from_cache_or_api(
-            f"metro_station_connections_{station_id}",
-            lambda: self.tmb_api_service.get_station_connections(station_id),
-            cache_ttl=3600*24
-        )
-
-        formatted_connections = ("\n".join(str(c) for c in connections))
-        return formatted_connections
 
     async def get_station_routes(self, metro_station_id):
         routes = await self._get_from_cache_or_api(
@@ -164,7 +158,9 @@ class MetroService(ServiceBase):
         for line in lines:
             line_stations = await self.tmb_api_service.get_stations_by_metro_line(line.CODI_LINIA)
             for api_station in line_stations:
+                connections = await self.tmb_api_service.get_station_connections(api_station.CODI_ESTACIO)
                 station = update_metro_station_with_line_info(api_station, line)
+                station = update_metro_station_with_connections(station, connections)
                 stations.append(station)
 
         await self.cache_service.set("metro_stations_static", stations, ttl=3600*24)

@@ -88,7 +88,7 @@ class KeyboardFactory:
         rows = self._chunk_buttons(buttons, 3)
         return InlineKeyboardMarkup(rows)
     
-    def bus_category_menu(self, list):
+    def bus_category_menu(self, lines): #Do not delete lines, it's used for compliance at handler base
         keyboard = [
             InlineKeyboardButton('🟣 D', callback_data=Callbacks.BUS_CATEGORY_D.value),
             InlineKeyboardButton('🔵 H', callback_data=Callbacks.BUS_CATEGORY_H.value),
@@ -203,9 +203,9 @@ class KeyboardFactory:
         if stop_type not in previous_callback:
             inline_buttons.append(InlineKeyboardButton(f'{self.language_manager.t('common.next')}  ', callback_data=f"{item_type}_{stop_type}:{line_id}:{item_id}"))
         if item_type == TransportType.METRO.value and "access" not in previous_callback:
-            inline_buttons.append(InlineKeyboardButton(f'{self.language_manager.t('common.access')}  ', callback_data=f"{item_type}_access:{line_id}:{item_id}:{has_connections}"))
+            inline_buttons.append(InlineKeyboardButton(f'{self.language_manager.t('common.access')}  ', callback_data=f"{item_type}_access:{line_id}:{item_id}"))
         if has_connections and "connections" not in previous_callback:
-            inline_buttons.append(InlineKeyboardButton(f'{self.language_manager.t('common.connections')}  ', callback_data=f"{item_type}_connections:{line_id}:{item_id}:{has_connections}"))
+            inline_buttons.append(InlineKeyboardButton(f'{self.language_manager.t('common.connections')}  ', callback_data=f"{item_type}_connections:{line_id}:{item_id}"))
 
         keyboard = InlineKeyboardMarkup([
             inline_buttons,

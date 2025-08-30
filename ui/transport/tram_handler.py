@@ -60,7 +60,7 @@ class TramHandler(HandlerBase):
             transport_type=TransportType.TRAM,
             service_get_stations_by_line=self.tram_service.get_stops_by_line,
             mapper_method=self.mapper.map_tram_stops,
-            keyboard_menu_builder=self.keyboard_factory.bus_stops_map_menu
+            keyboard_menu_builder=self.keyboard_factory.map_reply_menu
         )
 
     async def show_stop(self, update: Update, context: ContextTypes.DEFAULT_TYPE):

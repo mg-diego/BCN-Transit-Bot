@@ -1,5 +1,5 @@
 from domain.transport_type import TransportType
-from domain.metro import get_alert_by_language
+from domain.metro import get_alert_by_language, format_metro_connections
 from telegram import Update
 from telegram.ext import ContextTypes
 
@@ -60,7 +60,7 @@ class MetroHandler(HandlerBase):
             transport_type=TransportType.METRO,
             service_get_stations_by_line=self.metro_service.get_stations_by_line,
             mapper_method=self.mapper.map_metro_stations,
-            keyboard_menu_builder=self.keyboard_factory.bus_stops_map_menu
+            keyboard_menu_builder=self.keyboard_factory.map_reply_menu
         )
 
     async def show_station(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -76,7 +76,6 @@ class MetroHandler(HandlerBase):
         message = await self.show_stop_intro(update, context, TransportType.METRO.value, line_id, metro_station_id, station.NOM_ESTACIO)
 
         await self.metro_service.get_station_routes(metro_station_id)
-        station_connections = await self.metro_service.get_station_connections(metro_station_id)
         station_alerts = get_alert_by_language(station, self.user_data_manager.get_user_language(user_id))
         alerts_message = f"{self.language_manager.t("common.alerts")}\n{station_alerts}\n\n" if any(station_alerts) else ""
 
@@ -92,7 +91,7 @@ class MetroHandler(HandlerBase):
                 f"{self.language_manager.t('common.updates.every_x_seconds', seconds=self.UPDATE_INTERVAL)}"
             )
             is_fav = self.user_data_manager.has_favorite(user_id, TransportType.METRO.value, metro_station_id)
-            keyboard = self.keyboard_factory.update_menu(is_fav, TransportType.METRO.value, metro_station_id, line_id, callback, has_connections=any(station_connections))
+            keyboard = self.keyboard_factory.update_menu(is_fav, TransportType.METRO.value, metro_station_id, line_id, callback, has_connections=any(station.connections))
             return text, keyboard
 
         self.start_update_loop(user_id, chat_id, message.message_id, update_text, default_callback)
@@ -107,7 +106,7 @@ class MetroHandler(HandlerBase):
         logger.info(f"[MetroHandler] Update task cancelled for user {user_id} to show station accesses")
 
         # 2. Obtener datos necesarios de la callback
-        _, line_id, station_id, has_connections = self.message_service.get_callback_data(update)
+        _, line_id, station_id = self.message_service.get_callback_data(update)
         station = await self.metro_service.get_station_by_id(station_id)        
         station_accesses = await self.metro_service.get_station_accesses(station.CODI_GRUP_ESTACIO)
         station_alerts = get_alert_by_language(station, self.user_data_manager.get_user_language(user_id))
@@ -131,7 +130,7 @@ class MetroHandler(HandlerBase):
         await self.message_service.edit_inline_message(
             update,
             text,
-            reply_markup=self.keyboard_factory.update_menu(is_fav, TransportType.METRO.value, station_id, line_id, self.message_service.get_callback_query(update), has_connections=BoolConverter.from_string(has_connections))
+            reply_markup=self.keyboard_factory.update_menu(is_fav, TransportType.METRO.value, station_id, line_id, self.message_service.get_callback_query(update), has_connections=any(station.connections))
         )
 
     async def show_station_connections(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -143,9 +142,9 @@ class MetroHandler(HandlerBase):
         logger.info(f"[MetroHandler] Update task cancelled for user {user_id} to show station accesses")
 
         # 2. Obtener datos necesarios de la callback
-        _, line_id, station_id, has_connections = self.message_service.get_callback_data(update)
+        _, line_id, station_id = self.message_service.get_callback_data(update)
         station = await self.metro_service.get_station_by_id(station_id)        
-        station_connections = await self.metro_service.get_station_connections(station.ID_ESTACIO)
+        station_connections = format_metro_connections(station.connections)
         station_alerts = get_alert_by_language(station, self.user_data_manager.get_user_language(user_id))
         alerts_message = f"{self.language_manager.t("common.alerts")}\n{station_alerts}\n\n" if any(station_alerts) else ""
         logger.info(f"[MetroHandler] Showing connections for station ID: {station_id}")
@@ -163,5 +162,5 @@ class MetroHandler(HandlerBase):
         await self.message_service.edit_inline_message(
             update,
             text,
-            reply_markup=self.keyboard_factory.update_menu(is_fav, TransportType.METRO.value, station_id, line_id, self.message_service.get_callback_query(update), has_connections=BoolConverter.from_string(has_connections))
+            reply_markup=self.keyboard_factory.update_menu(is_fav, TransportType.METRO.value, station_id, line_id, self.message_service.get_callback_query(update), has_connections=False)
         )

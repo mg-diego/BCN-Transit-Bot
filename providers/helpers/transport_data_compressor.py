@@ -127,7 +127,8 @@ class TransportDataCompressor:
                 "lon": station.coordinates[0],
                 "name": f"{station.CODI_ESTACIO} - {self._normalize_name(station.NOM_ESTACIO)}",
                 "color": station.COLOR_LINIA,
-                "alert": '⚠️' if station.has_alerts else ''
+                "alert": '⚠️' if station.has_alerts else '',
+                "connections": "".join(connection.NOM_LINIA for connection in station.connections)
             }
             for station in stations
         ]
