@@ -38,7 +38,7 @@ class BicingHandler(HandlerBase):
         await self.message_service.send_new_message_from_callback(
             update,
             text=self.language_manager.t('common.line.only.map', line=''),
-            reply_markup=self.keyboard_factory.bus_stops_map_menu(encoded)
+            reply_markup=self.keyboard_factory.map_reply_menu(encoded)
         )
         '''
 

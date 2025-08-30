@@ -56,7 +56,7 @@ class BusHandler(HandlerBase):
         await self.message_service.send_new_message_from_callback(
             update,
             text=self.language_manager.t('common.line.only.map', line=line_name),  # INVESTIGATE TELEGRAPH TO SHOW ALERTS
-            reply_markup=self.keyboard_factory.bus_stops_map_menu(encoded)
+            reply_markup=self.keyboard_factory.map_reply_menu(encoded)
         )
 
     async def show_stop(self, update: Update, context: ContextTypes.DEFAULT_TYPE):

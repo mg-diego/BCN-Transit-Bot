@@ -1,3 +1,4 @@
+from domain.bicing import BicingStation
 from domain.transport_type import TransportType
 from providers.helpers.distance_helper import DistanceHelper
 from telegram import Update
@@ -5,6 +6,7 @@ from telegram.ext import (
     ContextTypes
 )
 
+from providers.helpers.transport_data_compressor import TransportDataCompressor
 from ui import MetroHandler, BusHandler, TramHandler, RodaliesHandler, FavoritesHandler, LanguageHandler, HelpHandler, MenuHandler, SettingsHandler, BicingHandler
 
 class ReplyHandler:
@@ -32,6 +34,8 @@ class ReplyHandler:
         self.help_handler = help_handler
         self.settings_handler = settings_handler
         self.bicing_handler = bicing_handler
+
+        self.mapper = TransportDataCompressor()
 
         self.previous_search = None
         self.current_search = None
@@ -80,10 +84,7 @@ class ReplyHandler:
 
         if user_location is None:
             await message_service.send_new_message(update, language_manager.t('results.location.ask'), keyboard_factory.location_keyboard())
-            self.current_search = str(update.message.text)            
-        else:
-            await message_service.send_new_message(update, language_manager.t('results.location.received'), keyboard_factory._back_reply_button())
-            self.current_search = self.previous_search
+            self.current_search = str(update.message.text)
         message_service.set_bot_instance(context.bot)
 
         if len(self.current_search) < 3:
@@ -140,6 +141,30 @@ class ReplyHandler:
                 bicing_results=bicing_count
             )
         else:
+            near_bicing_stations = []
+            for stop in stops_with_distance:
+                near_bicing_stations.append(BicingStation(
+                    streetName=stop.get('station_name'),
+                    id=stop.get('station_code'),
+                    latitude=stop.get('coordinates')[0],
+                    longitude=stop.get('coordinates')[1],
+                    slots=stop.get('slots'),
+                    mechanical_bikes=stop.get('mechanical'),
+                    electrical_bikes=stop.get('electrical'),
+                    type=None,
+                    streetNumber=None,
+                    bikes=None,
+                    type_bicing=None,
+                    status=None,
+                    disponibilidad=stop.get('availability'),
+                    icon='',
+                    transition_end=None,
+                    transition_start=None,
+                    obcn=None
+                ))
+            encoded = self.mapper.map_bicing_stations(near_bicing_stations)      
+            await message_service.send_new_message(update, language_manager.t('results.location.received'), keyboard_factory.map_reply_menu(encoded))
+            self.current_search = self.previous_search
             msg = language_manager.t('bicing.station.near')
 
         await message_service.edit_message_by_id(

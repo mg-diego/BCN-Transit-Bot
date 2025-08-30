@@ -156,7 +156,7 @@ class KeyboardFactory:
         rows = self._chunk_buttons(buttons, 2)
         return InlineKeyboardMarkup(rows)    
     
-    def bus_stops_map_menu(self, encoded):
+    def map_reply_menu(self, encoded):
         keyboard = [
             [KeyboardButton(
                 text=self.language_manager.t('keyboard.map'),

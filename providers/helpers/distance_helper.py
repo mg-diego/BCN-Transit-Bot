@@ -113,6 +113,7 @@ class DistanceHelper:
                 "slots": b.slots,
                 "mechanical": b.mechanical_bikes,
                 "electrical": b.electrical_bikes,
+                "availability": b.disponibilidad,
                 "distance_km": distance_km
             })
 

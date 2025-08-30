@@ -159,7 +159,17 @@
               .replace(/'/g, "&#39;");
       }
 
-      function createNumberedIcon(id, hexColor, showText = true) {
+      function createNumberedIcon(stop, type, hexColor, showText = true) {
+        if (type === "bicing") {
+            return new L.Icon({
+                iconUrl: "https://www.bicing.barcelona/modules/custom/mapa_disponibilitat/assets/icons/ubicacio.png", // ejemplo de icono de bici
+                iconSize: [36, 36], // tamaño del iconos
+                iconAnchor: [16, 32], // punto de anclaje
+                popupAnchor: [0, -32], // desplazamiento del popup
+            });
+        }
+
+        const id = type === "bus" ? stop.id : stop.name
         const estimatedCharWidth = 6.5; // ancho promedio por carácter
         const padding = 10; // padding extra
         const textLength = id.length * estimatedCharWidth + padding;
@@ -209,34 +219,18 @@
         if (jsonData && jsonData.stops) {
           type = jsonData.type;
           if (type === "bicing") {
-            fetch("https://cors-anywhere.herokuapp.com/https://www.bicing.barcelona/es/get-stations", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json"
-            },
-            body: "{}"
-          })
-            .then(response => response.json())
-            .then(data => {
-              const coordsList = data.stations.map(station => ({
-                id: station.id,
-                lat: station.latitude,
-                lon: station.longitude,
-                name: station.streetName,
-                slots: station.slots,
-                bikes: station.bikes,
-                mechanical_bikes: station.mechanical_bikes,
-                electrical_bikes: station.electrical_bikes,
-                status: station.status,
-                icon: station.icon
-              }));
-
-              console.log("bicing coordsList:", coordsList);
-              // Puedes usar coordsList aquí para renderizar un mapa o lo que necesites
-            })
-            .catch(error => {
-              console.error("Error al obtener estaciones:", error);
-            });
+            line_id = '',
+            line_name = ''
+              coordsList = jsonData.stops.map((stop) => ({
+              id: stop.name.split(" - ")[0],
+              lat: stop.lat,
+              lon: stop.lon,
+              name: stop.name.split(" - ").slice(1).join(" - "),
+              slots: stop.slots,
+              electrical: stop.electrical_bikes,
+              mechanical: stop.mechanical_bikes,
+              availability: stop.avai
+            }));
           }
           else {
             line_id = jsonData.line_id;
@@ -282,7 +276,7 @@
       const markers = [];
 
       coordsList.forEach((stop) => {
-        const icon = createNumberedIcon(type === "bus" ? stop.id : stop.name, `#${stop.color}`);
+        const icon = createNumberedIcon(stop, type, `#${stop.color}`);
         const marker = L.marker([stop.lat, stop.lon], { icon }).addTo(map);
 
         const popupContent = document.createElement("div");
@@ -291,9 +285,63 @@
         popupContent.style.fontSize = "14px";
         popupContent.style.color = "#222";
         popupContent.style.textAlign = "center";
-        popupContent.innerHTML = `<p style="margin:0 0 8px 0; font-weight: 600; font-size: 16px;">📍(${
-          stop.id
-        }) - ${stop.name || "Parada"} ${stop.alertIcon || ''}</p>`;
+
+        if (type === "bicing") {
+            popupContent.innerHTML = `
+                <div style="
+                    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+                    color: #222;
+                    text-align: center;
+                    padding: 8px;
+                    min-width: 180px;
+                ">
+                    <!-- Título -->
+                    <p style="
+                        margin: 0 0 8px 0;
+                        font-weight: 700;
+                        font-size: 16px;
+                        color: #1a1a1a;
+                    ">
+                        📍 (${stop.id}) - ${stop.name || "Parada"} ${stop.alertIcon || ''}
+                    </p>
+
+                    <!-- Slots -->
+                    <p style="
+                        margin: 4px 0;
+                        font-size: 14px;
+                        color: #444;
+                    ">
+                        <strong>🅿️ Slots:</strong> ${stop.slots}
+                    </p>
+
+                    <!-- Bicis eléctricas -->
+                    <p style="
+                        margin: 4px 0;
+                        font-size: 14px;
+                        color: #0a84ff;
+                        font-weight: 600;
+                    ">
+                        ⚡ Bicis Eléctricas: ${stop.electrical}
+                    </p>
+
+                    <!-- Bicis mecánicas -->
+                    <p style="
+                        margin: 4px 0;
+                        font-size: 14px;
+                        color: #34a853;
+                        font-weight: 600;
+                    ">
+                        🚲 Bicis Mecánicas: ${stop.mechanical}
+                    </p>
+                </div>
+            `;
+        } else {
+            popupContent.innerHTML = `
+                <p style="margin:0 0 8px 0; font-weight:600; font-size:16px;">
+                    📍(${stop.id}) - ${stop.name || "Parada"} ${stop.alertIcon || ''}
+                </p>
+            `;
+        }
 
         const btn = document.createElement("button");
         btn.textContent = "Seleccionar parada";
@@ -469,6 +517,13 @@
 
       // Leyenda
       L.control.zoom({ position: "topright" }).addTo(map);
+
+      const button = document.getElementById("sidebarToggle");      
+      if (type === "bicing") {
+        button.style.display = "none";
+      } else {
+        button.style.display = "block";
+      }
 
     </script>
   </body>

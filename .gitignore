@@ -213,3 +213,4 @@ credentials.json
 test.py
 temp/
 app.log
+logs/

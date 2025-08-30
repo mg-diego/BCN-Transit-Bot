@@ -289,9 +289,13 @@ class TransportDataCompressor:
             "type": TransportType.BICING.value,
             "stops": [
                 {
-                    "a": station.latitude,
-                    "o": station.longitude,
-                    "n": f"{station.id} - {self._normalize_name(html.escape(station.streetName))}",
+                    "lat": station.latitude,
+                    "lon": station.longitude,
+                    "name": f"{station.id} - {self._normalize_name(html.escape(station.streetName))}",
+                    "slots": station.slots,
+                    "electrical_bikes": station.electrical_bikes,
+                    "mechanical_bikes": station.mechanical_bikes,
+                    "availability": station.disponibilidad
                 }
                 for station in stations
             ]

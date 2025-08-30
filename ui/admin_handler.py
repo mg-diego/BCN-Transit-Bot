@@ -38,7 +38,7 @@ class AdminHandler:
             logger.error(f"Error fetching commit: {e}")
             return f"Error fetching commit: {e}"
         
-    def tail_log(self, file_path: str = "app.log", lines: int = 50) -> List[str]:
+    def tail_log(self, file_path: str = "logs/app.log", lines: int = 50) -> List[str]:
         """
         Returns the last `lines` lines of the log file.
         """
