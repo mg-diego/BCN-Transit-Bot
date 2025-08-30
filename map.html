@@ -150,6 +150,25 @@
         .replace(/'/g, "&#39;");
     }
 
+    function buildIconUrl(line_name, stop_connections) {
+    // Extrae todas las líneas de stop_connections, ej: "L3L11L4" -> ["L3", "L11", "L4"]
+    const connections = stop_connections.match(/L\d+[NS]?/g) || [];
+
+    // Combina la línea principal con las conexiones
+    const allLines = [line_name, ...connections];
+
+    // Función para extraer el número de cada línea (L10N -> 10)
+    const getLineNumber = line => parseInt(line.match(/\d+/)[0], 10);
+
+    // Ordena por número, dejando los sufijos (N, S) en su sitio
+    const sortedLines = allLines.sort((a, b) => getLineNumber(a) - getLineNumber(b));
+
+    // Construye el resultado final
+    const result = sortedLines.join('');
+
+    return `https://tmb-barcelona.github.io/TMB-Icons/svg/${result}.svg`;
+}
+
     function createNumberedIcon(stop, type, hexColor, showText = true) {
       if (type === "bicing") {
         return new L.Icon({
@@ -474,7 +493,7 @@
         const li = document.createElement("li");
         let connections = stop.connections != ''
           ? `<img 
-                  src="https://tmb-barcelona.github.io/TMB-Icons/svg/${line_name}${stop.connections}.svg"
+                  src="${buildIconUrl(line_name, stop.connections)}"
                   alt="Icono conexión" 
                   style="width: 35px; height: 35px; vertical-align: middle; margin-left: 6px;"
               />`
