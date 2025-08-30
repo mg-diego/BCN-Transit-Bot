@@ -54,7 +54,7 @@
   "tram.stop.next": "🚋 <u>Next Trams:</u>",
   "rodalies.station.name":"🚏 <b>'{name}' STATION</b> 🚏",
   "rodalies.station.next": "🚆 <u>Next Rodalies:</u>",
-  "bicing.search.instructions": "🔍 To find a Bicing station:\n\n• Type the <i>station name</i> or <i>ID</i>\n\n• Or click the <i>'📍Share my location'</i> button to see the nearest stations with available bikes",
+  "bicing.search.instructions": "🔍 To find a Bicing station:\n\n• Type the <i>station name</i> or <i>ID</i>\n\n• Or click the <i>'📍Share my location'</i> button to see the nearest stations",
   "bicing.station.name": "🚲 <b><u>Bicing Stop #{station_id}</u></b>",
   "bicing.station.details": "🅿️ Available slots: {slots}\n🚴 Available bikes: {available_bikes}\n    -🔋 Electric: {electrical_bikes}\n    -🚲 Mechanical: {mechanical_bikes}\n\n📊 Overall availability: ({availability}%)\n🔄 Status: {status}",
   "bicing.station.near": "📍 Here are the Bicing stations closest to you!\n\n🔹 Legend:\n    -🅿️ Free slots\n    -🔋 Electric bikes\n    -🚲 Mechanical bikes",

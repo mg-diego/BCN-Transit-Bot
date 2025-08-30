@@ -251,6 +251,7 @@ class KeyboardFactory:
                 "emoji": "🚴",
                 "name_fmt": "({code}) {name}",
                 "callback": lambda item: Callbacks.BICING_STATION.format(
+                    line_code='bicing',
                     station_code=item.get("code")
                 ),
             },
@@ -358,6 +359,7 @@ class KeyboardFactory:
             elif stop["type"] == "bicing":
                 text = f"🚴 {stop['station_name']} (🅿️:{stop['slots']} 🔋:{stop["electrical"]} 🚲:{stop["mechanical"]}){distance_str}"
                 callback = Callbacks.BICING_STATION.format(
+                    line_code='bicing',
                     station_code=stop["station_code"]
                 )
             else:

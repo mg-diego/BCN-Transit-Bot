@@ -13,7 +13,7 @@ class Callbacks(Enum):
     BUS_STOP = "bus_stop:{line_code}:{stop_code}"
     TRAM_STOP = "tram_stop:{line_code}:{stop_code}"
     RODALIES_STATION = "rodalies_station:{line_code}:{station_code}"
-    BICING_STATION = "bicing_station:{station_code}"
+    BICING_STATION = "bicing_station:{line_code}:{station_code}"
 
     BUS_CATEGORY_D = "bus_category:Diagonals"
     BUS_CATEGORY_H = "bus_category:Horitzontals"

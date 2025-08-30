@@ -4,7 +4,7 @@ from telegram import Update
 from telegram.ext import ContextTypes
 from providers.helpers.logger import logger
 
-from ui import MetroHandler, BusHandler, TramHandler, RodaliesHandler
+from ui import MetroHandler, BusHandler, TramHandler, RodaliesHandler, BicingHandler
 
 class WebAppHandler:
     """
@@ -12,11 +12,12 @@ class WebAppHandler:
     to the appropriate transport handler (Metro, Bus, Tram).
     """
 
-    def __init__(self, metro_handler: MetroHandler, bus_handler: BusHandler, tram_handler: TramHandler, rodalies_handler: RodaliesHandler):
+    def __init__(self, metro_handler: MetroHandler, bus_handler: BusHandler, tram_handler: TramHandler, rodalies_handler: RodaliesHandler, bicing_handler: BicingHandler):
         self.metro_handler = metro_handler
         self.bus_handler = bus_handler
         self.tram_handler = tram_handler
         self.rodalies_handler = rodalies_handler
+        self.bicing_handler = bicing_handler
         logger.info(f"[{self.__class__.__name__}] WebAppHandler initialized")
 
     def web_app_data_router(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -46,6 +47,9 @@ class WebAppHandler:
         elif data_type == TransportType.RODALIES.value:        
             logger.info(f"[{self.__class__.__name__}] Routing to RodaliesHandler")
             return self.rodalies_handler.show_station(update, context)
+        elif data_type == TransportType.BICING.value:        
+            logger.info(f"[{self.__class__.__name__}] Routing to BicingHandler")
+            return self.bicing_handler.show_station(update, context)
         else:
             logger.warning(f"[{self.__class__.__name__}] Unrecognized WebApp data type: {data_type}")
             return update.message.reply_text("Unrecognized data type.")

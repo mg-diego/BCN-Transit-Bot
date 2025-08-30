@@ -53,7 +53,7 @@
   "tram.stop.next": "🚋 <u>Propers Trams:</u>",
   "rodalies.station.name":"🚏 <b>ESTACIÓ '{name}'</b> 🚏",
   "rodalies.station.next": "🚆 <u>Propers Rodalies:</u>",
-  "bicing.search.instructions": "🔍 Per trobar una estació de Bicing:\n\n• Escriu el <i>nom</i> o l'<i>ID</i> de la parada\n\n• O clica el botó <i>'📍 Compartir la meva ubicació'</i> per veure les estacions amb bicicletes disponibles més properes",
+  "bicing.search.instructions": "🔍 Per trobar una estació de Bicing:\n\n• Escriu el <i>nom</i> o l'<i>ID</i> de la parada\n\n• O clica el botó <i>'📍 Compartir la meva ubicació'</i> per veure les estacions més properes",
   "bicing.station.name": "🚲 <b><u>Parada Bicing {station_id}</u></b>",
   "bicing.station.details": "🅿️ Places disponibles: {slots}\n🚴 Bicis disponibles: {available_bikes}\n  -🔋 Elèctriques: {electrical_bikes}\n  🚲 Mecàniques: {mechanical_bikes}\n\n📊 Disponibilitat general: ({availability}%)\n🔄 Estat: {status}",
   "bicing.station.near": "📍 Aquí tens les estacions de Bicing més a prop teu!\n\n🔹 Llegenda:\n    -🅿️ Places lliures\n    -🔋 Bicicletes elèctriques\n    -🚲 Bicicletes mecàniques",

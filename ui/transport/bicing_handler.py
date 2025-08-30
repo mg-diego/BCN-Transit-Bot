@@ -43,7 +43,7 @@ class BicingHandler(HandlerBase):
         '''
 
     async def show_station(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        user_id, chat_id, bicing_station_id, _ = self.message_service.extract_context(update, context)
+        user_id, chat_id, line_id, bicing_station_id = self.message_service.extract_context(update, context)
         logger.info(f"Showing bicing station info for user {user_id}, station {bicing_station_id}")
 
         default_callback = f"bicing_station:{bicing_station_id}"

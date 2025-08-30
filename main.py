@@ -114,7 +114,7 @@ class BotApp:
         self.favorites_handler = FavoritesHandler(self.message_service, self.user_data_manager, self.keyboard_factory, self.metro_service, self.bus_service, self.tram_service, self.rodalies_service, self.bicing_service, self.language_manager)
         self.help_handler = HelpHandler(self.message_service, self.keyboard_factory, self.language_manager)
         self.language_handler = LanguageHandler(self.keyboard_factory, self.user_data_manager, self.message_service, self.language_manager, self.update_manager)
-        self.web_app_handler = WebAppHandler(self.metro_handler, self.bus_handler, self.tram_handler, self.rodalies_handler)
+        self.web_app_handler = WebAppHandler(self.metro_handler, self.bus_handler, self.tram_handler, self.rodalies_handler, self.bicing_handler)
         self.settings_handler = SettingsHandler(self.message_service, self.keyboard_factory, self.language_manager)
         self.reply_handler = ReplyHandler(self.menu_handler, self.metro_handler, self.bus_handler, self.tram_handler, self.rodalies_handler,
                                           self.favorites_handler, self.language_handler, self.help_handler, self.settings_handler, self.bicing_handler)

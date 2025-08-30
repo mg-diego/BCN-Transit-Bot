@@ -118,7 +118,7 @@ class ReplyHandler:
                 bicing_stations = await bicing_service.get_stations_by_name(self.current_search)
 
         else: 
-            bicing_stations = await bicing_service.get_stations_with_availability()
+            bicing_stations = await bicing_service.get_all_stations()
         
         await update_manager.stop_loading(update, context)
 
@@ -162,7 +162,7 @@ class ReplyHandler:
                     transition_start=None,
                     obcn=None
                 ))
-            encoded = self.mapper.map_bicing_stations(near_bicing_stations)      
+            encoded = self.mapper.map_bicing_stations(near_bicing_stations, user_location.latitude, user_location.longitude)      
             await message_service.send_new_message(update, language_manager.t('results.location.received'), keyboard_factory.map_reply_menu(encoded))
             self.current_search = self.previous_search
             msg = language_manager.t('bicing.station.near')

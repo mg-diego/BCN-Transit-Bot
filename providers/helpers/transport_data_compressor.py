@@ -271,7 +271,7 @@ class TransportDataCompressor:
         self._log_mapping_end(TransportType.RODALIES.value, line.id)
         return compressed
     
-    def map_bicing_stations(self, stations: List[BicingStation]):
+    def map_bicing_stations(self, stations: List[BicingStation], user_location_lat, user_location_long):
         """
         Maps a list of bus stops into a compressed JSON format.
 
@@ -287,6 +287,10 @@ class TransportDataCompressor:
 
         data = {
             "type": TransportType.BICING.value,
+            "user_location": {
+                "latitude": user_location_lat,
+                "longitude": user_location_long
+            },
             "stops": [
                 {
                     "lat": station.latitude,
