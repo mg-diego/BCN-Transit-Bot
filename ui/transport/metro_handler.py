@@ -5,11 +5,11 @@ from telegram.ext import ContextTypes
 
 from ui.keyboard_factory import KeyboardFactory
 
-from application import MetroService, UpdateManager, MessageService
+from application import MetroService, UpdateManager, MessageService, TelegraphService
 
 from providers.manager import UserDataManager
 from providers.manager import LanguageManager
-from providers.helpers import TransportDataCompressor, GoogleMapsHelper, logger, BoolConverter
+from providers.helpers import TransportDataCompressor, GoogleMapsHelper, logger
 
 from .handler_base import HandlerBase
 
@@ -25,9 +25,10 @@ class MetroHandler(HandlerBase):
         update_manager: UpdateManager,
         user_data_manager: UserDataManager,
         message_service: MessageService,
-        language_manager: LanguageManager
+        language_manager: LanguageManager,
+        telegraph_service: TelegraphService
     ):
-        super().__init__(message_service, update_manager, language_manager, user_data_manager, keyboard_factory)
+        super().__init__(message_service, update_manager, language_manager, user_data_manager, keyboard_factory, telegraph_service)
         self.metro_service = metro_service
         self.mapper = TransportDataCompressor()
         logger.info(f"[{self.__class__.__name__}] MetroHandler initialized")
@@ -42,7 +43,9 @@ class MetroHandler(HandlerBase):
         )
 
     async def ask_search_method(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        await super().ask_search_method(update, context, transport_type=TransportType.METRO)
+        _, line_id, line_name = self.message_service.get_callback_data(update)
+        line = await self.metro_service.get_line_by_id(line_id)
+        await super().ask_search_method(update, context, transport_type=TransportType.METRO, alerts=line.alerts)
 
     async def show_list(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         await self.show_line_stations_list(

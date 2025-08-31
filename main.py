@@ -6,7 +6,7 @@ from ui import (
     MenuHandler, MetroHandler, BusHandler, TramHandler, FavoritesHandler, HelpHandler, 
     LanguageHandler, KeyboardFactory, WebAppHandler, RodaliesHandler, ReplyHandler, AdminHandler, SettingsHandler, BicingHandler
 )
-from application import MessageService, MetroService, BusService, TramService, RodaliesService, BicingService, CacheService, UpdateManager
+from application import MessageService, MetroService, BusService, TramService, RodaliesService, BicingService, CacheService, UpdateManager, TelegraphService
 from providers.manager import SecretsManager, UserDataManager, LanguageManager
 from providers.api import TmbApiService, TramApiService, RodaliesApiService, BicingApiService
 from providers.helpers import logger
@@ -20,12 +20,14 @@ class BotApp:
 
     def __init__(self):
         self.telegram_token = None
+        self.telegraph_token = None
         self.admin_id = None
 
         # Services
         self.language_manager = None
         self.secrets_manager = None
         self.message_service = None
+        self.telegraph_service = None
         self.update_manager = None
         self.user_data_manager = None
         self.cache_service = None
@@ -63,20 +65,13 @@ class BotApp:
     def init_services(self):
         """Initialize managers, APIs, domain services and handlers."""
 
-        logger.info("Initializing BCN Transit Bot services...")
-
-        # Managers
-        self.language_manager = LanguageManager()
+        logger.info("Initializing BCN Transit Bot services...")        
         self.secrets_manager = SecretsManager()
-        self.message_service = MessageService()
-        self.update_manager = UpdateManager(self.message_service)
-        self.user_data_manager = UserDataManager()
-        self.cache_service = CacheService()
-        self.keyboard_factory = KeyboardFactory(self.language_manager)
 
         # Load secrets
         try:
             self.telegram_token = self.secrets_manager.get('TELEGRAM_TOKEN')
+            self.telegraph_token = self.secrets_manager.get('TELEGRAPH_TOKEN')
             tmb_app_id = self.secrets_manager.get('TMB_APP_ID')
             tmb_app_key = self.secrets_manager.get('TMB_APP_KEY')
             tram_client_id = self.secrets_manager.get('TRAM_CLIENT_ID')
@@ -86,6 +81,15 @@ class BotApp:
         except Exception as e:
             logger.critical(f"Error loading secrets: {e}")
             raise
+
+        # Managers
+        self.language_manager = LanguageManager()
+        self.message_service = MessageService()
+        self.telegraph_service = TelegraphService(access_token=self.telegraph_token)
+        self.update_manager = UpdateManager(self.message_service)
+        self.user_data_manager = UserDataManager()
+        self.cache_service = CacheService()
+        self.keyboard_factory = KeyboardFactory(self.language_manager)
 
         # APIs
         self.tmb_api_service = TmbApiService(app_id=tmb_app_id, app_key=tmb_app_key)
@@ -105,11 +109,11 @@ class BotApp:
         # Handlers
         self.admin_handler = AdminHandler(self.admin_id)
         self.menu_handler = MenuHandler(self.keyboard_factory, self.message_service, self.user_data_manager, self.language_manager, self.update_manager)
-        self.metro_handler = MetroHandler(self.keyboard_factory, self.metro_service, self.update_manager, self.user_data_manager, self.message_service, self.language_manager)
-        self.bus_handler = BusHandler(self.keyboard_factory, self.bus_service, self.update_manager, self.user_data_manager, self.message_service, self.language_manager)
-        self.tram_handler = TramHandler(self.keyboard_factory, self.tram_service, self.update_manager, self.user_data_manager, self.message_service, self.language_manager)
-        self.rodalies_handler = RodaliesHandler(self.keyboard_factory, self.rodalies_service, self.update_manager, self.user_data_manager, self.message_service, self.language_manager)
-        self.bicing_handler = BicingHandler(self.keyboard_factory, self.bicing_service, self.update_manager, self.user_data_manager, self.message_service, self.language_manager)
+        self.metro_handler = MetroHandler(self.keyboard_factory, self.metro_service, self.update_manager, self.user_data_manager, self.message_service, self.language_manager, self.telegraph_service)
+        self.bus_handler = BusHandler(self.keyboard_factory, self.bus_service, self.update_manager, self.user_data_manager, self.message_service, self.language_manager, self.telegraph_service)
+        self.tram_handler = TramHandler(self.keyboard_factory, self.tram_service, self.update_manager, self.user_data_manager, self.message_service, self.language_manager, self.telegraph_service)
+        self.rodalies_handler = RodaliesHandler(self.keyboard_factory, self.rodalies_service, self.update_manager, self.user_data_manager, self.message_service, self.language_manager, self.telegraph_service)
+        self.bicing_handler = BicingHandler(self.keyboard_factory, self.bicing_service, self.update_manager, self.user_data_manager, self.message_service, self.language_manager, self.telegraph_service)
 
         self.favorites_handler = FavoritesHandler(self.message_service, self.user_data_manager, self.keyboard_factory, self.metro_service, self.bus_service, self.tram_service, self.rodalies_service, self.bicing_service, self.language_manager)
         self.help_handler = HelpHandler(self.message_service, self.keyboard_factory, self.language_manager)

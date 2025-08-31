@@ -6,7 +6,7 @@ from telegram.ext import ContextTypes
 
 from ui.keyboard_factory import KeyboardFactory
 
-from application import TramService, UpdateManager, MessageService
+from application import TramService, UpdateManager, MessageService, TelegraphService
 
 from providers.manager import UserDataManager, LanguageManager
 from providers.helpers import TransportDataCompressor, logger, GoogleMapsHelper
@@ -25,9 +25,10 @@ class TramHandler(HandlerBase):
         update_manager: UpdateManager,
         user_data_manager: UserDataManager,
         message_service: MessageService,
-        language_manager: LanguageManager
+        language_manager: LanguageManager,
+        telegraph_service: TelegraphService
     ):
-        super().__init__(message_service, update_manager, language_manager, user_data_manager, keyboard_factory)
+        super().__init__(message_service, update_manager, language_manager, user_data_manager, keyboard_factory, telegraph_service)
         self.tram_service = tram_service
         self.mapper = TransportDataCompressor()
         logger.info(f"[{self.__class__.__name__}] TramHandler initialized")

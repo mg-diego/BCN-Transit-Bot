@@ -4,7 +4,7 @@ from telegram.ext import ContextTypes
 from domain.bus.bus_stop import get_alert_by_language
 from providers.helpers.google_maps_helper import GoogleMapsHelper
 from ui.keyboard_factory import KeyboardFactory
-from application import BusService, MessageService, UpdateManager
+from application import BusService, MessageService, UpdateManager, TelegraphService
 from providers.manager import UserDataManager, LanguageManager
 from providers.helpers import TransportDataCompressor, logger
 from domain.transport_type import TransportType
@@ -19,9 +19,10 @@ class BusHandler(HandlerBase):
         update_manager: UpdateManager,
         user_data_manager: UserDataManager,
         message_service: MessageService,
-        language_manager: LanguageManager
+        language_manager: LanguageManager,
+        telegraph_service: TelegraphService
     ):
-        super().__init__(message_service, update_manager, language_manager, user_data_manager, keyboard_factory)
+        super().__init__(message_service, update_manager, language_manager, user_data_manager, keyboard_factory, telegraph_service)
         self.bus_service = bus_service
         self.mapper = TransportDataCompressor()
 
@@ -53,9 +54,13 @@ class BusHandler(HandlerBase):
         stops = await self.bus_service.get_stops_by_line(line_id)
         encoded = self.mapper.map_bus_stops(stops, line_id, line.ORIGINAL_NOM_LINIA)
 
+        if any(line.alerts):
+            line_alerts_url = self.telegraph_service.create_page(f'Bus {line.NOM_LINIA}: Alerts', line.alerts)
+            line_alerts_html = f"{self.language_manager.t('common.alerts.line.1')} <a href='{line_alerts_url}'>{self.language_manager.t('common.alerts.line.2')}</a>"
+
         await self.message_service.send_new_message_from_callback(
             update,
-            text=self.language_manager.t('common.line.only.map', line=line_name),  # INVESTIGATE TELEGRAPH TO SHOW ALERTS
+            text=f"{self.language_manager.t('common.line.only.map', line=line_name)}{"\n\n" + line_alerts_html if any(line.alerts) else ''}",
             reply_markup=self.keyboard_factory.map_reply_menu(encoded)
         )
 

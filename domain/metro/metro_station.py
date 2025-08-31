@@ -61,12 +61,11 @@ def update_metro_station_with_line_info(metro_station: MetroStation, metro_line:
     metro_station.ORDRE_LINIA = metro_line.ORDRE_LINIA
     metro_station.EMOJI_NOM_LINIA = _set_emoji_at_name(metro_station.NOM_LINIA)
     if metro_line.has_alerts:
-        line_alerts = json.loads(metro_line.raw_alerts)
-        for alert in line_alerts:
-            for entity in alert.get('entities', []):
-                if entity.get('station_code') == str(metro_station.CODI_ESTACIO):
+        for alert in metro_line.alerts:
+            for entity in alert.affected_entities:
+                if entity.station_code == str(metro_station.CODI_ESTACIO):
                     metro_station.has_alerts = True
-                    metro_station.alerts = alert.get('publications', [])
+                    metro_station.alerts = alert.publications
 
     return metro_station
 
@@ -77,9 +76,8 @@ def update_metro_station_with_connections(metro_station: MetroStation, connectio
 def get_alert_by_language(metro_station: MetroStation, language: str):
     raw_alerts = []
     if metro_station.has_alerts:
-        text_key = f'text{language.capitalize()}'
         for alert in metro_station.alerts:
-            raw_alerts.append(f"{alert.get(text_key)}")
+            raw_alerts.append(getattr(alert, f'text{language.capitalize()}'))
 
     return "\n".join(f"<pre>{alert}</pre>" for alert in raw_alerts)
 

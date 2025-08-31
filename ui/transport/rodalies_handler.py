@@ -2,7 +2,7 @@ from domain.transport_type import TransportType
 from telegram import Update
 from telegram.ext import ContextTypes
 
-from application import RodaliesService, MessageService, UpdateManager
+from application import RodaliesService, MessageService, UpdateManager, TelegraphService
 
 from providers.manager import UserDataManager, LanguageManager
 from providers.helpers import TransportDataCompressor, logger, GoogleMapsHelper
@@ -23,9 +23,10 @@ class RodaliesHandler(HandlerBase):
         update_manager: UpdateManager,
         user_data_manager: UserDataManager,
         message_service: MessageService,
-        language_manager: LanguageManager
+        language_manager: LanguageManager,
+        telegraph_service: TelegraphService
     ):
-        super().__init__(message_service, update_manager, language_manager, user_data_manager, keyboard_factory)
+        super().__init__(message_service, update_manager, language_manager, user_data_manager, keyboard_factory, telegraph_service)
         self.rodalies_service = rodalies_service
         self.mapper = TransportDataCompressor()
         logger.info(f"[{self.__class__.__name__}] RodaliesHandler initialized")

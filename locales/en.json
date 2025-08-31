@@ -45,6 +45,8 @@
   "common.updates.every_x_seconds": "⏱️ Next update in {seconds} seconds",
   "common.loading.routes": "🔄 Updating real-time information...",
   "common.arriving": "🔜 Arriving",
+  "common.alerts.line.1": "<i>⚠️ There are incidents on this line. Click here to view them:</i>",
+  "common.alerts.line.2": "[View alerts]",
   
   "metro.station.name": "🚏 <b>'{name}' STATION</b> 🚏",
   "metro.station.next": "🚇 <u>Next Metros:</u>",

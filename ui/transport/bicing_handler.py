@@ -5,7 +5,7 @@ from providers.helpers.google_maps_helper import GoogleMapsHelper
 from ui.keyboard_factory import KeyboardFactory
 from .handler_base import HandlerBase
 
-from application import BicingService, UpdateManager, MessageService
+from application import BicingService, UpdateManager, MessageService, TelegraphService
 from providers.helpers import TransportDataCompressor, logger
 from providers.manager import LanguageManager, UserDataManager
 
@@ -19,9 +19,10 @@ class BicingHandler(HandlerBase):
         update_manager: UpdateManager,
         user_data_manager: UserDataManager,
         message_service: MessageService,
-        language_manager: LanguageManager
+        language_manager: LanguageManager,
+        telegraph_service: TelegraphService
     ):
-        super().__init__(message_service, update_manager, language_manager, user_data_manager, keyboard_factory)
+        super().__init__(message_service, update_manager, language_manager, user_data_manager, keyboard_factory, telegraph_service)
         self.bicing_service = bicing_service
         self.mapper = TransportDataCompressor()
 

@@ -2,6 +2,7 @@ from typing import List
 import aiohttp
 import re
 import inspect
+import json
 
 from domain.metro import MetroLine, MetroLineRoute, NextMetro, MetroConnection, MetroStation, create_metro_station, create_metro_access
 from domain.bus import BusStop, BusLine, create_bus_stop, BusLineRoute, NextBus

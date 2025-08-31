@@ -21,6 +21,7 @@ class SecretsManager:
         logger.info("[SecretsManager] Loading secrets from environment variables...")
         keys = [
             'TELEGRAM_TOKEN',
+            'TELEGRAPH_TOKEN'
             'TMB_APP_ID',
             'TMB_APP_KEY',
             'TRAM_CLIENT_ID',

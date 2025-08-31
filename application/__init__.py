@@ -6,5 +6,6 @@ from .transport.rodalies_service import RodaliesService
 from .transport.bicing_service import BicingService
 from .cache_service import CacheService
 from .update_manager import UpdateManager
+from .telegraph_service import TelegraphService
 
-__all__ = ["MessageService", "MetroService", "BusService", "TramService", "RodaliesService", "CacheService", "UpdateManager", "BicingService"]
+__all__ = ["MessageService", "MetroService", "BusService", "TramService", "RodaliesService", "CacheService", "UpdateManager", "BicingService", "TelegraphService"]

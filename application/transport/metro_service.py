@@ -3,7 +3,7 @@ from typing import List
 import json
 
 from domain.metro import MetroLine, MetroStation, MetroAccess, update_metro_station_with_line_info, update_metro_station_with_connections
-
+from domain.common.alert import Alert
 from domain.transport_type import TransportType
 from providers.api import TmbApiService
 from providers.manager import LanguageManager
@@ -40,29 +40,29 @@ class MetroService(ServiceBase):
             if cached_alerts:
                 for line in cached_lines:
                     line_alerts = cached_alerts.get(line.ORIGINAL_NOM_LINIA, [])
-                    line.has_alerts = bool(line_alerts)
-                    line.raw_alerts = json.dumps(line_alerts) if line_alerts else ''
+                    line.has_alerts = any(line_alerts)
+                    line.alerts = line_alerts
             return cached_lines
 
         # No lines and no alerts in cache
         lines = await self.tmb_api_service.get_metro_lines()
-        alerts = await self.tmb_api_service.get_global_alerts(TransportType.METRO)
+        api_alerts = await self.tmb_api_service.get_global_alerts(TransportType.METRO)
+        alerts = [Alert.map_from_metro_alert(alert) for alert in api_alerts]
 
         result = defaultdict(list)
         for alert in alerts:
             seen_lines = set()
-            for entity in alert.get('entities', []):
-                line_name = entity.get('line_name')
-                if line_name and line_name not in seen_lines:
-                    result[line_name].append(alert)
-                    seen_lines.add(line_name)
+            for entity in alert.affected_entities:
+                if entity.line_name and entity.line_name not in seen_lines:
+                    result[entity.line_name].append(alert)
+                    seen_lines.add(entity.line_name)
 
         alerts_dict = dict(result)
 
         for line in lines:
             line_alerts = alerts_dict.get(line.ORIGINAL_NOM_LINIA, [])
-            line.has_alerts = bool(line_alerts)
-            line.raw_alerts = json.dumps(line_alerts) if line_alerts else ''
+            line.has_alerts = any(line_alerts)
+            line.alerts = line_alerts
 
         await self._get_from_cache_or_data(static_key, lines, cache_ttl=3600*24)
         await self._get_from_cache_or_data(alerts_key, alerts_dict, cache_ttl=3600)

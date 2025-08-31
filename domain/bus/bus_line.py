@@ -1,5 +1,8 @@
-from dataclasses import dataclass
+from collections import defaultdict
+from dataclasses import dataclass, field
 from typing import Optional
+
+from domain.common.alert import Alert
 
 @dataclass
 class BusLine:
@@ -28,8 +31,7 @@ class BusLine:
     COLOR_TEXT_LINIA: str
     ORIGINAL_NOM_LINIA: Optional[str] = None
     has_alerts: Optional[bool] = False
-    raw_alerts: Optional[str] = ''
-
+    alerts: Optional[list[Alert]] = field(default_factory=lambda: defaultdict(list))
 
     def __post_init__(self):
         emojis = {

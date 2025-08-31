@@ -44,6 +44,8 @@
   "common.updates.every_x_seconds": "⏱️ Propera actualització en {seconds} segons",
   "common.loading.routes": "🔄 Actualitzant informació en temps real...",
   "common.arriving": "🔜 Arribant",
+  "common.alerts.line.1": "<i>⚠️ Hi ha incidències en aquesta línia. Fes clic aquí per veure-les:</i>",
+  "common.alerts.line.2": "[Veure alertes]",
 
   "metro.station.name": "🚏 <b>ESTACIÓ '{name}'</b> 🚏",
   "metro.station.next": "🚇 <u>Propers Metros:</u>",

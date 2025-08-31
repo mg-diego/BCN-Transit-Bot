@@ -3,6 +3,7 @@ import json
 from typing import List
 
 from domain.bus.bus_stop import update_bus_stop_with_line_info
+from domain.common.alert import Alert
 from domain.transport_type import TransportType
 from providers.api.tmb_api_service import TmbApiService
 
@@ -35,63 +36,33 @@ class BusService(ServiceBase):
             if cached_alerts:
                 for line in cached_lines:
                     line_alerts = cached_alerts.get(line.ORIGINAL_NOM_LINIA, [])
-                    line.has_alerts = bool(line_alerts)
-                    line.raw_alerts = json.dumps(line_alerts) if line_alerts else ''
+                    line.has_alerts = any(line_alerts)
+                    line.alerts = line_alerts
             return cached_lines
 
         # No lines and no alerts in cache
         lines = await self.tmb_api_service.get_bus_lines()
-        alerts = await self.tmb_api_service.get_global_alerts(TransportType.BUS)
+        api_alerts = await self.tmb_api_service.get_global_alerts(TransportType.BUS)        
+        alerts = [Alert.map_from_bus_alert(alert) for alert in api_alerts]
         
         result = defaultdict(list)
         for alert in alerts:
             seen_lines = set()
-            for line in alert.get("linesAffected", []):
-                line_id = line.get("commercialLineId")
-                if line_id and line_id not in seen_lines:
-                    result[line_id].append(alert)
-                    seen_lines.add(line_id)
+            for entity in alert.affected_entities:
+                if entity.line_name and entity.line_name not in seen_lines:
+                    result[entity.line_name].append(alert)
+                    seen_lines.add(entity.line_name)
         alerts_dict = dict(result)
 
         for line in lines:
             line_alerts = alerts_dict.get(line.ORIGINAL_NOM_LINIA, [])
-            line.has_alerts = bool(line_alerts)
-            line.raw_alerts = json.dumps(line_alerts) if line_alerts else ''
+            line.has_alerts = any(line_alerts)
+            line.alerts = line_alerts
 
         await self._get_from_cache_or_data(static_key, lines, cache_ttl=3600*24)
         await self._get_from_cache_or_data(alerts_key, alerts_dict, cache_ttl=3600)
 
         return lines
-
-        '''
-        static_lines = await self.cache_service.get("bus_lines_static")
-        alerts_dict = await self.cache_service.get("bus_lines_alerts")
-
-        if not static_lines:
-            static_lines = await self.tmb_api_service.get_bus_lines()
-            await self.cache_service.set("bus_lines_static", static_lines, ttl=3600 * 24)
-
-        if not alerts_dict:
-            alerts = await self.tmb_api_service.get_global_alerts(TransportType.BUS)
-            result = defaultdict(list)
-            for alert in alerts:
-                seen_lines = set()
-                for line in alert.get("linesAffected", []):
-                    line_id = line.get("commercialLineId")
-                    if line_id and line_id not in seen_lines:
-                        result[line_id].append(alert)
-                        seen_lines.add(line_id)
-            alerts_dict = dict(result)
-            await self.cache_service.set("bus_lines_alerts", alerts_dict, ttl=3600)
-
-        # Combinar líneas + alertas
-        for line in static_lines:
-            line_alerts = alerts_dict.get(line.ORIGINAL_NOM_LINIA, [])
-            line.has_alerts = bool(line_alerts)
-            line.raw_alerts = json.dumps(line_alerts) if line_alerts else ""
-
-        return static_lines
-        '''
     
     async def get_all_stops(self) -> List[BusStop]:
         static_stops = await self.cache_service.get("bus_stops_static")

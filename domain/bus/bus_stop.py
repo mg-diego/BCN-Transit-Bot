@@ -107,24 +107,19 @@ def create_bus_stop(feature) -> BusStop:
 
 def update_bus_stop_with_line_info(bus_stop: BusStop, bus_line: BusLine) -> BusStop:
     if bus_line.has_alerts:
-        line_alerts = json.loads(bus_line.raw_alerts)
-        for alert in line_alerts:
-            for line in alert.get("linesAffected", []):
-                if line.get("commercialLineId") == bus_stop.NOM_LINIA:
-                    for way in line.get('ways'):
-                        for stop in way.get('stops'):
-                            if stop.get('stopId') == bus_stop.CODI_PARADA:
-                                bus_stop.has_alerts = True
-                                bus_stop.alerts.append(alert.get('channelInfoTO', []))
+        for alert in bus_line.alerts:
+            for entity in alert.affected_entities:
+                if entity.line_name == bus_stop.NOM_LINIA and entity.station_code == bus_stop.CODI_PARADA:
+                    bus_stop.has_alerts = True
+                    bus_stop.alerts.append(alert)
 
     return bus_stop
 
 def get_alert_by_language(bus_stop: BusStop, language: str):
     raw_alerts = []
     if bus_stop.has_alerts:
-        text_key = f'text{language.capitalize()}'
         for alert in bus_stop.alerts:
-            raw_alerts.append(HtmlHelper.clean_text(f"{alert.get(text_key)}"))
+            raw_alerts.append(getattr(alert, f'text{language.capitalize()}'))
 
     return "\n".join(f"<pre>{alert}</pre>" for alert in raw_alerts)
 

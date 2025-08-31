@@ -3,8 +3,5 @@ aiohttp
 lzstring
 gspread
 oauth2client
-gtfs-realtime-bindings
-protobuf
-tzdata
-pandas
 rapidfuzz
+telegraph

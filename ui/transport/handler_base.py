@@ -1,13 +1,13 @@
 import asyncio
 from collections import defaultdict
-import time
-import json
+import time, json
 from typing import Awaitable, Callable, List
+from domain.common.alert import Alert
 from domain.transport_type import TransportType
 from telegram import Update
 from telegram.ext import ContextTypes
 from telegram.error import RetryAfter
-from application import MessageService, UpdateManager
+from application import MessageService, UpdateManager, TelegraphService
 from providers.manager.language_manager import LanguageManager
 from providers.manager.user_data_manager import UserDataManager
 from providers.helpers import logger
@@ -18,12 +18,13 @@ class HandlerBase:
     Base class for all transport handlers (Bus, Metro, Tram) with common logic.
     """
 
-    def __init__(self, message_service: MessageService, update_manager: UpdateManager, language_manager: LanguageManager, user_data_manager: UserDataManager, keyboard_factory: KeyboardFactory):
+    def __init__(self, message_service: MessageService, update_manager: UpdateManager, language_manager: LanguageManager, user_data_manager: UserDataManager, keyboard_factory: KeyboardFactory, telegraph_service: TelegraphService):
         self.message_service = message_service
         self.update_manager = update_manager
         self.language_manager = language_manager
         self.user_data_manager = user_data_manager
         self.keyboard_factory = keyboard_factory
+        self.telegraph_service = telegraph_service
 
         self.update_counters = defaultdict(lambda: {"count": 0, "last_reset": time.time()})
         self.ALERT_THRESHOLD = 120  # aviso preventivo
@@ -72,7 +73,8 @@ class HandlerBase:
         self,
         update: Update,
         context: ContextTypes.DEFAULT_TYPE,
-        transport_type: TransportType
+        transport_type: TransportType,
+        alerts: List[Alert] = None
     ):
         """
         Pregunta al usuario cómo quiere buscar una línea: mapa o lista.
@@ -83,10 +85,12 @@ class HandlerBase:
         self.message_service.set_bot_instance(context.bot)
 
         logger.info(f"Asking search method map/list for {line_id} ({transport_type.value})")
-        
+        if alerts is not None and any(alerts):
+            line_alerts_url = self.telegraph_service.create_page(f'{transport_type.value.capitalize()} {line_name}: Alerts', alerts)
+            line_alerts_html = f"{self.language_manager.t('common.alerts.line.1')} <a href='{line_alerts_url}'>{self.language_manager.t('common.alerts.line.2')}</a>"
         await self.message_service.edit_inline_message(
             update,
-            self.language_manager.t('common.ask.search'),
+            f"{self.language_manager.t('common.ask.search')}{"\n\n" + line_alerts_html if alerts is not None and any(alerts) else ''}",
             reply_markup=self.keyboard_factory.map_or_list_menu(transport_type.value, line_id, line_name)
         )
 
