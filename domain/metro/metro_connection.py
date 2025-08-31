@@ -35,8 +35,11 @@ class MetroConnection:
             "L3": "🟩",
             "L4": "🟨",
             "L5": "🟦",
-            "L9S": "🟧",
             "L9N": "🟧",
+            "L9S": "🟧",
+            "L10N": "🟦",
+            "L10S": "🟦",
+            "L11": "🟩",
         }
         emoji = emojis.get(self.NOM_LINIA, "")
         return f"     {emoji} {self.NOM_LINIA} - {self.DESC_LINIA}"

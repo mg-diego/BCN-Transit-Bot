@@ -101,7 +101,7 @@ class TmbApiService:
     async def get_metro_lines(self) -> List[MetroLine]:
         url = f'{self.BASE_URL_TRANSIT}/linies/metro'
         items, _ = await self.fetch_transit_items(url, MetroLine, sort_key=lambda x: x.NOM_LINIA)
-        return items
+        return [item for item in items if "FM" not in item.ORIGINAL_NOM_LINIA]
     
     async def get_metro_stations(self) -> List[MetroStation]:
         url = f'{self.BASE_URL_TRANSIT}/estacions'
@@ -222,7 +222,7 @@ class TmbApiService:
                 connection = MetroConnection(**props)
                 connections.append(connection) 
 
-        return connections
+        return [c for c in connections if "FM" not in c.NOM_LINIA] # Filter out Funicular
     
     async def get_global_alerts(self, transport_type: TransportType):
         url = f"https://api.tmb.cat/v1/alerts/{transport_type.value}/channels/WEB"
