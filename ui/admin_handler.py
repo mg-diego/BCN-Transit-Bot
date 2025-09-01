@@ -88,7 +88,7 @@ class AdminHandler:
             logger.warning(f"Invalid argument for /logs by user {user_id}: {context.args}")
             return
 
-        log_lines = self.tail_log("app.log", num_lines)
+        log_lines = self.tail_log("logs/app.log", num_lines)
         log_text = "\n".join(log_lines)
         log_text = html.escape(log_text)
 
