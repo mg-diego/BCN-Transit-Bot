@@ -122,6 +122,6 @@ def get_alert_by_language(bus_stop: BusStop, language: str):
         for alert in bus_stop.alerts:
             raw_alerts.append(getattr(alert, f'text{language.capitalize()}'))
 
-    return "\n".join(f"<pre>{alert}</pre>" for alert in raw_alerts)
+    return "\n".join(f"<pre>{alert}</pre>" for alert in set(raw_alerts))
 
 

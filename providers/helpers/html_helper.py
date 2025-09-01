@@ -5,18 +5,22 @@ class HtmlHelper:
 
     @staticmethod
     def clean_text(text):
-        # 1. Quitar etiquetas HTML como <br>
+        # Quitar etiquetas HTML
         text = re.sub(r'<.*?>', '', text)
 
-        # 2. Decodificar secuencias de escape unicode (como \u00b7)
-        text = bytes(text, "utf-8").decode("unicode_escape")
+        # Si el texto contiene secuencias \uXXXX, las decodificamos
+        if r"\u" in text:
+            try:
+                text = text.encode("utf-8").decode("unicode_escape")
+            except UnicodeDecodeError:
+                pass  # Si falla, lo dejamos tal cual
 
-        # 3. Quitar secuencias como \n o \t si quedan
+        # Reemplazar \n y \t por saltos reales
         text = text.replace('\\n', '\n').replace('\\t', '\t')
 
-        # 4. Opcional: limpiar espacios extra
-        text = text.strip()
-        return text
+        # Limpiar espacios extra
+        return text.strip()
+
     
 
     @staticmethod

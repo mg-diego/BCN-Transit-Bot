@@ -79,7 +79,7 @@ def get_alert_by_language(metro_station: MetroStation, language: str):
         for alert in metro_station.alerts:
             raw_alerts.append(getattr(alert, f'text{language.capitalize()}'))
 
-    return "\n".join(f"<pre>{alert}</pre>" for alert in raw_alerts)
+    return "\n".join(f"<pre>{alert}</pre>" for alert in set(raw_alerts))
 
 def _set_emoji_at_name(name):
     emojis = {
