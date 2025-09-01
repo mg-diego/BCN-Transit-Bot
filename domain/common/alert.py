@@ -5,6 +5,7 @@ from typing import List
 import html
 
 from providers.helpers.html_helper import HtmlHelper
+from providers.helpers.logger import logger
 
 @dataclass
 class Publication:
@@ -35,6 +36,54 @@ class Alert:
     cause: str
     publications: List[Publication]
     affected_entities: List[AffectedEntity]
+
+    def format_alert(self):
+        # Tomamos el primer texto en español como descripción principal
+        title = self.publications[0].headerEs if self.publications and self.publications[0].headerEs else ""
+        description = self.publications[0].textEs if self.publications and self.publications[0].textEs else "Sin descripción"
+        description = html.escape(description)
+
+        # Fecha de inicio y fin
+        begin_str = self.begin_date.strftime("%d/%m/%Y %H:%M")
+        end_str = self.end_date.strftime("%d/%m/%Y %H:%M")
+
+        # Sacamos las estaciones afectadas
+        estaciones = sorted({e.station_name for e in self.affected_entities if e.station_name})
+        estaciones_str = ", ".join(estaciones) if estaciones else "Varias estaciones"
+
+        # Sacamos las líneas afectadas
+        lineas = sorted({e.line_name for e in self.affected_entities if e.line_name})
+        lineas_str = ", ".join(lineas) if lineas else "Varias líneas"
+
+        # Mapeo de estados a emojis
+        status_emojis = {
+            "ACTIVE": "🚨",
+            "INACTIVE": "✅",
+            "RESOLVED": "✅",
+            "PLANNED": "📅"
+        }
+        status_emoji = status_emojis.get(self.status.upper(), "ℹ️")
+
+        # Mapeo de causas más amigable
+        cause_map = {
+            "TECHNICAL": "⚙️ Problemas técnicos",
+            "ACCIDENT": "🚑 Accidente",
+            "WORKS": "🚧 Obras",
+            "EVENT": "🎉 Evento",
+            "OTHER": "ℹ️ Otros"
+        }
+        cause_str = cause_map.get(self.cause.upper(), self.cause)
+
+        return (
+            f"🚨 <b>NUEVA ALERTA</b> 🚨\n\n"
+            f"<u>{title}:</u>\n\n"
+            f"🕒 <b>Desde:</b> {begin_str}\n"
+            f"⏳ <b>Hasta:</b> {end_str}\n\n"
+            f"🚇 <b>Líneas:</b> {lineas_str}\n"
+            f"📍 <b>Estaciones:</b> {estaciones_str}\n"
+            f"❗ <b>Causa:</b> {cause_str}\n\n"
+            f"📝 <b>Info:</b>\n<i>{description}</i>"
+        )
 
     @staticmethod
     def map_from_metro_alert(metro_alert):

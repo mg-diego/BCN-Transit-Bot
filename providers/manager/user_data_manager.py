@@ -1,8 +1,13 @@
+import json
+from typing import Dict, List
+from domain.common.alert import AffectedEntity, Alert, Publication
+from domain.common.user import User
 from domain.transport_type import TransportType
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 from datetime import datetime, timedelta
 from providers.helpers import logger
+import ast
 
 
 class UserDataManager:
@@ -30,10 +35,13 @@ class UserDataManager:
             self.users_ws = self.sheet.worksheet("users")
             self.favorites_ws = self.sheet.worksheet("favorites")
             self.searches_ws = self.sheet.worksheet("searches")
+            self.alerts_ws = self.sheet.worksheet("alerts")
 
             self.USERS_LAST_START_COLUMN_INDEX = 4
             self.USERS_USES_COLUMN_INDEX = 5
             self.USERS_LANGUAGE_INDEX = 6
+            self.USERS_RECEIVE_NOTIFICATIONS_INDEX = 7
+            self.USERS_ALREADY_NOTIFIED = 8
 
             self.SEARCHES_LAST_SEARCH_COLUMN_INDEX = 6
             self.SEARCHES_USES_COLUMN_INDEX = 7
@@ -42,6 +50,7 @@ class UserDataManager:
             self._users_cache = {"data": None, "timestamp": None}
             self._favorites_cache = {"data": None, "timestamp": None}
             self._searches_cache = {"data": None, "timestamp": None}
+            self._alerts_cache = {"data": None, "timestamp": None}
 
             logger.info(f"Connected to Google Spreadsheet '{spreadsheet_name}' successfully.")
         except Exception as e:
@@ -75,6 +84,14 @@ class UserDataManager:
         searches = self.searches_ws.get_all_records()
         self._searches_cache = {"data": searches, "timestamp": datetime.now()}
         return searches
+    
+    def _load_alerts(self, force_refresh=False):
+        if not force_refresh and self._alerts_cache["data"] is not None:
+            if datetime.now() - self._alerts_cache["timestamp"] < timedelta(seconds=self.CACHE_TTL):
+                return self._alerts_cache["data"]
+        alerts = self.alerts_ws.get_all_records()
+        self._alerts_cache = {"data": alerts, "timestamp": datetime.now()}
+        return alerts
 
     def _invalidate_favorites_cache(self):
         self._favorites_cache = {"data": None, "timestamp": None}
@@ -104,7 +121,9 @@ class UserDataManager:
             "last_start": now,
             "created_at": now,
             "uses": 1,
-            "language": "en"
+            "language": "en",
+            "receive_notifications": False,
+            "already_notified": json.dumps([e.__dict__ for e in []], ensure_ascii=False)
         })
         return 1
 
@@ -125,6 +144,60 @@ class UserDataManager:
             if str(user["user_id"]) == str(user_id):
                 return user["language"]
         return "en"
+    
+    def get_users(self) -> List[User]:
+        ws_users = self._load_users()
+        return [self.row_to_user(ws_user) for ws_user in ws_users]
+    
+    def update_notified_alerts(self, user_id, alert_id):
+        logger.debug(f"Updating notified alerts for user_id={user_id} -> '{alert_id}'")
+        users = self._load_users()
+        for idx, user in enumerate(users, start=2):
+            if str(user["user_id"]) == str(user_id):
+                already_notified = self.safe_str_to_list(user.get('already_notified'))
+                already_notified.append(alert_id)
+                self.users_ws.update_cell(idx, self.USERS_ALREADY_NOTIFIED, json.dumps(already_notified))
+                self._users_cache["data"][idx - 2]["already_notified"] = already_notified
+                return True
+        return False
+
+    
+    def row_to_user(self, row: List[str]) -> User:
+        """
+        row: [
+            user_id, username, initial_start, last_start, uses,
+            language, receive_alerts, already_notified
+        ]
+        """
+        return User(
+            user_id=int(row.get('user_id')),
+            username=row.get('username'),
+            initial_start=datetime.strptime(row.get('initial_start'), "%Y:%m:%d %H:%M:%S"),
+            last_start=datetime.strptime(row.get('last_start'), "%Y:%m:%d %H:%M:%S"),
+            uses=int(row.get('uses')),
+            language=row.get('language'),
+            receive_alerts=row.get('receive_alerts') == "TRUE",
+            already_notified=self.safe_str_to_list(row.get('already_notified'))
+        )
+    
+    def safe_str_to_list(self, value):
+    # Si ya es lista, la devolvemos tal cual
+        if isinstance(value, list):
+            return value
+        
+        # Si es None o vacío, devolvemos lista vacía
+        if value in (None, "", "[]"):
+            return []
+
+        # Aseguramos que es str
+        if not isinstance(value, str):
+            value = str(value)
+
+        try:
+            return ast.literal_eval(value)
+        except (SyntaxError, ValueError):
+            # Si falla, devolvemos lista vacía como fallback
+            return []
 
     # ---------------------------
     # FAVORITES
@@ -236,3 +309,67 @@ class UserDataManager:
             "searches": 1
         })
         return 1
+    
+
+    # ---------------------------
+    # ALERTS
+    # ---------------------------
+
+    def register_alert(self, transport_type: TransportType, api_alert: Alert):
+        logger.debug(f"Registering alert: type={transport_type}, alert={api_alert}")
+        ws_alerts = self._load_alerts()
+        
+        for idx, ws_alert in enumerate(ws_alerts, start=2):
+            if str(ws_alert.get("type")) == str(transport_type.value) and str(ws_alert.get("id")) == str(api_alert.id):
+                logger.debug(f"Alert already registered: type={transport_type}, alert_id={api_alert.id}")
+                return False
+            
+        self.alerts_ws.append_row([api_alert.id, transport_type.value, api_alert.begin_date.isoformat() if api_alert.begin_date else "", api_alert.end_date.isoformat() if api_alert.end_date else "", api_alert.status, api_alert.cause, json.dumps([pub.__dict__ for pub in api_alert.publications], ensure_ascii=False), json.dumps([ent.__dict__ for ent in api_alert.affected_entities], ensure_ascii=False)])
+        self._alerts_cache["data"].append({
+            "id": api_alert.id,
+            "transport_type": transport_type,
+            "begin_date": api_alert.begin_date.isoformat() if api_alert.begin_date else "",
+            "end_date": api_alert.end_date.isoformat() if api_alert.end_date else "",
+            "status": api_alert.status,
+            "cause": api_alert.cause,
+            "publications": json.dumps([pub.__dict__ for pub in api_alert.publications], ensure_ascii=False),
+            "affected_entitites": json.dumps([ent.__dict__ for ent in api_alert.affected_entities], ensure_ascii=False)
+        })        
+
+        logger.info(f"New alert registered: type={transport_type}, alert_id={api_alert.id}")
+        return True
+    
+    def get_alerts(self) -> List[Alert]:
+        ws_alerts = self._load_alerts()
+        return [self.row_to_alert(ws_alert) for ws_alert in ws_alerts]
+
+    def row_to_alert(self, row: Dict[str, str]) -> Alert:
+        """
+        Convierte una fila de Google Sheets en un objeto Alert.
+
+        :param row: Diccionario con los datos de la fila.
+        :return: Instancia de Alert.
+        """
+        try:
+            publications = [
+                Publication(**pub) for pub in json.loads(row.get("publications", "[]"))
+            ]
+
+            affected_entities = [
+                AffectedEntity(**ent) for ent in json.loads(row.get("affected_entities", "[]"))
+            ]
+
+            begin_date = datetime.fromisoformat(row.get("begin_date")) if row.get("begin_date") else None
+            end_date = datetime.fromisoformat(row.get("end_date")) if row.get("end_date") else None
+
+            return Alert(
+                id=row.get("id"),
+                begin_date=begin_date,
+                end_date=end_date,
+                status=row.get("status"),
+                cause=row.get("cause"),
+                publications=publications,
+                affected_entities=affected_entities
+            )
+        except Exception as e:
+            raise ValueError(f"Error parsing row into Alert: {e}")

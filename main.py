@@ -1,12 +1,13 @@
 import asyncio
 from datetime import datetime
 from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, MessageHandler, filters
+from telegram import Bot
 
 from ui import (
     MenuHandler, MetroHandler, BusHandler, TramHandler, FavoritesHandler, HelpHandler, 
     LanguageHandler, KeyboardFactory, WebAppHandler, RodaliesHandler, ReplyHandler, AdminHandler, SettingsHandler, BicingHandler
 )
-from application import MessageService, MetroService, BusService, TramService, RodaliesService, BicingService, CacheService, UpdateManager, TelegraphService
+from application import MessageService, MetroService, BusService, TramService, RodaliesService, BicingService, CacheService, UpdateManager, TelegraphService, AlertsService
 from providers.manager import SecretsManager, UserDataManager, LanguageManager
 from providers.api import TmbApiService, TramApiService, RodaliesApiService, BicingApiService
 from providers.helpers import logger
@@ -21,6 +22,7 @@ class BotApp:
     def __init__(self):
         self.telegram_token = None
         self.telegraph_token = None
+        self.bot = None
         self.admin_id = None
 
         # Services
@@ -32,6 +34,7 @@ class BotApp:
         self.user_data_manager = None
         self.cache_service = None
         self.keyboard_factory = None
+        self.alerts_service = None
 
         # APIs
         self.tmb_api_service = None
@@ -71,6 +74,7 @@ class BotApp:
         # Load secrets
         try:
             self.telegram_token = self.secrets_manager.get('TELEGRAM_TOKEN')
+            self.bot = Bot(token=self.telegram_token)
             self.telegraph_token = self.secrets_manager.get('TELEGRAPH_TOKEN')
             tmb_app_id = self.secrets_manager.get('TMB_APP_ID')
             tmb_app_key = self.secrets_manager.get('TMB_APP_KEY')
@@ -90,6 +94,7 @@ class BotApp:
         self.user_data_manager = UserDataManager()
         self.cache_service = CacheService()
         self.keyboard_factory = KeyboardFactory(self.language_manager)
+        self.alerts_service = AlertsService(self.bot, self.message_service, self.user_data_manager)
 
         # APIs
         self.tmb_api_service = TmbApiService(app_id=tmb_app_id, app_key=tmb_app_key)
@@ -98,8 +103,8 @@ class BotApp:
         self.bicing_api_service = BicingApiService()
 
         # Domain services
-        self.metro_service = MetroService(self.tmb_api_service, self.language_manager, self.cache_service)
-        self.bus_service = BusService(self.tmb_api_service, self.cache_service)
+        self.metro_service = MetroService(self.tmb_api_service, self.language_manager, self.cache_service, self.user_data_manager)
+        self.bus_service = BusService(self.tmb_api_service, self.cache_service, self.user_data_manager)
         self.tram_service = TramService(self.tram_api_service, self.language_manager, self.cache_service)
         self.rodalies_service = RodaliesService(self.rodalies_api_service, self.language_manager, self.cache_service)
         self.bicing_service = BicingService(self.bicing_api_service, self.cache_service)
@@ -248,12 +253,21 @@ class BotApp:
             await self.application.start()
             await self.application.updater.start_polling()
             
+            logger.info("Creando tarea recurrente...")
+            recurring_task = asyncio.create_task(self.alerts_service.scheduler())
+            logger.info(f"Tarea creada: {recurring_task}")
+
             # Keep the bot running
             logger.info("Bot is running. Press Ctrl+C to stop.")
             await asyncio.Event().wait()  # Run forever until interrupted
             
         except KeyboardInterrupt:
             logger.info("Received interrupt signal, shutting down...")
+            recurring_task.cancel()
+            try:
+                await recurring_task
+            except asyncio.CancelledError:
+                pass
         except Exception as e:
             logger.error(f"Unexpected error: {e}")
         finally:

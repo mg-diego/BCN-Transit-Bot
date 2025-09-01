@@ -50,6 +50,13 @@ class MessageService:
         self._cache_message(update, msg)
         logger.info(f"[{self.__class__.__name__}] Sent new message {msg.message_id} to user {self.get_user_id(update)}")
         return msg
+    
+    async def send_new_message_from_bot(self, bot, user_id, text, parse_mode=ParseMode.HTML):
+        await bot.send_message(
+            chat_id=user_id,
+            text=text,
+            parse_mode=parse_mode
+        )
 
     async def edit_inline_message(self, update: Update, text: str, reply_markup: InlineKeyboardMarkup = None, parse_mode=ParseMode.HTML):
         """Edit a message originating from an inline button (callback_query)."""

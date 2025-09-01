@@ -9,6 +9,7 @@ from providers.api.tmb_api_service import TmbApiService
 
 from domain.bus import BusLine, BusStop
 from providers.helpers import logger
+from providers.manager.user_data_manager import UserDataManager
 
 from .service_base import ServiceBase
 from application.cache_service import CacheService
@@ -18,9 +19,10 @@ class BusService(ServiceBase):
     Service to interact with Bus data via TmbApiService, with optional caching.
     """
 
-    def __init__(self, tmb_api_service: TmbApiService, cache_service: CacheService = None):
+    def __init__(self, tmb_api_service: TmbApiService, cache_service: CacheService = None, user_data_manager: UserDataManager = None):
         super().__init__(cache_service)
-        self.tmb_api_service = tmb_api_service        
+        self.tmb_api_service = tmb_api_service
+        self.user_data_manager = user_data_manager
         logger.info(f"[{self.__class__.__name__}] BusService initialized")
 
     # === CACHE CALLS ===
@@ -46,7 +48,8 @@ class BusService(ServiceBase):
         alerts = [Alert.map_from_bus_alert(alert) for alert in api_alerts]
         
         result = defaultdict(list)
-        for alert in alerts:
+        for alert in alerts:            
+            self.user_data_manager.register_alert(TransportType.BUS, alert)
             seen_lines = set()
             for entity in alert.affected_entities:
                 if entity.line_name and entity.line_name not in seen_lines:

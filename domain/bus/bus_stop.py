@@ -111,7 +111,8 @@ def update_bus_stop_with_line_info(bus_stop: BusStop, bus_line: BusLine) -> BusS
             for entity in alert.affected_entities:
                 if entity.line_name == bus_stop.NOM_LINIA and entity.station_code == bus_stop.CODI_PARADA:
                     bus_stop.has_alerts = True
-                    bus_stop.alerts.append(alert)
+                    if alert.publications not in bus_stop.alerts:
+                        bus_stop.alerts = alert.publications
 
     return bus_stop
 
