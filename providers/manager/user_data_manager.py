@@ -121,7 +121,7 @@ class UserDataManager:
                 self._users_cache["data"][idx - 2]["uses"] = new_uses
                 return new_uses
 
-        self.users_ws.append_row([user_id, username, now, now, 1, 'en'])
+        self.users_ws.append_row([user_id, username, now, now, 1, 'en', True, json.dumps([])])
         self._users_cache["data"].append({
             "user_id": user_id,
             "username": username,
