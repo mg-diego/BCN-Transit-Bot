@@ -8,6 +8,7 @@ from .favorites_handler import FavoritesHandler
 from .settings.help_handler import HelpHandler
 from .settings.language_handler import LanguageHandler
 from .settings.settings_handler import SettingsHandler
+from .settings.notifications_handler import NotificationsHandler
 from .keyboard_factory import KeyboardFactory
 from .transport.web_app_handler import WebAppHandler
 from .transport.handler_base import HandlerBase
@@ -29,5 +30,6 @@ __all__ = [
     "ReplyHandler",
     "AdminHandler",
     "SettingsHandler",
-    "BicingHandler"
+    "BicingHandler",
+    "NotificationsHandler"
 ]

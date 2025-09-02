@@ -7,7 +7,7 @@ from telegram.ext import (
 )
 
 from providers.helpers.transport_data_compressor import TransportDataCompressor
-from ui import MetroHandler, BusHandler, TramHandler, RodaliesHandler, FavoritesHandler, LanguageHandler, HelpHandler, MenuHandler, SettingsHandler, BicingHandler
+from ui import MetroHandler, BusHandler, TramHandler, RodaliesHandler, FavoritesHandler, LanguageHandler, HelpHandler, MenuHandler, SettingsHandler, BicingHandler, NotificationsHandler
 
 class ReplyHandler:
     def __init__(
@@ -21,7 +21,8 @@ class ReplyHandler:
             language_handler: LanguageHandler,
             help_handler: HelpHandler,
             settings_handler: SettingsHandler,
-            bicing_handler: BicingHandler
+            bicing_handler: BicingHandler,
+            notifications_handler: NotificationsHandler
         ):
 
         self.menu_handler = menu_handler
@@ -34,6 +35,7 @@ class ReplyHandler:
         self.help_handler = help_handler
         self.settings_handler = settings_handler
         self.bicing_handler = bicing_handler
+        self.notifications_handler = notifications_handler
 
         self.mapper = TransportDataCompressor()
 
@@ -62,7 +64,7 @@ class ReplyHandler:
         elif '⚙️' in self.current_search:
             await self.settings_handler.show_settings(update, context)
         elif '🔔' in self.current_search:
-            pass
+            await self.notifications_handler.show_current_configuration(update, context)
         elif '🔙' in self.current_search:
             await self.menu_handler.back_to_menu(update, context)
         else:

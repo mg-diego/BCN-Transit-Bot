@@ -12,6 +12,8 @@
 
   "settings.message": "⚙️ Gestiona el teu compte i la configuració.\n\nFes servir el teclat per triar una opció ⌨️ o accedeix a l'ajuda 📘 per a més informació.",
   "settings.notifications": "🔔 Notificacions",
+  "settings.notifications.enabled": "🔔 <b>Notificacions activades</b>\n\nActualment rebràs alertes sobre incidències a les teves estacions preferides.",
+  "settings.notifications.disabled": "🔕 <b>Notificacions desactivades</b>\n\nActualment no rebràs alertes sobre incidències.",
   "settings.help": "📘 Ajuda",
 
   "keyboard.back": "🔙 Tornar",
@@ -21,6 +23,8 @@
   "keyboard.map": "🗺️ Obrir Mapa i seleccionar parada",
   "keyboard.next": "Següent ➡️",
   "keyboard.previous": "⬅️ Anterior",
+  "keyboard.notifications.enable": "🔔 Activar notificacions",
+  "keyboard.notifications.disable": "🔕 Desactivar notificacions",
 
   "common.loading.lines": "Carregant línies de {type}",
   "common.loading.favorites": "Carregant llistat de favorits",

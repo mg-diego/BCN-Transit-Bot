@@ -12,6 +12,8 @@
   
   "settings.language": "🌐 Language",
   "settings.notifications": "🔔 Notifications",
+  "settings.notifications.enabled": "🔔 <b>Notifications enabled</b>\n\nYou will currently receive alerts about incidents at your favorite stations.",
+  "settings.notifications.disabled": "🔕 <b>Notifications disabled</b>\n\nYou will currently not receive alerts about incidents.",
   "settings.help": "📘 Help",
   "settings.message": "⚙️ Manage your account and settings.\n\nUse the keyboard to choose an option ⌨️ or access help 📘 for more info.",
 
@@ -22,6 +24,8 @@
   "keyboard.map": "🗺️ Open Map and select stop",
   "keyboard.next": "Next ➡️",
   "keyboard.previous": "⬅️ Previous",
+  "keyboard.notifications.enable": "🔔 Enable notifications",
+  "keyboard.notifications.disable": "🔕 Disable notifications",
 
   "common.loading.lines": "Loading {type} lines",
   "common.loading.favorites": "Loading favorites list",

@@ -297,6 +297,10 @@ class KeyboardFactory:
             one_time_keyboard=False  # el teclado permanece visible
         )
     
+    def update_notifications(self, enabled_notifications: bool):
+        locale_key, bool_value = ('disable', False) if enabled_notifications else ('enable', True)
+        return InlineKeyboardMarkup([[InlineKeyboardButton(self.language_manager.t(f'keyboard.notifications.{locale_key}'), callback_data=Callbacks.SET_RECEIVE_NOTIFICATIONS.format(value=bool_value))]])
+    
     def language_menu(self, available_languages: dict):
         buttons = [
             InlineKeyboardButton(name, callback_data=Callbacks.SET_LANGUAGE.format(language_code=code))

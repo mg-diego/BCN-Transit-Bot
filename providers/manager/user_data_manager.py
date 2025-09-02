@@ -65,7 +65,14 @@ class UserDataManager:
         if not force_refresh and self._users_cache["data"] is not None:
             if datetime.now() - self._users_cache["timestamp"] < timedelta(seconds=self.CACHE_TTL):
                 return self._users_cache["data"]
+
         users = self.users_ws.get_all_records()
+
+        # Conversión explícita de campos booleanos conocidos
+        for user in users:
+            if "receive_notifications" in user:
+                user["receive_notifications"] = str(user["receive_notifications"]).strip().lower() in ("true", "1", "yes", "y")
+
         self._users_cache = {"data": users, "timestamp": datetime.now()}
         return users
 
@@ -122,7 +129,7 @@ class UserDataManager:
             "created_at": now,
             "uses": 1,
             "language": "en",
-            "receive_notifications": False,
+            "receive_notifications": True,
             "already_notified": json.dumps([e.__dict__ for e in []], ensure_ascii=False)
         })
         return 1
@@ -160,13 +167,43 @@ class UserDataManager:
                 self._users_cache["data"][idx - 2]["already_notified"] = already_notified
                 return True
         return False
+    
+    def remove_deprecated_notified_alert(self, user_id, alert_id):
+        logger.debug(f"Removing deprecated notified alerts for user_id={user_id} -> '{alert_id}'")
+        users = self._load_users()
+        for idx, user in enumerate(users, start=2):
+            if str(user["user_id"]) == str(user_id):
+                already_notified = self.safe_str_to_list(user.get('already_notified'))
+                already_notified.remove(alert_id)
+                self.users_ws.update_cell(idx, self.USERS_ALREADY_NOTIFIED, json.dumps(already_notified))
+                self._users_cache["data"][idx - 2]["already_notified"] = already_notified
+                return True
+        return False
 
+    def get_user_receive_notifications(self, user_id) -> bool:
+        logger.debug(f"Fetching receive_notifications for user_id={user_id}")
+        users = self._load_users()
+        for user in users:
+            if str(user["user_id"]) == str(user_id):
+                return user["receive_notifications"]
+        return False
+    
+    def update_user_receive_notifications(self, user_id, value: bool):
+        bool_value = value.lower() == "true" if isinstance(value, str) else value
+        logger.debug(f"Updating receive_notifications for user_id={user_id} to '{value}'")
+        users = self._load_users()
+        for idx, user in enumerate(users, start=2):
+            if str(user["user_id"]) == str(user_id):
+                self.users_ws.update_cell(idx, self.USERS_RECEIVE_NOTIFICATIONS_INDEX, bool_value)                
+                self._users_cache["data"][idx - 2]["receive_notifications"] = bool_value
+                return True
+        return False
     
     def row_to_user(self, row: List[str]) -> User:
         """
         row: [
             user_id, username, initial_start, last_start, uses,
-            language, receive_alerts, already_notified
+            language, receive_notifications, already_notified
         ]
         """
         return User(
@@ -176,7 +213,7 @@ class UserDataManager:
             last_start=datetime.strptime(row.get('last_start'), "%Y:%m:%d %H:%M:%S"),
             uses=int(row.get('uses')),
             language=row.get('language'),
-            receive_alerts=row.get('receive_alerts') == "TRUE",
+            receive_notifications=row.get('receive_notifications'),
             already_notified=self.safe_str_to_list(row.get('already_notified'))
         )
     
@@ -339,6 +376,34 @@ class UserDataManager:
         logger.info(f"New alert registered: type={transport_type}, alert_id={api_alert.id}")
         return True
     
+    def remove_alert(self, alert: Alert) -> bool:
+        """
+        Elimina una alerta de la hoja de cálculo y de la caché según ID y tipo de transporte.
+        
+        :param transport_type: Tipo de transporte de la alerta.
+        :param alert_id: ID de la alerta a eliminar.
+        :return: True si la alerta fue eliminada, False si no se encontró.
+        """
+        logger.debug(f"Removing alert: type={alert.transport_type}, alert_id={alert.id}")
+        
+        ws_alerts = self._load_alerts()
+        
+        for idx, ws_alert in enumerate(ws_alerts, start=2):  # start=2 porque la fila 1 es encabezado
+            if str(ws_alert.get("type")) == str(alert.transport_type.value) and str(ws_alert.get("id")) == str(alert.id):
+                self.alerts_ws.delete_rows(idx)
+                logger.info(f"Alert removed from spreadsheet: type={alert.transport_type}, alert_id={alert.id}")
+                
+                if self._alerts_cache["data"] is not None:
+                    self._alerts_cache["data"] = [
+                        a for a in self._alerts_cache["data"]
+                        if not (str(a.get("transport_type")) == str(alert.transport_type) and str(a.get("id")) == str(alert.id))
+                    ]
+                return True
+        
+        logger.warning(f"Alert not found: type={alert.transport_type}, alert_id={alert.id}")
+        return False
+
+    
     def get_alerts(self) -> List[Alert]:
         ws_alerts = self._load_alerts()
         return [self.row_to_alert(ws_alert) for ws_alert in ws_alerts]
@@ -364,6 +429,7 @@ class UserDataManager:
 
             return Alert(
                 id=row.get("id"),
+                transport_type=TransportType(str(row.get('type').lower())),
                 begin_date=begin_date,
                 end_date=end_date,
                 status=row.get("status"),

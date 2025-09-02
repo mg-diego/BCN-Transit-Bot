@@ -11,6 +11,8 @@
   "main.menu.settings": "⚙️ Ajustes",
 
   "settings.notifications": "🔔 Notificationes",
+  "settings.notifications.enabled": "🔔 <b>Notificaciones activadas</b>\n\nActualmente recibirás alertas sobre incidencias en tus estaciones favoritas.",
+  "settings.notifications.disabled": "🔕 <b>Notificaciones desactivadas</b>\n\nActualmente no recibirás alertas sobre incidencias.",
   "settings.help": "📘 Ayuda",
   "settings.message": "⚙️ Gestiona tu cuenta y ajustes.\n\nUsa el teclado para elegir una opción ⌨️ o accede a la ayuda 📘 para más información.",
 
@@ -21,6 +23,8 @@
   "keyboard.map": "🗺️ Abrir Mapa y seleccionar parada",
   "keyboard.next": "Siguiente ➡️",
   "keyboard.previous": "⬅️ Anterior",
+  "keyboard.notifications.enable": "🔔 Activar notificaciones",
+  "keyboard.notifications.disable": "🔕 Desactivar notificaciones",
 
   "common.loading.lines": "Cargando líneas de {type}",
   "common.loading.favorites": "Cargando lista de favoritos",

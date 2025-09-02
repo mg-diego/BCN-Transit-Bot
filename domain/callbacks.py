@@ -31,5 +31,7 @@ class Callbacks(Enum):
 
     SET_LANGUAGE = "set_language:{language_code}"
 
+    SET_RECEIVE_NOTIFICATIONS = "set_receive_notifications:{value}"
+
     def format(self, **kwargs):
         return self.value.format(**kwargs)

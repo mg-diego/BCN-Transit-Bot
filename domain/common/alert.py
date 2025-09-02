@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import List
 import html
 
+from domain.transport_type import TransportType
 from providers.helpers.html_helper import HtmlHelper
 from providers.helpers.logger import logger
 
@@ -30,6 +31,7 @@ class AffectedEntity:
 @dataclass
 class Alert:
     id: str
+    transport_type: TransportType
     begin_date: datetime
     end_date: datetime
     status: str
@@ -113,6 +115,7 @@ class Alert:
 
         return Alert(
             id=metro_alert.get('id'),
+            transport_type=TransportType.METRO,
             begin_date=datetime.fromtimestamp(metro_alert.get('disruption_dates')[0].get('begin_date', None) / 1000),
             end_date=datetime.fromtimestamp(metro_alert.get('disruption_dates')[0].get('end_date', None) / 1000),
             publications=publications,
@@ -152,6 +155,7 @@ class Alert:
 
         return Alert(
             id=bus_alert.get('id'),
+            transport_type=TransportType.BUS,
             begin_date=datetime.fromtimestamp(bus_alert.get('begin') / 1000),
             end_date=datetime.fromtimestamp(bus_alert.get('end') / 1000),
             publications=publications,

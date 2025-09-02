@@ -10,5 +10,5 @@ class User:
     last_start: datetime
     uses: int
     language: str
-    receive_alerts: bool
+    receive_notifications: bool
     already_notified: List[int] = field(default_factory=list)
