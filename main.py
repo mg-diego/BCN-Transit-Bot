@@ -149,7 +149,10 @@ class BotApp:
                 start = datetime.now()
                 for method_name in methods:
                     method = getattr(service, method_name)
-                    await method()
+                    try:
+                        await method()
+                    except Exception as e:
+                        logger.error(f"There was an error running the '{name}' seeder: \n {e}")
                 elapsed = int((datetime.now() - start).total_seconds())
                 service_times.append((name, elapsed))
 
