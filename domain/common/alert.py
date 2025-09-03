@@ -163,3 +163,41 @@ class Alert:
             status=HtmlHelper.clean_text(bus_alert.get('causeName')),
             cause=bus_alert.get('categories').get('messageType')
         )
+    
+    @staticmethod
+    def map_from_rodalies_alert(rodalies_alert):
+        publications = []
+        title = rodalies_alert.get('title')
+        description = rodalies_alert.get('description')
+        publications.append(Publication(
+            headerCa=title.get('ca', None),
+            headerEn=title.get('en', None),
+            headerEs=title.get('es', None),
+            textCa=HtmlHelper.clean_text(description.get('ca', '')),
+            textEn=HtmlHelper.clean_text(description.get('en', '')),
+            textEs=HtmlHelper.clean_text(description.get('es', '')),
+        ))
+
+        affected_entities = []
+        for entity in rodalies_alert.get('lines'):
+            affected_entities.append(AffectedEntity(
+                direction_code=None,
+                direction_name=None,
+                entrance_code=None,
+                entrance_name=None,
+                line_code=entity.get('id'),
+                line_name=entity.get('name'),
+                station_code=None,
+                station_name=None
+            ))
+
+        return Alert(
+            id=rodalies_alert.get('externalId'),
+            transport_type=TransportType.RODALIES,
+            begin_date=datetime.fromisoformat(rodalies_alert.get('date')),
+            end_date=None,
+            publications=publications,
+            affected_entities=affected_entities,
+            status=None,
+            cause=None
+        )

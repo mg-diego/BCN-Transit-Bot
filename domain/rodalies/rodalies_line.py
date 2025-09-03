@@ -1,5 +1,8 @@
+from collections import defaultdict
 from dataclasses import dataclass, field
-from typing import List
+from typing import List, Optional
+
+from domain.common.alert import Alert
 from .rodalies_station import RodaliesStation
 
 @dataclass
@@ -16,6 +19,8 @@ class RodaliesLine:
     destination_station_name: str
     stations: List[RodaliesStation]
     color: str = field(init=False)
+    has_alerts: Optional[bool] = False
+    alerts: Optional[list[Alert]] = field(default_factory=lambda: defaultdict(list))
 
     EMOJIS = {
         "R1": "🟦",

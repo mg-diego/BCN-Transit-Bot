@@ -59,10 +59,15 @@ class RodaliesApiService:
             stations.append(create_rodalies_station(station_data))
         return create_rodalies_line(line_data, stations)
 
+    async def get_global_alerts(self):
+        alerts = await self._request("GET", "/notices?limit=500&sort=date,desc&sort=time,desc")
+        return alerts['included']
+
     # ==== Stations ====
     async def get_next_trains_at_station(self, station_id: int, line_id: str) -> List[RodaliesStation]:
         """Fetch all stations for a given line."""
         next_rodalies = await self._request("GET", f"/departures?stationId={station_id}&minute=90&fullResponse=true&lang=ca")
+        
         
         routes_dict = {}
         for item in next_rodalies["trains"]:

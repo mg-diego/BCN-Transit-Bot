@@ -432,8 +432,8 @@ class UserDataManager:
                 transport_type=TransportType(str(row.get('type').lower())),
                 begin_date=begin_date,
                 end_date=end_date,
-                status=row.get("status"),
-                cause=row.get("cause"),
+                status=row.get("status") if row.get("status") else None,
+                cause=row.get("cause") if row.get("cause") else None,
                 publications=publications,
                 affected_entities=affected_entities
             )

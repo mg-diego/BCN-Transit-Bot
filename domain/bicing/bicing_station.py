@@ -20,3 +20,6 @@ class BicingStation:
     transition_start: Optional[str]
     transition_end: Optional[str]
     obcn: str
+
+    def __post_init__(self):
+        self.streetName = self.streetName.title()

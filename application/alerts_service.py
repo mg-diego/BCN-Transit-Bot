@@ -42,7 +42,8 @@ class AlertsService:
                 for alert in alerts:
                     for entity in alert.affected_entities:
                         if (
-                            int(entity.station_code) in user_favorites_station_codes
+                            entity.station_code is not None
+                            and int(entity.station_code) in user_favorites_station_codes
                             and entity.station_name in user_favorites_station_names
                         ):
                             if alert.id not in user.already_notified:

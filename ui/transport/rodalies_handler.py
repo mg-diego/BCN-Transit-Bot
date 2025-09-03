@@ -49,9 +49,13 @@ class RodaliesHandler(HandlerBase):
         stops = await self.rodalies_service.get_stations_by_line(line_id)
         encoded = self.mapper.map_rodalies_stations(stops, line)
 
+        if line.alerts is not None and any(line.alerts):
+            line_alerts_url = self.telegraph_service.create_page(f'{TransportType.RODALIES.value.capitalize()} {line.name}: Alerts', line.alerts)
+            line_alerts_html = f"{self.language_manager.t('common.alerts.line.1')} <a href='{line_alerts_url}'>{self.language_manager.t('common.alerts.line.2')}</a>"
+
         await self.message_service.send_new_message_from_callback(
             update,
-            text=self.language_manager.t('common.line.only.map', line=line.name),
+            text=f"{self.language_manager.t('common.line.only.map', line=line.emoji_name)} {"\n\n" + line_alerts_html if line.alerts is not None and any(line.alerts) else ''}",
             reply_markup=self.keyboard_factory.map_reply_menu(encoded)
         )
 
