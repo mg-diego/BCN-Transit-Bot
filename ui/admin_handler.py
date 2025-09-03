@@ -6,6 +6,7 @@ import subprocess
 from typing import List
 from telegram import Update
 from telegram.ext import CallbackContext
+from telegram.constants import ParseMode
 from providers.helpers import logger
 
 
@@ -137,8 +138,7 @@ class AdminHandler:
             logger.warning(f"Unauthorized user {user_id} tried to access /deploy")
             return
         
-        # Avisar al usuario que el despliegue ha comenzado
-        await update.message.reply_text("🚀 Iniciando despliegue... Esto puede tardar unos segundos.")
+        await update.message.reply_text("🚀 Starting deployment...")
 
         try:
             project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -153,7 +153,7 @@ class AdminHandler:
             logger.info(f"Deploy script launched by {user_id}")
 
         except Exception as e:
-            await update.message.reply_text(f"❌ Error al ejecutar el despliegue: {str(e)}")
+            await update.message.reply_text(f"❌ Failed to execute deploy script:\n<pre>{e}</pre>", parse_mode=ParseMode.HTML)
             logger.error(f"Failed to launch deploy script: {e}")
 
     

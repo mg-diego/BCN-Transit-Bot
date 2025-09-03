@@ -429,7 +429,7 @@ class UserDataManager:
 
             return Alert(
                 id=row.get("id"),
-                transport_type=TransportType(str(row.get('type').lower())),
+                transport_type=TransportType(str(row.get('type').lower())) if row.get('type') else None,
                 begin_date=begin_date,
                 end_date=end_date,
                 status=row.get("status") if row.get("status") else None,
