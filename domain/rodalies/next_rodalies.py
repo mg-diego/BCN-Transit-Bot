@@ -37,12 +37,12 @@ class NextRodalies:
             return f" {hours}h {minutes}m {seconds}s"
         else:
             return f" {minutes}m {seconds}s"
-
-    def estimated_arrival(self) -> datetime:
-        """Devuelve la hora estimada de llegada en base al retraso."""
+    
+    def scheduled_arrival(self) -> datetime:
+        """Devuelve la hora programada de llegada en base al retraso."""
         if not self.arrival_time:
             return None
-        return self.arrival_time + timedelta(minutes=self.delay_in_minutes or 0)
+        return self.arrival_time - timedelta(minutes=self.delay_in_minutes or 0)
 
 
 @dataclass
@@ -80,18 +80,20 @@ class RodaliesLineRoute:
         number_emoji = number_emojis[i] if i < len(number_emojis) else f"{i+1}."
 
         # Vía si existe
-        via_text = f" (Vía {rodalies.platform})" if rodalies.platform else ""
+        via_text = f" (Vía {rodalies.platform} - {rodalies.id})" if rodalies.platform else ""
 
         # Horas programada y estimada
-        scheduled = rodalies.arrival_time.strftime("%H:%M") if rodalies.arrival_time else "?"
-        estimated_time = rodalies.estimated_arrival()
-        estimated = estimated_time.strftime("%H:%M") if estimated_time else "?"
+        scheduled_time = rodalies.scheduled_arrival()
+        scheduled = scheduled_time.strftime("%H:%M") if scheduled_time else "?"
+        estimated = rodalies.arrival_time.strftime("%H:%M") if rodalies.arrival_time else "?"
 
         # Retraso
         if rodalies.delay_in_minutes is None or rodalies.delay_in_minutes == 0:
             delay_text = ""
-        if rodalies.delay_in_minutes > 0:
-            delay_text = f"(+{rodalies.delay_in_minutes}m ❗)"        
+        if rodalies.delay_in_minutes > 0 and rodalies.delay_in_minutes < 15:
+            delay_text = f"(+{rodalies.delay_in_minutes}m❗)"
+        if rodalies.delay_in_minutes >= 15:
+            delay_text = f"(+{rodalies.delay_in_minutes}m‼️)"
         if rodalies.delay_in_minutes < 0:
             delay_text = f"({rodalies.delay_in_minutes}m ⏪)"
 
