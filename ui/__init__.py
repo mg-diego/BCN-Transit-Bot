@@ -4,6 +4,7 @@ from .transport.bus_handler import BusHandler
 from .transport.tram_handler import TramHandler
 from .transport.rodalies_handler import RodaliesHandler
 from .transport.bicing_handler import BicingHandler
+from .transport.fgc_handler import FgcHandler
 from .favorites_handler import FavoritesHandler
 from .settings.help_handler import HelpHandler
 from .settings.language_handler import LanguageHandler
@@ -31,5 +32,6 @@ __all__ = [
     "AdminHandler",
     "SettingsHandler",
     "BicingHandler",
-    "NotificationsHandler"
+    "NotificationsHandler",
+    "FgcHandler"
 ]

@@ -43,15 +43,15 @@ class KeyboardFactory:
         """Teclado principal como ReplyKeyboard."""
         keyboard = [
             [KeyboardButton(self.language_manager.t('main.menu.metro')),
-            KeyboardButton(self.language_manager.t('main.menu.bus'))],
+            KeyboardButton(self.language_manager.t('main.menu.bus')),
+            KeyboardButton(self.language_manager.t('main.menu.tram'))],
             
-            [KeyboardButton(self.language_manager.t('main.menu.tram')),
-            KeyboardButton(self.language_manager.t('main.menu.bicing'))],
+            [KeyboardButton(self.language_manager.t('main.menu.bicing')),
+            KeyboardButton(self.language_manager.t('main.menu.rodalies')),
+            KeyboardButton(self.language_manager.t('main.menu.fgc'))],
             
-            [KeyboardButton(self.language_manager.t('main.menu.rodalies')),
-            KeyboardButton(self.language_manager.t('main.menu.favorites'))],
-            
-            [KeyboardButton(self.language_manager.t('main.menu.settings'))]
+            [KeyboardButton(self.language_manager.t('main.menu.favorites')),
+            KeyboardButton(self.language_manager.t('main.menu.settings'))]
         ]
 
         return ReplyKeyboardMarkup(

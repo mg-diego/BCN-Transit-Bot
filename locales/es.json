@@ -6,6 +6,7 @@
   "main.menu.tram": "🚋 Tram",
   "main.menu.rodalies": "🚆 Rodalies",
   "main.menu.bicing": "🚴 Bicing",
+  "main.menu.fgc": "🚊 FGC",
   "main.menu.favorites": "⭐ Favoritos",
   "settings.language": "🌐 Idioma",
   "main.menu.settings": "⚙️ Ajustes",
@@ -16,7 +17,7 @@
   "settings.help": "📘 Ayuda",
   "settings.message": "⚙️ Gestiona tu cuenta y ajustes.\n\nUsa el teclado para elegir una opción ⌨️ o accede a la ayuda 📘 para más información.",
 
-  "keyboard.back": "🔙 Volver",
+  "keyboard.back": "🔍 Nueva búsqueda",
   "keyboard.close": "❌ Cerrar",
   "keyboard.favorites.add": "♥️ Añadir a Favoritos",
   "keyboard.favorites.remove": "💔 Quitar de Favoritos",
@@ -75,7 +76,7 @@
   "language.es": "🇪🇸 Español",
   "language.ca": "(ꮯꭺꭲ) Catalán",
 
-  "help.text": "📘 <b><u>Ayuda del BCN Transit Bot</u></b> 📘\n\nEste bot te permite consultar información actualizada sobre el <b>Metro</b> y <b>Bus</b> de la ciudad de Barcelona de forma rápida.\n\n📋 <u>Comandos disponibles:</u>\n  • /start – Inicia una nueva búsqueda\n  • /help – Muestra este mensaje de ayuda\n\n🚇 <u>Para ver los próximos metros:</u>\n  1. Pulsa en 'Metro' en el menú.\n  2. Selecciona una línea.\n  3. Selecciona una estación.\n  4. Verás los horarios actualizados y más detalles.\n\n🚌 <u>Para ver los próximos buses:</u>\n  1. Pulsa en 'Bus' en el menú.\n  2. Selecciona una línea.\n  3. Selecciona una estación desde el mapa interactivo.\n  4. Verás los horarios actualizados y más detalles.\n\n⭐ <u>Para ver tus favoritos:</u>\n  1. Pulsa en 'Favoritos' en el menú.\n  2. Selecciona uno de tus favoritos (necesitas haberlo guardado previamente).\n  3. Verás los horarios actualizados y más detalles.\n\n🌐 <u>Para seleccionar el Idioma:</u>\n  1. Pulsa en 'Idioma' en el menú.\n  2. Selecciona uno de los idiomas disponibles (Inglés, Español o Catalán).\n  3. Verás la aplicación actualizada al nuevo idioma.\n\n¿Tienes dudas o sugerencias? ¡Estoy aquí para ayudarte!\n\n📬 <b>Contacto:</b> <a href='https://github.com/mg-diego/BCN-Transit-Bot'>github.com/mg-diego/BCN-Transit-Bot</a>\n\n 🔖 <b>Versión:</b> <code>v1.4</code>",
+  "help.text": "📘 <b><u>Ayuda del BCN Transit Bot</u></b> 📘\n\nEste bot te permite consultar información actualizada sobre el <b>Metro</b> y <b>Bus</b> de la ciudad de Barcelona de forma rápida.\n\n📋 <u>Comandos disponibles:</u>\n  • /start – Inicia una nueva búsqueda\n  • /help – Muestra este mensaje de ayuda\n\n🚇 <u>Para ver los próximos metros:</u>\n  1. Pulsa en 'Metro' en el menú.\n  2. Selecciona una línea.\n  3. Selecciona una estación.\n  4. Verás los horarios actualizados y más detalles.\n\n🚌 <u>Para ver los próximos buses:</u>\n  1. Pulsa en 'Bus' en el menú.\n  2. Selecciona una línea.\n  3. Selecciona una estación desde el mapa interactivo.\n  4. Verás los horarios actualizados y más detalles.\n\n⭐ <u>Para ver tus favoritos:</u>\n  1. Pulsa en 'Favoritos' en el menú.\n  2. Selecciona uno de tus favoritos (necesitas haberlo guardado previamente).\n  3. Verás los horarios actualizados y más detalles.\n\n🌐 <u>Para seleccionar el Idioma:</u>\n  1. Pulsa en 'Idioma' en el menú.\n  2. Selecciona uno de los idiomas disponibles (Inglés, Español o Catalán).\n  3. Verás la aplicación actualizada al nuevo idioma.\n\n¿Tienes dudas o sugerencias? ¡Estoy aquí para ayudarte!\n\n📬 <b>Contacto:</b> <a href='https://github.com/mg-diego/BCN-Transit-Bot'>github.com/mg-diego/BCN-Transit-Bot</a>\n\n 🔖 <b>Versión:</b> <code>v1.5-beta</code>",
 
   "results.found": "🔍 He encontrado {count} resultado{s} que coinciden con tu búsqueda '{search_value}':\n\n -🚇 <b>Metro:</b> {metro_results}\n - 🚌 <b>Bus:</b> {bus_results}\n - 🚋 <b>Tram:</b> {tram_results}\n - 🚆 <b>Rodalies:</b> {rodalies_results}\n - 🚲 <b>Bicing:</b> {bicing_results}",
   "results.searching": "Buscando resultados",

@@ -7,7 +7,7 @@ from telegram.ext import (
 )
 
 from providers.helpers.transport_data_compressor import TransportDataCompressor
-from ui import MetroHandler, BusHandler, TramHandler, RodaliesHandler, FavoritesHandler, LanguageHandler, HelpHandler, MenuHandler, SettingsHandler, BicingHandler, NotificationsHandler
+from ui import MetroHandler, BusHandler, TramHandler, RodaliesHandler, FavoritesHandler, LanguageHandler, HelpHandler, MenuHandler, SettingsHandler, BicingHandler, NotificationsHandler, FgcHandler
 
 class ReplyHandler:
     def __init__(
@@ -22,6 +22,7 @@ class ReplyHandler:
             help_handler: HelpHandler,
             settings_handler: SettingsHandler,
             bicing_handler: BicingHandler,
+            fgc_handler: FgcHandler,
             notifications_handler: NotificationsHandler
         ):
 
@@ -35,6 +36,7 @@ class ReplyHandler:
         self.help_handler = help_handler
         self.settings_handler = settings_handler
         self.bicing_handler = bicing_handler
+        self.fgc_handler = fgc_handler
         self.notifications_handler = notifications_handler
 
         self.mapper = TransportDataCompressor()
@@ -52,9 +54,11 @@ class ReplyHandler:
         elif self.current_search == "🚋 Tram":
             await self.tram_handler.show_lines(update, context)
         elif self.current_search == "🚆 Rodalies":
-            await self.rodalies_handler.show_lines(update, context)        
+            await self.rodalies_handler.show_lines(update, context)
         elif self.current_search == '🚴 Bicing':
-            await self.bicing_handler.show_instructions(update, context)
+            await self.bicing_handler.show_instructions(update, context)    
+        elif self.current_search == '🚊 FGC':
+            await self.fgc_handler.show_lines(update, context)
         elif '⭐' in self.current_search:
             await self.favorites_handler.show_favorites(update, context)
         elif '🌐' in self.current_search:
@@ -65,7 +69,7 @@ class ReplyHandler:
             await self.settings_handler.show_settings(update, context)
         elif '🔔' in self.current_search:
             await self.notifications_handler.show_current_configuration(update, context)
-        elif '🔙' in self.current_search:
+        elif '🔍' in self.current_search:
             await self.menu_handler.back_to_menu(update, context)
         else:
             await self.handle_reply_from_user(update, context)

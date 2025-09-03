@@ -5,7 +5,7 @@ from telegram import Bot
 
 from ui import (
     MenuHandler, MetroHandler, BusHandler, TramHandler, FavoritesHandler, HelpHandler, 
-    LanguageHandler, KeyboardFactory, WebAppHandler, RodaliesHandler, ReplyHandler, AdminHandler, SettingsHandler, BicingHandler, NotificationsHandler
+    LanguageHandler, KeyboardFactory, WebAppHandler, RodaliesHandler, ReplyHandler, AdminHandler, SettingsHandler, BicingHandler, NotificationsHandler, FgcHandler
 )
 from application import MessageService, MetroService, BusService, TramService, RodaliesService, BicingService, CacheService, UpdateManager, TelegraphService, AlertsService
 from providers.manager import SecretsManager, UserDataManager, LanguageManager
@@ -50,12 +50,16 @@ class BotApp:
         self.bicing_service = None
 
         # Handlers
-        self.admin_handler = None
+        self.admin_handler = None        
         self.menu_handler = None
+
         self.metro_handler = None
         self.bus_handler = None
         self.tram_handler = None
         self.rodalies_handler = None
+        self.bicing_handler = None
+        self.fgc_handler = None
+
         self.favorites_handler = None
         self.help_handler = None
         self.language_handler = None
@@ -120,6 +124,7 @@ class BotApp:
         self.tram_handler = TramHandler(self.keyboard_factory, self.tram_service, self.update_manager, self.user_data_manager, self.message_service, self.language_manager, self.telegraph_service)
         self.rodalies_handler = RodaliesHandler(self.keyboard_factory, self.rodalies_service, self.update_manager, self.user_data_manager, self.message_service, self.language_manager, self.telegraph_service)
         self.bicing_handler = BicingHandler(self.keyboard_factory, self.bicing_service, self.update_manager, self.user_data_manager, self.message_service, self.language_manager, self.telegraph_service)
+        self.fgc_handler = FgcHandler(self.keyboard_factory, self.metro_service, self.update_manager, self.user_data_manager, self.message_service, self.language_manager, self.telegraph_service)
 
         self.favorites_handler = FavoritesHandler(self.message_service, self.user_data_manager, self.keyboard_factory, self.metro_service, self.bus_service, self.tram_service, self.rodalies_service, self.bicing_service, self.language_manager)
         self.help_handler = HelpHandler(self.message_service, self.keyboard_factory, self.language_manager)
@@ -127,7 +132,7 @@ class BotApp:
         self.web_app_handler = WebAppHandler(self.metro_handler, self.bus_handler, self.tram_handler, self.rodalies_handler, self.bicing_handler)
         self.settings_handler = SettingsHandler(self.message_service, self.keyboard_factory, self.language_manager)
         self.notifications_handler = NotificationsHandler(self.message_service, self.keyboard_factory, self.language_manager, self.user_data_manager)
-        self.reply_handler = ReplyHandler(self.menu_handler, self.metro_handler, self.bus_handler, self.tram_handler, self.rodalies_handler,self.favorites_handler, self.language_handler, self.help_handler, self.settings_handler, self.bicing_handler, self.notifications_handler)
+        self.reply_handler = ReplyHandler(self.menu_handler, self.metro_handler, self.bus_handler, self.tram_handler, self.rodalies_handler,self.favorites_handler, self.language_handler, self.help_handler, self.settings_handler, self.bicing_handler, self.fgc_handler, self.notifications_handler)
 
         logger.info("Handlers initialized")
 
@@ -143,6 +148,7 @@ class BotApp:
                 ("Bus", self.bus_service, ["get_all_lines", "get_all_stops"]),
                 ("Tram", self.tram_service, ["get_all_lines", "get_all_stops"]),
                 ("Rodalies", self.rodalies_service, ["get_all_lines", "get_all_stations"])
+                #TODO: Add FGC seeder
             ]
 
             for name, service, methods in preload_tasks:
@@ -208,6 +214,9 @@ class BotApp:
 
         # BICING
         self.application.add_handler(CallbackQueryHandler(self.bicing_handler.show_station, pattern=r"^bicing_station"))
+
+        # FGC
+        
 
         # FAVORITES
         self.application.add_handler(CallbackQueryHandler(self.favorites_handler.add_favorite, pattern=r"^add_fav"))
