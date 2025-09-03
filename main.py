@@ -107,13 +107,13 @@ class BotApp:
         self.metro_service = MetroService(self.tmb_api_service, self.language_manager, self.cache_service, self.user_data_manager)
         self.bus_service = BusService(self.tmb_api_service, self.cache_service, self.user_data_manager)
         self.tram_service = TramService(self.tram_api_service, self.language_manager, self.cache_service)
-        self.rodalies_service = RodaliesService(self.rodalies_api_service, self.language_manager, self.cache_service)
+        self.rodalies_service = RodaliesService(self.rodalies_api_service, self.language_manager, self.cache_service, self.user_data_manager)
         self.bicing_service = BicingService(self.bicing_api_service, self.cache_service)
 
         logger.info("Transport services initialized")
 
         # Handlers
-        self.admin_handler = AdminHandler(self.admin_id)
+        self.admin_handler = AdminHandler(self.bot, self.admin_id)
         self.menu_handler = MenuHandler(self.keyboard_factory, self.message_service, self.user_data_manager, self.language_manager, self.update_manager)
         self.metro_handler = MetroHandler(self.keyboard_factory, self.metro_service, self.update_manager, self.user_data_manager, self.message_service, self.language_manager, self.telegraph_service)
         self.bus_handler = BusHandler(self.keyboard_factory, self.bus_service, self.update_manager, self.user_data_manager, self.message_service, self.language_manager, self.telegraph_service)
@@ -229,6 +229,7 @@ class BotApp:
         self.application.add_handler(CommandHandler("commit", self.admin_handler.commit_command))
         self.application.add_handler(CommandHandler("logs", self.admin_handler.tail_log_command))
         self.application.add_handler(CommandHandler("uptime", self.admin_handler.uptime_command))
+        self.application.add_handler(CommandHandler("deploy", self.admin_handler.deploy))
 
         logger.info("Handlers registered successfully")
 
@@ -250,6 +251,7 @@ class BotApp:
             # Initialize and start the application
             await self.application.initialize()
             await self.application.start()
+            await self.admin_handler.send_commit_to_admins_on_startup()
             await self.application.updater.start_polling()
             
             logger.info("Creando tarea recurrente...")

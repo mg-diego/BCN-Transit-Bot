@@ -9,13 +9,14 @@ from providers.helpers import logger
 
 
 class AdminHandler:
-    def __init__(self, admin_id):
+    def __init__(self, bot, admin_id):
         """
         Initialize the AdminCommands handler.
 
         Args:
             admin_ids (list[int]): Telegram user IDs allowed to use admin commands.
         """
+        self.bot = bot
         self.admin_ids = [int(admin_id)]
         self.start_time = datetime.now()
         self.MAX_LENGTH = 4000
@@ -66,15 +67,32 @@ class AdminHandler:
             logger.error(f"Error reading log file {file_path}: {e}")
             return [f"Error reading log file: {e}"]
 
+    async def _send_commit_info(self, chat_id: int):
+        """Internal helper to send the current commit info to a chat."""
+        commit_info = self.get_current_commit()
+        await self.bot.send_message(
+            chat_id=chat_id,
+            text=f"🔖 Current bot commit:\n\n`{commit_info}`",
+            parse_mode="Markdown"
+        )
+        logger.info(f"Sent current commit info to {chat_id}")
+
     async def commit_command(self, update: Update, context: CallbackContext):
+        """Triggered when an admin uses /commit."""
         user_id = update.effective_user.id
         if user_id not in self.admin_ids:
             logger.warning(f"Unauthorized user {user_id} tried to access /commit")
             return
 
-        commit_info = self.get_current_commit()
-        logger.info(f"Admin {user_id} requested current commit")
-        await update.message.reply_text(f"🔖 Current bot commit:\n\n`{commit_info}`", parse_mode="Markdown")
+        await self._send_commit_info(update.effective_chat.id)
+
+    async def send_commit_to_admins_on_startup(self):
+        """Called right after the bot starts."""
+        for admin_id in self.admin_ids:
+            try:
+                await self._send_commit_info(admin_id)
+            except Exception as e:
+                logger.error(f"Failed to send commit info to {admin_id}: {e}")
 
     async def tail_log_command(self, update: Update, context: CallbackContext):
         user_id = update.effective_user.id
@@ -111,3 +129,28 @@ class AdminHandler:
         msg = f"⏱ Bot uptime: {int(hours)}h {int(minutes)}m {int(seconds)}s"
         logger.info(f"Admin {user_id} requested uptime: {msg}")
         await update.message.reply_text(msg)
+
+    async def deploy(self, update: Update, context: CallbackContext):
+        user_id = update.effective_user.id
+        if user_id not in self.admin_ids:
+            logger.warning(f"Unauthorized user {user_id} tried to access /deploy")
+            return
+        
+        # Avisar al usuario que el despliegue ha comenzado
+        await update.message.reply_text("🚀 Iniciando despliegue... Esto puede tardar unos segundos.")
+
+        try:
+            # Lanzar el script en segundo plano para que se ejecute incluso si el bot se detiene
+            subprocess.Popen(
+                ["bash", "deploy.sh"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                start_new_session=True
+            )
+            logger.info(f"Deploy script launched by {user_id}")
+
+        except Exception as e:
+            await update.message.reply_text(f"❌ Error al ejecutar el despliegue: {str(e)}")
+            logger.error(f"Failed to launch deploy script: {e}")
+
+    
