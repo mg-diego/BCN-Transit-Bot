@@ -1,4 +1,5 @@
 from datetime import datetime
+import os
 from pathlib import Path
 import html
 import subprocess
@@ -140,9 +141,11 @@ class AdminHandler:
         await update.message.reply_text("🚀 Iniciando despliegue... Esto puede tardar unos segundos.")
 
         try:
-            # Lanzar el script en segundo plano para que se ejecute incluso si el bot se detiene
+            project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            script_path = os.path.join(project_root, "scripts", "deploy.sh")
             subprocess.Popen(
-                ["bash", "deploy.sh"],
+                ["bash", script_path],
+                cwd=project_root,
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
                 start_new_session=True
