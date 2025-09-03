@@ -122,10 +122,12 @@ class KeyboardFactory:
         return InlineKeyboardMarkup(rows)
     
     def rodalies_lines_menu(self, rodalies_lines: List[RodaliesLine])-> InlineKeyboardMarkup:
-        keyboard = []
-        for line in rodalies_lines:
-            keyboard.append([InlineKeyboardButton(f" {'⚠️ ' if line.has_alerts else ''}{line.emoji_name} - {line.description}  ", callback_data=Callbacks.RODALIES_LINE.format(line_code=line.id))])
-        return InlineKeyboardMarkup(keyboard)
+        buttons = [
+            InlineKeyboardButton(f" {'⚠️ ' if line.has_alerts else ''}{line.emoji_name}  ", callback_data=Callbacks.RODALIES_LINE.format(line_code=line.id))
+            for line in rodalies_lines
+        ]
+        rows = self._chunk_buttons(buttons, 3)
+        return InlineKeyboardMarkup(rows)
 
     # === STATIONS / STOPS ===
 
