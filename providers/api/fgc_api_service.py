@@ -1,5 +1,6 @@
 from datetime import datetime
 from io import StringIO
+import ssl
 import aiohttp
 import inspect
 import asyncio
@@ -15,12 +16,12 @@ from google.transit import gtfs_realtime_pb2
 class FgcApiService:
     """Service to interact with FGC API."""
 
-    BASE_URL = "https://dadesobertes.fgc.cat/api/explore/v2.1/catalog/datasets"
+    FGC_BASE_URL = "https://dadesobertes.fgc.cat/api/explore/v2.1/catalog/datasets"
+    MOUTE_BASE_URL = "https://mou-te.gencat.cat/MouteAPI/rest/infrastructure"
     GTFS_RT_URL = "https://dadesobertes.fgc.cat/api/explore/v2.1/catalog/datasets/trip-updates-gtfs_realtime/files/735985017f62fd33b2fe46e31ce53829"
 
 
-    def __init__(self):
-        # Almacenaremos los CSV descargados
+    def __init__(self):        
         self._routes = None
         self._stops = None
         self._trips = None
@@ -31,7 +32,7 @@ class FgcApiService:
         self,
         method: str,
         endpoint: str,
-        use_base_url: bool = True,
+        use_FGC_BASE_URL: bool = True,
         raw: bool = False,
         text: bool = False,
         **kwargs
@@ -41,13 +42,17 @@ class FgcApiService:
         headers = kwargs.pop("headers", {})
         headers["Accept"] = "*/*" if raw or text else "application/json"
 
-        url = f"{self.BASE_URL}{endpoint}" if use_base_url else endpoint
+        url = f"{self.FGC_BASE_URL}{endpoint}" if use_FGC_BASE_URL else endpoint
         self.logger.info(f"[{current_method}] {method.upper()} → {url} | Params: {kwargs.get('params', {})}")
 
+        ssl_context = ssl.create_default_context()
+        ssl_context.check_hostname = False
+        ssl_context.verify_mode = ssl.CERT_NONE
+
         async with aiohttp.ClientSession() as session:
-            async with session.request(method, url, headers=headers, **kwargs) as resp:
+            async with session.request(method, url, headers=headers, ssl=ssl_context, **kwargs) as resp:
                 if resp.status == 401:
-                    async with session.request(method, url, headers=headers, **kwargs) as retry_resp:
+                    async with session.request(method, url, headers=headers, ssl=ssl_context, **kwargs) as retry_resp:
                         retry_resp.raise_for_status()
                         return await retry_resp.read() if raw else (await retry_resp.text() if text else await retry_resp.json())
 
@@ -59,6 +64,16 @@ class FgcApiService:
                 else:
                     return await resp.json()
     
+    async def get_all_lines(self) -> List[FgcLine]: 
+        data = await self._request("GET", f"/lineas-red-fgc/records?limit=100", params=None)
+        lines = [create_fgc_line(l) for l in data['results']]
+        lines.sort(key= lambda x: x.id)
+        return lines
+    
+    async def get_all_stations(self):
+        data = await self._request("GET", f"{self.MOUTE_BASE_URL}/nearbyotp?radius=5000000&coordX=2.1528975837826656&coordY=41.40267994115967&language=ca_ES", params=None, use_FGC_BASE_URL=False)
+        return data['transports']
+
     # ----------------------------
     # Métodos para obtener estaciones
     # ----------------------------
@@ -81,10 +96,10 @@ class FgcApiService:
             return
 
         urls = await self._get_file_urls()
-        self._routes = pd.read_csv(StringIO(await self._request("GET", urls["routes"], use_base_url=False, text=True)))
-        self._stops = pd.read_csv(StringIO(await self._request("GET", urls["stops"], use_base_url=False, text=True)))
-        self._trips = pd.read_csv(StringIO(await self._request("GET", urls["trips"], use_base_url=False, text=True)))
-        self._stop_times = pd.read_csv(StringIO(await self._request("GET", urls["stop_times"], use_base_url=False, text=True)))
+        self._routes = pd.read_csv(StringIO(await self._request("GET", urls["routes"], use_FGC_BASE_URL=False, text=True)))
+        self._stops = pd.read_csv(StringIO(await self._request("GET", urls["stops"], use_FGC_BASE_URL=False, text=True)))
+        self._trips = pd.read_csv(StringIO(await self._request("GET", urls["trips"], use_FGC_BASE_URL=False, text=True)))
+        self._stop_times = pd.read_csv(StringIO(await self._request("GET", urls["stop_times"], use_FGC_BASE_URL=False, text=True)))
 
     async def get_stations_by_line(self, line_name: str) -> List[FgcStation]:
         """Obtener todas las estaciones de una línea concreta con orden correcto"""
@@ -149,7 +164,7 @@ class FgcApiService:
         route_id = route.iloc[0]["route_id"]
 
         # 4. Descargar el feed GTFS-RT usando _request()
-        data = await self._request("GET", self.GTFS_RT_URL, use_base_url=False, raw=True)
+        data = await self._request("GET", self.GTFS_RT_URL, use_FGC_BASE_URL=False, raw=True)
 
         # 5. Parsear el feed GTFS-RT
         feed = gtfs_realtime_pb2.FeedMessage()

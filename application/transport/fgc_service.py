@@ -8,6 +8,7 @@ from providers.helpers import logger
 
 from application.cache_service import CacheService
 from providers.manager.user_data_manager import UserDataManager
+from domain.transport_type import TransportType
 from .service_base import ServiceBase
 
 class FgcService(ServiceBase):
@@ -31,19 +32,34 @@ class FgcService(ServiceBase):
         )
     
     async def get_all_stations(self) -> List[FgcStation]:
-        static_key = "fgc_stations"
-        cached_stations = await self._get_from_cache_or_data(static_key, None, cache_ttl=3600*24)
+        #TODO: Complete integration
+        fgc_stations_key = "fgc_stations"
+        #moute_stations_key = "moute_stations"
+
+        cached_stations = await self._get_from_cache_or_data(fgc_stations_key, None, cache_ttl=3600*24)
+        #moute_stations = await self._get_from_cache_or_data(moute_stations_key, None, cache_ttl=3600*24)
 
         if cached_stations is not None:
             return cached_stations
         
+        #if moute_stations is None:
+        #    moute_stations = await self.fgc_api_service.get_all_stations()
+        #    await self._get_from_cache_or_data(moute_stations_key, moute_stations, cache_ttl=3600*24)
+
         lines = await self.get_all_lines()
         stations = []
         for line in lines:
             line_stations = await self.fgc_api_service.get_stations_by_line(line.id)
+            '''
+            for line_station in line_stations:
+                moute_station = next((s for s in moute_stations if str(TransportType.FGC.id) in s.get('tipusTransports') and line_station.name in s.get('desc')), None)
+                if moute_station is None:
+                    pass
+                line_station.moute_id = moute_station.get('id')
+            '''
             stations += line_stations
 
-        return await self._get_from_cache_or_data(static_key, stations, cache_ttl=3600*24)
+        return await self._get_from_cache_or_data(fgc_stations_key, stations, cache_ttl=3600*24)
 
     
     async def get_stations_by_line(self, line_id) -> List[FgcStation]:

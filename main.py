@@ -151,7 +151,7 @@ class BotApp:
                 ("Metro", self.metro_service, ["get_all_lines", "get_all_stations"]),
                 ("Bus", self.bus_service, ["get_all_lines", "get_all_stops"]),
                 ("Tram", self.tram_service, ["get_all_lines", "get_all_stops"]),
-                ("Rodalies", self.rodalies_service, ["get_all_lines", "get_all_stations"])                
+                ("Rodalies", self.rodalies_service, ["get_all_lines", "get_all_stations"]),             
                 ("FGC", self.fgc_service, ["get_all_lines", "get_all_stations"])
             ]
 
@@ -221,7 +221,8 @@ class BotApp:
 
         # FGC
         self.application.add_handler(CallbackQueryHandler(self.fgc_handler.ask_search_method, pattern=r"^fgc_line"))
-        self.application.add_handler(CallbackQueryHandler(self.fgc_handler.show_list, pattern=r"^fgc_list"))        
+        self.application.add_handler(CallbackQueryHandler(self.fgc_handler.show_list, pattern=r"^fgc_list"))
+        self.application.add_handler(CallbackQueryHandler(self.fgc_handler.show_station, pattern=r"^fgc_station"))
 
         # FAVORITES
         self.application.add_handler(CallbackQueryHandler(self.favorites_handler.add_favorite, pattern=r"^add_fav"))

@@ -54,3 +54,6 @@ class FgcHandler(HandlerBase):
             service_get_stations_by_line=self.fgc_service.get_stations_by_line,
             keyboard_menu_builder=self.keyboard_factory.fgc_stations_menu
         )
+
+    async def show_station(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        await self.message_service.handle_interaction(update, "🚧 This feature isn't available yet, but it's coming in a future update!")

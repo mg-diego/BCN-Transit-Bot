@@ -12,3 +12,4 @@ class FgcStation:
     order: int
     has_alerts: Optional[bool] = False
     alerts: Optional[list] = field(default_factory=lambda: defaultdict(list))
+    moute_id: Optional[int] =  None
