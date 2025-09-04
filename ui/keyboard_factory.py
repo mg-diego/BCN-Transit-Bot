@@ -7,6 +7,7 @@ from domain.bus import BusLine, BusStop
 from domain.tram import TramLine, TramStop
 from domain.rodalies import RodaliesLine
 from domain.transport_type import TransportType
+from domain.fgc import FgcLine, FgcStation
 from domain.callbacks import Callbacks
 
 from providers.manager import LanguageManager
@@ -128,6 +129,14 @@ class KeyboardFactory:
         ]
         rows = self._chunk_buttons(buttons, 3)
         return InlineKeyboardMarkup(rows)
+    
+    def fgc_lines_menu(self, fgc_lines: List[FgcLine])-> InlineKeyboardMarkup:
+        buttons = [
+            InlineKeyboardButton(f" {'⚠️ ' if line.has_alerts else ''}{line.name_with_emoji}  ", callback_data=Callbacks.FGC_LINE.format(line_code=line.id, line_name=line.name))
+            for line in fgc_lines
+        ]
+        rows = self._chunk_buttons(buttons, 4)
+        return InlineKeyboardMarkup(rows)
 
     # === STATIONS / STOPS ===
 
@@ -143,6 +152,14 @@ class KeyboardFactory:
         buttons = [
             InlineKeyboardButton(f"{tram_stop.order}. {tram_stop.name}  ", callback_data=Callbacks.TRAM_STOP.format(line_code=line_id, stop_code=tram_stop.id))
             for tram_stop in tram_stops
+        ]
+        rows = self._chunk_buttons(buttons, 2)
+        return InlineKeyboardMarkup(rows)
+    
+    def fgc_stations_menu(self, fgc_stations: List[FgcStation], line_id):
+        buttons = [
+            InlineKeyboardButton(f"{fgc_station.order}. {fgc_station.name} {'⚠️' if fgc_station.has_alerts else ''}  ", callback_data=Callbacks.FGC_STATION.format(line_code=line_id, station_code=fgc_station.id))
+            for fgc_station in fgc_stations
         ]
         rows = self._chunk_buttons(buttons, 2)
         return InlineKeyboardMarkup(rows)

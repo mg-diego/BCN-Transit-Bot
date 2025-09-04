@@ -25,9 +25,6 @@ class MetroService(ServiceBase):
         self.user_data_manager = user_data_manager
         logger.info(f"[{self.__class__.__name__}] MetroService initialized")
 
-        self.METRO_LINES_CACHE_KEY = "metro_lines"
-        self.METRO_STATIONS_CACHE_KEY = "metro_stations"
-
 
     # ===== CACHE CALLS ====
     async def get_all_lines(self) -> List[MetroLine]:

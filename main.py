@@ -7,9 +7,9 @@ from ui import (
     MenuHandler, MetroHandler, BusHandler, TramHandler, FavoritesHandler, HelpHandler, 
     LanguageHandler, KeyboardFactory, WebAppHandler, RodaliesHandler, ReplyHandler, AdminHandler, SettingsHandler, BicingHandler, NotificationsHandler, FgcHandler
 )
-from application import MessageService, MetroService, BusService, TramService, RodaliesService, BicingService, CacheService, UpdateManager, TelegraphService, AlertsService
+from application import MessageService, MetroService, BusService, TramService, RodaliesService, BicingService, CacheService, UpdateManager, TelegraphService, AlertsService, FgcService
 from providers.manager import SecretsManager, UserDataManager, LanguageManager
-from providers.api import TmbApiService, TramApiService, RodaliesApiService, BicingApiService
+from providers.api import TmbApiService, TramApiService, RodaliesApiService, BicingApiService, FgcApiService
 from providers.helpers import logger
 
 
@@ -41,6 +41,7 @@ class BotApp:
         self.tram_api_service = None
         self.rodalies_api_service = None
         self.bicing_api_service = None
+        self.fgc_api_service = None
 
         # Domain services
         self.metro_service = None
@@ -48,6 +49,7 @@ class BotApp:
         self.tram_service = None
         self.rodalies_service = None
         self.bicing_service = None
+        self.fgc_service = None
 
         # Handlers
         self.admin_handler = None        
@@ -106,6 +108,7 @@ class BotApp:
         self.tram_api_service = TramApiService(client_id=tram_client_id, client_secret=tram_client_secret)
         self.rodalies_api_service = RodaliesApiService()
         self.bicing_api_service = BicingApiService()
+        self.fgc_api_service = FgcApiService()
 
         # Domain services
         self.metro_service = MetroService(self.tmb_api_service, self.language_manager, self.cache_service, self.user_data_manager)
@@ -113,6 +116,7 @@ class BotApp:
         self.tram_service = TramService(self.tram_api_service, self.language_manager, self.cache_service)
         self.rodalies_service = RodaliesService(self.rodalies_api_service, self.language_manager, self.cache_service, self.user_data_manager)
         self.bicing_service = BicingService(self.bicing_api_service, self.cache_service)
+        self.fgc_service = FgcService(self.fgc_api_service, self.language_manager, self.cache_service, self.user_data_manager)
 
         logger.info("Transport services initialized")
 
@@ -124,7 +128,7 @@ class BotApp:
         self.tram_handler = TramHandler(self.keyboard_factory, self.tram_service, self.update_manager, self.user_data_manager, self.message_service, self.language_manager, self.telegraph_service)
         self.rodalies_handler = RodaliesHandler(self.keyboard_factory, self.rodalies_service, self.update_manager, self.user_data_manager, self.message_service, self.language_manager, self.telegraph_service)
         self.bicing_handler = BicingHandler(self.keyboard_factory, self.bicing_service, self.update_manager, self.user_data_manager, self.message_service, self.language_manager, self.telegraph_service)
-        self.fgc_handler = FgcHandler(self.keyboard_factory, self.metro_service, self.update_manager, self.user_data_manager, self.message_service, self.language_manager, self.telegraph_service)
+        self.fgc_handler = FgcHandler(self.keyboard_factory, self.fgc_service, self.update_manager, self.user_data_manager, self.message_service, self.language_manager, self.telegraph_service)
 
         self.favorites_handler = FavoritesHandler(self.message_service, self.user_data_manager, self.keyboard_factory, self.metro_service, self.bus_service, self.tram_service, self.rodalies_service, self.bicing_service, self.language_manager)
         self.help_handler = HelpHandler(self.message_service, self.keyboard_factory, self.language_manager)
@@ -147,8 +151,8 @@ class BotApp:
                 ("Metro", self.metro_service, ["get_all_lines", "get_all_stations"]),
                 ("Bus", self.bus_service, ["get_all_lines", "get_all_stops"]),
                 ("Tram", self.tram_service, ["get_all_lines", "get_all_stops"]),
-                ("Rodalies", self.rodalies_service, ["get_all_lines", "get_all_stations"])
-                #TODO: Add FGC seeder
+                ("Rodalies", self.rodalies_service, ["get_all_lines", "get_all_stations"])                
+                ("FGC", self.fgc_service, ["get_all_lines", "get_all_stations"])
             ]
 
             for name, service, methods in preload_tasks:
@@ -216,7 +220,8 @@ class BotApp:
         self.application.add_handler(CallbackQueryHandler(self.bicing_handler.show_station, pattern=r"^bicing_station"))
 
         # FGC
-        
+        self.application.add_handler(CallbackQueryHandler(self.fgc_handler.ask_search_method, pattern=r"^fgc_line"))
+        self.application.add_handler(CallbackQueryHandler(self.fgc_handler.show_list, pattern=r"^fgc_list"))        
 
         # FAVORITES
         self.application.add_handler(CallbackQueryHandler(self.favorites_handler.add_favorite, pattern=r"^add_fav"))

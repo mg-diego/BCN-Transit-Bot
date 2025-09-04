@@ -4,9 +4,10 @@ from .transport.bus_service import BusService
 from .transport.tram_service import TramService
 from .transport.rodalies_service import RodaliesService
 from .transport.bicing_service import BicingService
+from .transport.fgc_service import FgcService
 from .cache_service import CacheService
 from .update_manager import UpdateManager
 from .telegraph_service import TelegraphService
 from .alerts_service import AlertsService
 
-__all__ = ["MessageService", "MetroService", "BusService", "TramService", "RodaliesService", "CacheService", "UpdateManager", "BicingService", "TelegraphService", "AlertsService"]
+__all__ = ["MessageService", "MetroService", "BusService", "TramService", "RodaliesService", "CacheService", "UpdateManager", "BicingService", "FgcService", "TelegraphService", "AlertsService"]

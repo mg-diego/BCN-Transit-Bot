@@ -8,12 +8,14 @@ class Callbacks(Enum):
     BUS_LINE = "bus_line:{line_code}:{line_name}"
     TRAM_LINE = "tram_line:{line_code}:{line_name}"
     RODALIES_LINE = "rodalies_line:{line_code}"
+    FGC_LINE = "fgc_line:{line_code}:{line_name}"
 
     METRO_STATION = "metro_station:{line_code}:{station_code}"
     BUS_STOP = "bus_stop:{line_code}:{stop_code}"
     TRAM_STOP = "tram_stop:{line_code}:{stop_code}"
     RODALIES_STATION = "rodalies_station:{line_code}:{station_code}"
     BICING_STATION = "bicing_station:{line_code}:{station_code}"
+    FGC_STATION = "fgc_station:{line_code}:{station_code}"
 
     BUS_CATEGORY_D = "bus_category:Diagonals"
     BUS_CATEGORY_H = "bus_category:Horitzontals"
