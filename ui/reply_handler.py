@@ -47,17 +47,17 @@ class ReplyHandler:
     async def reply_router(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         self.current_search = str(update.message.text)
 
-        if self.current_search == "🚇 Metro":
+        if self.current_search == f"{TransportType.METRO.emoji} Metro":
             await self.metro_handler.show_lines(update, context)
-        elif self.current_search == "🚌 Bus":
+        elif self.current_search == f"{TransportType.BUS.emoji} Bus":
             await self.bus_handler.show_lines(update, context)
-        elif self.current_search == "🚋 Tram":
+        elif self.current_search == f"{TransportType.TRAM.emoji} Tram":
             await self.tram_handler.show_lines(update, context)
-        elif self.current_search == "🚆 Rodalies":
+        elif self.current_search == f"{TransportType.RODALIES.emoji} Rodalies":
             await self.rodalies_handler.show_lines(update, context)
-        elif self.current_search == '🚴 Bicing':
+        elif self.current_search == f"{TransportType.BICING.emoji} Bicing":
             await self.bicing_handler.show_instructions(update, context)    
-        elif self.current_search == '🚊 FGC':
+        elif self.current_search == f"{TransportType.FGC.emoji} FGC":
             await self.fgc_handler.show_lines(update, context)
         elif '⭐' in self.current_search:
             await self.favorites_handler.show_favorites(update, context)

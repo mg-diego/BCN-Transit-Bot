@@ -66,8 +66,7 @@ class RodaliesApiService:
     # ==== Stations ====
     async def get_next_trains_at_station(self, station_id: int, line_id: str) -> List[RodaliesStation]:
         """Fetch all stations for a given line."""
-        next_rodalies = await self._request("GET", f"/departures?stationId={station_id}&minute=90&fullResponse=true&lang=ca")
-        
+        next_rodalies = await self._request("GET", f"/departures?stationId={station_id}&minute=90&fullResponse=true&lang=ca")       
         
         routes_dict = {}
         for item in next_rodalies["trains"]:

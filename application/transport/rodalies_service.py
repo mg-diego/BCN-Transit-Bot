@@ -100,12 +100,6 @@ class RodaliesService(ServiceBase):
         line = next((l for l in lines if str(l.id) == str(line_id)), None)
         logger.debug(f"[{self.__class__.__name__}] get_line_by_id({line_id}) -> {line}")
         return line
-
-        return await self._get_from_cache_or_api(
-            f"rodalies_line_{line_id}",
-            lambda: self.rodalies_api_service.get_line_by_id(line_id),
-            cache_ttl=3600*24
-        )
     
     # === OTHER CALLS ===
     async def get_stations_by_line(self, line_id) -> List[RodaliesStation]:

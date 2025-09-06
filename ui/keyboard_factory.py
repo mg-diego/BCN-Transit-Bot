@@ -43,13 +43,13 @@ class KeyboardFactory:
     def create_main_menu_replykeyboard(self):
         """Teclado principal como ReplyKeyboard."""
         keyboard = [
-            [KeyboardButton(self.language_manager.t('main.menu.metro')),
-            KeyboardButton(self.language_manager.t('main.menu.bus')),
-            KeyboardButton(self.language_manager.t('main.menu.tram'))],
+            [KeyboardButton(f"{TransportType.METRO.emoji} {self.language_manager.t('main.menu.metro')}"),
+            KeyboardButton(f"{TransportType.BUS.emoji} {self.language_manager.t('main.menu.bus')}"),
+            KeyboardButton(f"{TransportType.TRAM.emoji} {self.language_manager.t('main.menu.tram')}")],
             
-            [KeyboardButton(self.language_manager.t('main.menu.bicing')),
-            KeyboardButton(self.language_manager.t('main.menu.rodalies')),
-            KeyboardButton(self.language_manager.t('main.menu.fgc'))],
+            [KeyboardButton(f"{TransportType.BICING.emoji} {self.language_manager.t('main.menu.bicing')}"),
+            KeyboardButton(f"{TransportType.RODALIES.emoji} {self.language_manager.t('main.menu.rodalies')}"),
+            KeyboardButton(f"{TransportType.FGC.emoji} {self.language_manager.t('main.menu.fgc')}")],
             
             [KeyboardButton(self.language_manager.t('main.menu.favorites')),
             KeyboardButton(self.language_manager.t('main.menu.settings'))]
@@ -235,7 +235,7 @@ class KeyboardFactory:
     def favorites_menu(self, favs):
         TRANSPORT_CONFIG = {
             TransportType.METRO.value: {
-                "emoji": "🚇",
+                "emoji": TransportType.METRO.emoji,
                 "name_fmt": "{nom_linia} - {name}",
                 "callback": lambda item: Callbacks.METRO_STATION.format(
                     line_code=item.get("codi_linia"),
@@ -243,7 +243,7 @@ class KeyboardFactory:
                 ),
             },
             TransportType.BUS.value: {
-                "emoji": "🚌",
+                "emoji": TransportType.BUS.emoji,
                 "name_fmt": "({code}) {name}",
                 "callback": lambda item: Callbacks.BUS_STOP.format(
                     line_code=item.get("codi_linia"),
@@ -251,7 +251,7 @@ class KeyboardFactory:
                 ),
             },
             TransportType.TRAM.value: {
-                "emoji": "🚋",
+                "emoji": TransportType.TRAM.emoji,
                 "name_fmt": "{nom_linia} - {name}",
                 "callback": lambda item: Callbacks.TRAM_STOP.format(
                     line_code=item.get("codi_linia"),
@@ -259,7 +259,7 @@ class KeyboardFactory:
                 ),
             },
             TransportType.RODALIES.value: {
-                "emoji": "🚆",
+                "emoji": TransportType.RODALIES.emoji,
                 "name_fmt": "{nom_linia} - {name}",
                 "callback": lambda item: Callbacks.RODALIES_STATION.format(
                     line_code=item.get("codi_linia"),
@@ -267,7 +267,7 @@ class KeyboardFactory:
                 ),
             },
             TransportType.BICING.value: {
-                "emoji": "🚴",
+                "emoji": TransportType.BICING.emoji,
                 "name_fmt": "({code}) {name}",
                 "callback": lambda item: Callbacks.BICING_STATION.format(
                     line_code='bicing',
@@ -356,31 +356,31 @@ class KeyboardFactory:
 
             # Build text and callback depending on type
             if stop["type"] == "metro":
-                text = f"🚇 {stop['line_name']} - {stop['station_name']}{distance_str}"
+                text = f"{TransportType.METRO.emoji} {stop['line_name']} - {stop['station_name']}{distance_str}"
                 callback = Callbacks.METRO_STATION.format(
                     line_code=stop["line_code"],
                     station_code=stop["station_code"]
                 )
             elif stop["type"] == "bus":
-                text = f"🚌 ({stop['stop_code']}) - {stop['stop_name']}{distance_str}"
+                text = f"{TransportType.BUS.emoji} ({stop['stop_code']}) - {stop['stop_name']}{distance_str}"
                 callback = Callbacks.BUS_STOP.format(
                     line_code=stop["line_code"],
                     stop_code=stop["stop_code"]
                 )
             elif stop["type"] == "tram":
-                text = f"🚋 {stop['line_name']} - {stop['stop_name']}{distance_str}"
+                text = f"{TransportType.TRAM.emoji} {stop['line_name']} - {stop['stop_name']}{distance_str}"
                 callback = Callbacks.TRAM_STOP.format(
                     line_code=stop["line_code"],
                     stop_code=stop["stop_code"]
                 )
             elif stop["type"] == "rodalies":
-                text = f"🚋 {stop['line_name']} - {stop['station_name']}{distance_str}"
+                text = f"{TransportType.RODALIES.emoji} {stop['line_name']} - {stop['station_name']}{distance_str}"
                 callback = Callbacks.RODALIES_STATION.format(
                     line_code=stop["line_code"],
                     station_code=stop["station_code"]
                 )            
             elif stop["type"] == "bicing":
-                text = f"🚴 {stop['station_name']} (🅿️:{stop['slots']} 🔋:{stop["electrical"]} 🚲:{stop["mechanical"]}){distance_str}"
+                text = f"{TransportType.BICING.emoji} {stop['station_name']} (🅿️:{stop['slots']} 🔋:{stop["electrical"]} 🚲:{stop["mechanical"]}){distance_str}"
                 callback = Callbacks.BICING_STATION.format(
                     line_code='bicing',
                     station_code=stop["station_code"]
