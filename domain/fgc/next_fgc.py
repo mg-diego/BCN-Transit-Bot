@@ -9,21 +9,35 @@ class NextFgc:
     temps_arribada: int  # Epoch en segundos
 
     def arrival_time_str(self) -> str:
-        now = datetime.now().timestamp()
-        delta_s = self.temps_arribada - now
+        now = datetime.now()
+        now_ts = now.timestamp()
+        delta_s = self.temps_arribada - now_ts
 
+        # Caso 1: Llega muy pronto (< 40s)
         if delta_s <= 40:
             return "🔜"
 
-        minutes, seconds = divmod(int(delta_s), 60)
+        # Caso 2: Menos de 1 hora → mostrar minutos y segundos
+        if delta_s < 60 * 60:
+            minutes, seconds = divmod(int(delta_s), 60)
 
-        parts = []
-        if minutes:
-            parts.append(f"{minutes}min")
-        if seconds or not minutes:
-            parts.append(f"{seconds}s")
+            parts = []
+            if minutes:
+                parts.append(f"{minutes}min")
+            if seconds or not minutes:
+                parts.append(f"{seconds}s")
 
-        return " ".join(parts)
+            return " ".join(parts)
+
+        # Convertimos el timestamp de llegada en datetime
+        arrival_dt = datetime.fromtimestamp(self.temps_arribada)
+
+        # Caso 3: Es hoy pero dentro de más de 1 hora → mostrar hora exacta
+        if arrival_dt.date() == now.date():
+            return arrival_dt.strftime("%H:%Mh")
+
+        # Caso 4: No es hoy → mostrar fecha y hora completa
+        return arrival_dt.strftime("%d-%m-%Y %H:%M")
 
 @dataclass
 class FgcLineRoute:

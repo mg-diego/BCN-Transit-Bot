@@ -115,7 +115,7 @@ class FavoritesHandler:
             new_fav_item = {
                 "STATION_CODE": item.id,
                 "STATION_NAME": item.name,
-                "LINE_NAME": line.name,
+                "LINE_NAME": line.name_with_emoji,
                 "LINE_CODE": line_id,
                 "coordinates": [item.lat, item.lon]
             }

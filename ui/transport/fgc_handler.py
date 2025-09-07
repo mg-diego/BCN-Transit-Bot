@@ -45,6 +45,21 @@ class FgcHandler(HandlerBase):
 
     async def ask_search_method(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         await super().ask_search_method(update, context, transport_type=TransportType.FGC)
+    
+    async def show_map(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Display stations of a rodalies line."""
+        self.message_service.set_bot_instance(context.bot)
+        _, line_id, line_name = self.message_service.get_callback_data(update)
+
+        line = await self.fgc_service.get_line_by_id(line_id)
+        stations = await self.fgc_service.get_stations_by_line(line_id)
+        encoded = self.mapper.map_fgc_stations(stations, line)
+
+        await self.message_service.send_new_message_from_callback(
+            update=update,
+            text=self.language_manager.t("common.map.open", line_name=line_name),
+            reply_markup=self.keyboard_factory.map_reply_menu(encoded),
+        )
 
     async def show_list(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         await self.show_line_stations_list(

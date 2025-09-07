@@ -137,7 +137,7 @@ class FgcService(ServiceBase):
         """
         Retrieve a station by its code.
         """
-        lines = await self.get_all_lines(line_id)
+        lines = await self.get_all_lines()
         line = next((l for l in lines if str(l.id) == str(line_id)), None)
         logger.debug(f"[{self.__class__.__name__}] get_line_by_id({line_id}) -> {line}")
         return line
