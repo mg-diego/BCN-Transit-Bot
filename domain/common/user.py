@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import List
 
+
 @dataclass
 class User:
     user_id: int

@@ -4,6 +4,7 @@ from typing import Optional
 
 from domain.common.alert import Alert
 
+
 @dataclass
 class BusLine:
     ID_LINIA: int
@@ -34,13 +35,7 @@ class BusLine:
     alerts: Optional[list[Alert]] = field(default_factory=lambda: defaultdict(list))
 
     def __post_init__(self):
-        emojis = {
-            "H": "🟦",
-            "D": "🟪",
-            "V": "🟩",
-            "M": "🔴",
-            "X": "⚫"
-        }
+        emojis = {"H": "🟦", "D": "🟪", "V": "🟩", "M": "🔴", "X": "⚫"}
 
         self.ORIGINAL_NOM_LINIA = self.NOM_LINIA
 

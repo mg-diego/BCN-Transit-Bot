@@ -1,11 +1,13 @@
 from dataclasses import dataclass
 from typing import List
 
+
 @dataclass
 class TramStopConnection:
     stopId: int
     connectionId: int
     order: int
+
 
 @dataclass
 class TramConnection:

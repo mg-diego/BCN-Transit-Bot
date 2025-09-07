@@ -1,13 +1,12 @@
-from domain.transport_type import TransportType
 from telegram import Update
 from telegram.ext import ContextTypes
 
-from application import RodaliesService, MessageService, UpdateManager, TelegraphService
-
-from providers.manager import UserDataManager, LanguageManager
-from providers.helpers import TransportDataCompressor, logger, GoogleMapsHelper
-
+from application import MessageService, RodaliesService, TelegraphService, UpdateManager
+from domain.transport_type import TransportType
+from providers.helpers import GoogleMapsHelper, TransportDataCompressor, logger
+from providers.manager import LanguageManager, UserDataManager
 from ui.keyboard_factory import KeyboardFactory
+
 from .handler_base import HandlerBase
 
 

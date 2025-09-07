@@ -1,5 +1,6 @@
 from enum import Enum
 
+
 class Callbacks(Enum):
     MENU_CALLBACK = "menu"
     BACK_TO_MENU_CALLBACK = "back_to_menu"
@@ -29,7 +30,9 @@ class Callbacks(Enum):
     BUS_CATEGORY_141_200 = "bus_category:141-200"
 
     REMOVE_FAVORITE = "remove_fav:{item_type}:{line_id}:{item_id}:{previous_callback}:{has_connections}"
-    ADD_FAVORITE = "add_fav:{item_type}:{line_id}:{item_id}:{previous_callback}:{has_connections}"
+    ADD_FAVORITE = (
+        "add_fav:{item_type}:{line_id}:{item_id}:{previous_callback}:{has_connections}"
+    )
 
     SET_LANGUAGE = "set_language:{language_code}"
 

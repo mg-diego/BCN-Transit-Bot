@@ -1,12 +1,15 @@
 import urllib.parse
 
+
 class GoogleMapsHelper:
     """
     Helper to generate Google Maps URLs for directions with customizable options.
     """
 
     @staticmethod
-    def build_directions_url(latitude: float, longitude: float, travel_mode: str = "walking") -> str:
+    def build_directions_url(
+        latitude: float, longitude: float, travel_mode: str = "walking"
+    ) -> str:
         """
         Builds a Google Maps URL for directions from the user's current location
         to the given coordinates.

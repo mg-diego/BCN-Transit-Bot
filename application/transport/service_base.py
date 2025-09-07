@@ -1,7 +1,10 @@
-from typing import Callable, Any, List
-from rapidfuzz import process, fuzz
-from providers.helpers import logger, HtmlHelper
+from typing import Any, Callable, List
+
+from rapidfuzz import fuzz, process
+
 from application.cache_service import CacheService
+from providers.helpers import HtmlHelper, logger
+
 
 class ServiceBase:
     """
@@ -16,7 +19,7 @@ class ServiceBase:
         query: str,
         items: List[Any],
         key: Callable[[Any], str],
-        threshold: float = 80
+        threshold: float = 80,
     ) -> List[Any]:
         """
         Performs fuzzy search on a list of objects, returning all exact matches
@@ -38,29 +41,33 @@ class ServiceBase:
 
         # --- Matches without special chars ---
         remaining_items = [item for item in items if item not in exact_matches]
-        normalized_matches = [item for item in remaining_items if HtmlHelper.normalize_text(query_lower) in HtmlHelper.normalize_text(key(item).lower())]
+        normalized_matches = [
+            item
+            for item in remaining_items
+            if HtmlHelper.normalize_text(query_lower)
+            in HtmlHelper.normalize_text(key(item).lower())
+        ]
 
         # --- Prepare fuzzy search excluding exact matches ---
-        remaining_items = [item for item in items if item not in (exact_matches + normalized_matches)]
+        remaining_items = [
+            item for item in items if item not in (exact_matches + normalized_matches)
+        ]
         item_dict = {key(item): item for item in remaining_items}
 
         # --- Fuzzy matches ---
         fuzzy_matches = process.extract(
-            query=query,
-            choices=item_dict.keys(),
-            scorer=fuzz.WRatio
+            query=query, choices=item_dict.keys(), scorer=fuzz.WRatio
         )
 
-        fuzzy_filtered = [item_dict[name] for name, score, _ in fuzzy_matches if score >= threshold]
+        fuzzy_filtered = [
+            item_dict[name] for name, score, _ in fuzzy_matches if score >= threshold
+        ]
 
         # --- Combine exact + normalized + fuzzy ---
         return exact_matches + normalized_matches + fuzzy_filtered
 
     async def _get_from_cache_or_data(
-        self,
-        cache_key: str,
-        data: Any,
-        cache_ttl: int = 3600
+        self, cache_key: str, data: Any, cache_ttl: int = 3600
     ) -> Any:
         """
         Generic method to fetch data from cache or use the provided data,
@@ -87,15 +94,14 @@ class ServiceBase:
         # Store provided data in cache
         if self.cache_service and data is not None:
             await self.cache_service.set(cache_key, data, ttl=cache_ttl)
-            logger.info(f"[{class_name}] Cached data for key: {cache_key} (TTL={cache_ttl}s)")
+            logger.info(
+                f"[{class_name}] Cached data for key: {cache_key} (TTL={cache_ttl}s)"
+            )
 
         return data
 
     async def _get_from_cache_or_api(
-        self,
-        cache_key: str,
-        api_call: Callable[[], Any],
-        cache_ttl: int = 3600
+        self, cache_key: str, api_call: Callable[[], Any], cache_ttl: int = 3600
     ) -> Any:
         """
         Fetch data from cache or, if not present, call the API function

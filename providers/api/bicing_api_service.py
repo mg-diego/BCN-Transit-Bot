@@ -1,8 +1,10 @@
-import aiohttp
 import inspect
+
+import aiohttp
 
 from domain.bicing.bicing_station import BicingStation
 from providers.helpers import logger
+
 
 class BicingApiService:
     BASE_URL = "https://www.bicing.barcelona"
@@ -10,7 +12,7 @@ class BicingApiService:
 
     def __init__(self):
         self.logger = logger.getChild(self.__class__.__name__)
-        
+
     async def _post(self, endpoint: str, data: dict = None):
         """Realiza una petición POST a la API de Bicing."""
         url = f"{self.BASE_URL}{endpoint}"
@@ -24,6 +26,6 @@ class BicingApiService:
 
     async def get_stations(self):
         """Obtiene la lista de estaciones de Bicing."""
-        data = await self._post('/get-stations')
-        stations = [BicingStation(**station) for station in data.get('stations', [])]
+        data = await self._post("/get-stations")
+        stations = [BicingStation(**station) for station in data.get("stations", [])]
         return stations

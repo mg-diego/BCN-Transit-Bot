@@ -1,8 +1,8 @@
-from telegraph import Telegraph
 import logging
-
-from html import escape
 from datetime import datetime
+from html import escape
+
+from telegraph import Telegraph
 
 logger = logging.getLogger(__name__)
 
@@ -13,7 +13,7 @@ class TelegraphService:
         Initialize the Telegraph client and create an account if no access token exists.
         """
         self.telegraph = Telegraph(access_token=access_token)
-        self.author_name = 'BCN Transit Bot'
+        self.author_name = "BCN Transit Bot"
 
     def create_page(self, title: str, alerts) -> str:
         """
@@ -30,7 +30,7 @@ class TelegraphService:
             response = self.telegraph.create_page(
                 title=title,
                 html_content=self.generate_telegraph_html(alerts),
-                author_name=self.author_name
+                author_name=self.author_name,
             )
             page_url = "https://telegra.ph/" + response["path"]
             logger.info(f"Telegraph page created: {page_url}")
@@ -38,8 +38,6 @@ class TelegraphService:
         except Exception as e:
             logger.error(f"Failed to create Telegraph page: {e}")
             raise
-
-
 
     # lang: "es" | "en" | "ca"
     def generate_telegraph_html(self, alerts, title="Incidencias de la línea"):
@@ -56,13 +54,10 @@ class TelegraphService:
             return s
 
         def get_status_emoji(status):
-                status = (status or "").upper()
-                return {
-                    "WARNING": "⚠️",
-                    "INFO": "ℹ️",
-                    "CLOSED": "⛔",
-                    "RESOLVED": "✅"
-                }.get(status, "ℹ️")
+            status = (status or "").upper()
+            return {"WARNING": "⚠️", "INFO": "ℹ️", "CLOSED": "⛔", "RESOLVED": "✅"}.get(
+                status, "ℹ️"
+            )
 
         def get_cause_emoji(cause):
             cause = (cause or "").upper()
@@ -70,7 +65,7 @@ class TelegraphService:
                 "MAINTENANCE": "🛠️",
                 "CONSTRUCTION": "🏗️",
                 "INCIDENT": "⚠️",
-                "TRAFFIC": "🚦"
+                "TRAFFIC": "🚦",
             }.get(cause, "")
 
         html = []
@@ -83,14 +78,14 @@ class TelegraphService:
         for a in alerts:
             header_txt = ""
             body_txt = ""
-            for p in (a.publications or []):
+            for p in a.publications or []:
                 if p.headerEs or p.textEs:
                     header_txt, body_txt = p.headerEs or "", p.textEs or ""
                     break
 
             # Entidades afectadas
             ent_rows = []
-            for e in (a.affected_entities or []):
+            for e in a.affected_entities or []:
                 ent_rows.append(
                     f"<li><b>{escape(e.line_name or e.line_code or '')}</b> — "
                     f"{escape(e.station_name or e.station_code or '')}"
@@ -121,7 +116,8 @@ class TelegraphService:
             status_emoji = get_status_emoji(a.status)
             cause_emoji = get_cause_emoji(a.cause)
 
-            html.append(f"""
+            html.append(
+                f"""
     <hr>
     <p><b><u>🚨 {escape(header_txt or 'Incidencia')}</u></b></p>
     <p><b>ID:</b> {escape(str(a.id) )}</p>
@@ -131,6 +127,7 @@ class TelegraphService:
     {affected_html}
     {body_html}
     _______________________________________
-    """)
+    """
+            )
 
         return "".join(html)

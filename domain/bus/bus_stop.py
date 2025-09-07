@@ -1,11 +1,11 @@
-from dataclasses import dataclass, field
 import json
-from typing import Optional
-from typing import Tuple
-
 import re
+from dataclasses import dataclass, field
+from typing import Optional, Tuple
+
 from domain.bus.bus_line import BusLine
 from providers.helpers.html_helper import HtmlHelper
+
 
 @dataclass
 class BusStop:
@@ -57,6 +57,7 @@ class BusStop:
     def __str__(self):
         return f"{self.ORDRE}. {self.NOM_PARADA}"
 
+
 def create_bus_stop(feature) -> BusStop:
     props = feature["properties"]
     coords = tuple(feature["geometry"]["coordinates"])  # (lon, lat)
@@ -102,26 +103,29 @@ def create_bus_stop(feature) -> BusStop:
         DATA_FI=props.get("DATA_FI"),
         COLOR_REC=props.get("COLOR_REC", ""),
         PUNTS_PARADA=props.get("PUNTS_PARADA", ""),
-        coordinates=coords
+        coordinates=coords,
     )
+
 
 def update_bus_stop_with_line_info(bus_stop: BusStop, bus_line: BusLine) -> BusStop:
     if bus_line.has_alerts:
         for alert in bus_line.alerts:
             for entity in alert.affected_entities:
-                if entity.line_name == bus_stop.NOM_LINIA and entity.station_code == bus_stop.CODI_PARADA:
+                if (
+                    entity.line_name == bus_stop.NOM_LINIA
+                    and entity.station_code == bus_stop.CODI_PARADA
+                ):
                     bus_stop.has_alerts = True
                     if alert.publications not in bus_stop.alerts:
                         bus_stop.alerts = alert.publications
 
     return bus_stop
 
+
 def get_alert_by_language(bus_stop: BusStop, language: str):
     raw_alerts = []
     if bus_stop.has_alerts:
         for alert in bus_stop.alerts:
-            raw_alerts.append(getattr(alert, f'text{language.capitalize()}'))
+            raw_alerts.append(getattr(alert, f"text{language.capitalize()}"))
 
     return "\n".join(f"<pre>{alert}</pre>" for alert in set(raw_alerts))
-
-

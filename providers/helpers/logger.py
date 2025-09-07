@@ -1,9 +1,9 @@
 import logging
-from logging.handlers import TimedRotatingFileHandler
 import os
+from logging.handlers import TimedRotatingFileHandler
 
 # Crear la carpeta /logs si no existe
-log_dir = './logs'
+log_dir = "./logs"
 if not os.path.exists(log_dir):
     os.makedirs(log_dir)
 
@@ -27,7 +27,7 @@ file_handler = TimedRotatingFileHandler(
     when="midnight",  # Rotar a medianoche
     interval=1,  # Cada día
     backupCount=30,  # Mantener logs de los últimos 30 días
-    encoding="utf-8"
+    encoding="utf-8",
 )
 file_handler.setLevel(logging.DEBUG)
 file_handler.setFormatter(formatter)

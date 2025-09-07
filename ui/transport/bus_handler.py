@@ -1,15 +1,16 @@
 from telegram import Update
 from telegram.ext import ContextTypes
 
+from application import BusService, MessageService, TelegraphService, UpdateManager
 from domain.bus.bus_stop import get_alert_by_language
-from providers.helpers.google_maps_helper import GoogleMapsHelper
-from ui.keyboard_factory import KeyboardFactory
-from application import BusService, MessageService, UpdateManager, TelegraphService
-from providers.manager import UserDataManager, LanguageManager
-from providers.helpers import TransportDataCompressor, logger
 from domain.transport_type import TransportType
+from providers.helpers import TransportDataCompressor, logger
+from providers.helpers.google_maps_helper import GoogleMapsHelper
+from providers.manager import LanguageManager, UserDataManager
+from ui.keyboard_factory import KeyboardFactory
 
 from .handler_base import HandlerBase
+
 
 class BusHandler(HandlerBase):
     def __init__(

@@ -1,7 +1,8 @@
-from dataclasses import dataclass
-from typing import List, Optional
-from datetime import datetime
 import html
+from dataclasses import dataclass
+from datetime import datetime
+from typing import List, Optional
+
 
 @dataclass
 class NextBus:
@@ -26,6 +27,7 @@ class NextBus:
 
         return " ".join(parts)
 
+
 @dataclass
 class BusLineRoute:
     id_operador: int
@@ -39,13 +41,7 @@ class BusLineRoute:
     original_nom_linia: Optional[str] = None
 
     def __post_init__(self):
-        emojis = {
-            "H": "🟦",
-            "D": "🟪",
-            "V": "🟩",
-            "M": "🔴",
-            "X": "🟨"
-        }
+        emojis = {"H": "🟦", "D": "🟪", "V": "🟩", "M": "🔴", "X": "🟨"}
 
         self.original_nom_linia = self.nom_linia
 
@@ -66,5 +62,5 @@ class BusLineRoute:
             f"           <i>{number_emojis[i] if i < len(number_emojis) else f'{i+1}.'} {bus.arrival_time_str()}</i>"
             for i, bus in enumerate(self.propers_busos[:5])
         )
-        
+
         return f"{header}\n{bus_info}"

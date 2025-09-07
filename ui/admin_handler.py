@@ -1,12 +1,14 @@
-from datetime import datetime
-import os
-from pathlib import Path
 import html
+import os
 import subprocess
+from datetime import datetime
+from pathlib import Path
 from typing import List
+
 from telegram import Update
-from telegram.ext import CallbackContext
 from telegram.constants import ParseMode
+from telegram.ext import CallbackContext
+
 from providers.helpers import logger
 
 
@@ -31,16 +33,26 @@ class AdminHandler:
         <hash>
         """
         try:
-            output = subprocess.check_output(
-                ["git", "log", "-1", "--pretty=format:%cd - %s%n%H", "--date=short"],
-                stderr=subprocess.DEVNULL
-            ).decode().strip()
+            output = (
+                subprocess.check_output(
+                    [
+                        "git",
+                        "log",
+                        "-1",
+                        "--pretty=format:%cd - %s%n%H",
+                        "--date=short",
+                    ],
+                    stderr=subprocess.DEVNULL,
+                )
+                .decode()
+                .strip()
+            )
             logger.debug(f"Fetched current commit: {output}")
             return output
         except Exception as e:
             logger.error(f"Error fetching commit: {e}")
             return f"Error fetching commit: {e}"
-        
+
     def tail_log(self, file_path: str = "logs/app.log", lines: int = 50) -> List[str]:
         """
         Returns the last `lines` lines of the log file.
@@ -57,12 +69,12 @@ class AdminHandler:
                 chunk_size = 1024
                 data = bytearray()
                 pointer = end_pos
-                while pointer > 0 and data.count(b'\n') <= lines:
+                while pointer > 0 and data.count(b"\n") <= lines:
                     read_size = min(chunk_size, pointer)
                     pointer -= read_size
                     f.seek(pointer)
                     data[:0] = f.read(read_size)
-                all_lines = data.decode(errors='ignore').splitlines()
+                all_lines = data.decode(errors="ignore").splitlines()
                 logger.debug(f"Read last {lines} lines from {file_path}")
                 return all_lines[-lines:]
         except Exception as e:
@@ -75,7 +87,7 @@ class AdminHandler:
         await self.bot.send_message(
             chat_id=chat_id,
             text=f"🔖 Current bot commit:\n\n`{commit_info}`",
-            parse_mode="Markdown"
+            parse_mode="Markdown",
         )
         logger.info(f"Sent current commit info to {chat_id}")
 
@@ -105,7 +117,9 @@ class AdminHandler:
         try:
             num_lines = int(context.args[0]) if context.args else 50
         except ValueError:
-            logger.warning(f"Invalid argument for /logs by user {user_id}: {context.args}")
+            logger.warning(
+                f"Invalid argument for /logs by user {user_id}: {context.args}"
+            )
             return
 
         log_lines = self.tail_log("logs/app.log", num_lines)
@@ -113,7 +127,7 @@ class AdminHandler:
         log_text = html.escape(log_text)
 
         if len(log_text) > self.MAX_LENGTH:
-            log_text = log_text[-self.MAX_LENGTH:]
+            log_text = log_text[-self.MAX_LENGTH :]
 
         logger.info(f"Admin {user_id} fetched last {num_lines} lines from log")
         await update.message.reply_text(f"<pre>{log_text}</pre>", parse_mode="HTML")
@@ -137,7 +151,7 @@ class AdminHandler:
         if user_id not in self.admin_ids:
             logger.warning(f"Unauthorized user {user_id} tried to access /deploy")
             return
-        
+
         await update.message.reply_text("🚀 Starting deployment...")
 
         try:
@@ -148,12 +162,13 @@ class AdminHandler:
                 cwd=project_root,
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
-                start_new_session=True
+                start_new_session=True,
             )
             logger.info(f"Deploy script launched by {user_id}")
 
         except Exception as e:
-            await update.message.reply_text(f"❌ Failed to execute deploy script:\n<pre>{e}</pre>", parse_mode=ParseMode.HTML)
+            await update.message.reply_text(
+                f"❌ Failed to execute deploy script:\n<pre>{e}</pre>",
+                parse_mode=ParseMode.HTML,
+            )
             logger.error(f"Failed to launch deploy script: {e}")
-
-    

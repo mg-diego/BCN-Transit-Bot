@@ -1,7 +1,8 @@
 from dataclasses import dataclass
-from typing import Dict
+from typing import Dict, Optional
+
 from domain.tram.tram_network import TramNetwork
-from typing import Optional
+
 
 @dataclass
 class TramLine:
@@ -18,4 +19,6 @@ class TramLine:
         self.name = f"🟩 {self.original_name}"
 
     def __str__(self):
-        return f"TramLine {self.name} (code: {self.code}) in network {self.network.name}"
+        return (
+            f"TramLine {self.name} (code: {self.code}) in network {self.network.name}"
+        )

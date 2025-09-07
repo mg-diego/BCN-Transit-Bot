@@ -1,11 +1,12 @@
+import html
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
-import html
 from typing import List
 from zoneinfo import ZoneInfo
 
 SPAIN_TZ = ZoneInfo("Europe/Madrid")
+
 
 @dataclass
 class NextTram:
@@ -42,7 +43,7 @@ class NextTram:
         else:
             return f" {minutes}m {seconds}s"
 
-    
+
 @dataclass
 class TramLineRoute:
     line_name: str
@@ -73,7 +74,9 @@ class TramLineRoute:
         lines = []
         for line_name, routes in grouped_routes.items():
             for route in routes:
-                header = f"     <b>🟩  {line_name} → {html.escape(route.destination)}</b>"
+                header = (
+                    f"     <b>🟩  {line_name} → {html.escape(route.destination)}</b>"
+                )
                 tram_info = "\n".join(
                     f"           <i>{number_emojis[i] if i < len(number_emojis) else f'{i+1}.'} {tram.remaining_from_now()}</i>"
                     for i, tram in enumerate(route.next_trams[:5])
@@ -82,4 +85,3 @@ class TramLineRoute:
             lines.append("\n")
 
         return "\n".join(lines)
-

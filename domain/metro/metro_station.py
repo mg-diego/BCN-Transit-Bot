@@ -1,10 +1,11 @@
+import json
 from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import List, Optional, Tuple
-import json
 
-from domain.metro import MetroLine, MetroConnection
+from domain.metro import MetroConnection, MetroLine
 from providers.helpers.html_helper import HtmlHelper
+
 
 @dataclass
 class MetroStation:

@@ -1,7 +1,8 @@
-from dataclasses import dataclass
-from typing import List
-from datetime import datetime
 import html
+from dataclasses import dataclass
+from datetime import datetime
+from typing import List
+
 
 @dataclass
 class NextMetro:
@@ -25,6 +26,7 @@ class NextMetro:
             parts.append(f"{seconds}s")
 
         return " ".join(parts)
+
 
 @dataclass
 class MetroLineRoute:
@@ -57,5 +59,5 @@ class MetroLineRoute:
             f"           <i>{number_emojis[i] if i < len(number_emojis) else f'{i+1}.'} {tren.arrival_time_str()}</i>"
             for i, tren in enumerate(self.propers_trens[:5])
         )
-        
+
         return f"{header}\n{tren_info}"

@@ -1,11 +1,19 @@
-import time
-import aiohttp
 import inspect
+import time
 from datetime import datetime
 from typing import Any, Dict, List
 
-from domain.tram import TramLine, TramNetwork, TramStop, TramConnection, TramStopConnection, TramLineRoute, NextTram
+import aiohttp
 
+from domain.tram import (
+    NextTram,
+    TramConnection,
+    TramLine,
+    TramLineRoute,
+    TramNetwork,
+    TramStop,
+    TramStopConnection,
+)
 from providers.helpers import logger
 
 
@@ -29,7 +37,7 @@ class TramApiService:
         data = {
             "grant_type": "client_credentials",
             "client_id": self.CLIENT_ID,
-            "client_secret": self.CLIENT_SECRET
+            "client_secret": self.CLIENT_SECRET,
         }
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
 
@@ -40,20 +48,28 @@ class TramApiService:
                     self.ACCESS_TOKEN = token_data.get("access_token")
                     expires_in = token_data.get("expires_in", 3600)
                     self.TOKEN_EXPIRES_AT = time.time() + expires_in - 60
-                    self.logger.info(f"[{current_method}] Access token successfully retrieved")
+                    self.logger.info(
+                        f"[{current_method}] Access token successfully retrieved"
+                    )
                 else:
                     text = await response.text()
-                    self.logger.error(f"[{current_method}] Failed to fetch token: {response.status} - {text}")
+                    self.logger.error(
+                        f"[{current_method}] Failed to fetch token: {response.status} - {text}"
+                    )
                     raise Exception(f"Error {response.status}: {text}")
 
     async def _get_valid_token(self) -> str:
         current_method = inspect.currentframe().f_code.co_name
         if not self.ACCESS_TOKEN or time.time() >= self.TOKEN_EXPIRES_AT:
-            self.logger.info(f"[{current_method}] Token expired or missing → fetching new one")
+            self.logger.info(
+                f"[{current_method}] Token expired or missing → fetching new one"
+            )
             await self._fetch_access_token()
         return self.ACCESS_TOKEN
 
-    async def _request(self, method: str, endpoint: str, use_base_url: bool = True, **kwargs) -> Any:
+    async def _request(
+        self, method: str, endpoint: str, use_base_url: bool = True, **kwargs
+    ) -> Any:
         """Método común para todas las llamadas HTTP."""
         current_method = inspect.currentframe().f_code.co_name
         token = await self._get_valid_token()
@@ -62,30 +78,41 @@ class TramApiService:
         headers["Authorization"] = f"Bearer {token}"
         headers["Accept"] = "application/json"
 
-        endpoint = f"{self.BASE_URL}{self.API_VERSION}{endpoint}" if use_base_url else endpoint
+        endpoint = (
+            f"{self.BASE_URL}{self.API_VERSION}{endpoint}" if use_base_url else endpoint
+        )
 
-        self.logger.info(f"[{current_method}] {method.upper()} → {endpoint} | Params: {kwargs.get('params', {})}")
+        self.logger.info(
+            f"[{current_method}] {method.upper()} → {endpoint} | Params: {kwargs.get('params', {})}"
+        )
 
         async with aiohttp.ClientSession() as session:
-            async with session.request(method, endpoint, headers=headers, **kwargs) as response:
+            async with session.request(
+                method, endpoint, headers=headers, **kwargs
+            ) as response:
                 if response.status == 401:
-                    self.logger.warning(f"[{current_method}] Token expired → retrying with new token")
+                    self.logger.warning(
+                        f"[{current_method}] Token expired → retrying with new token"
+                    )
                     await self._fetch_access_token()
                     headers["Authorization"] = f"Bearer {self.ACCESS_TOKEN}"
-                    async with session.request(method, endpoint, headers=headers, **kwargs) as retry_response:
+                    async with session.request(
+                        method, endpoint, headers=headers, **kwargs
+                    ) as retry_response:
                         retry_response.raise_for_status()
                         return await retry_response.json()
 
                 response.raise_for_status()
                 return await response.json()
 
-    async def get_networks(self, name: str = "", page: int = 1, page_size: int = 10, sort: str = ""):
-        return await self._request("GET", "/networks", params={
-            "name": name,
-            "page": page,
-            "pageSize": page_size,
-            "sort": sort
-        })
+    async def get_networks(
+        self, name: str = "", page: int = 1, page_size: int = 10, sort: str = ""
+    ):
+        return await self._request(
+            "GET",
+            "/networks",
+            params={"name": name, "page": page, "pageSize": page_size, "sort": sort},
+        )
 
     async def get_lines(
         self,
@@ -96,7 +123,7 @@ class TramApiService:
         code: int = None,
         page: int = 1,
         page_size: int = 100,
-        sort: str = ""
+        sort: str = "",
     ) -> List[TramLine]:
         params: Dict[str, Any] = {
             "name": name,
@@ -105,7 +132,7 @@ class TramApiService:
             "image": image,
             "page": page,
             "pageSize": page_size,
-            "sort": sort
+            "sort": sort,
         }
         if code is not None:
             params["code"] = code
@@ -119,7 +146,7 @@ class TramApiService:
                 network=TramNetwork(**line["network"]),
                 code=line["code"],
                 image=line["image"],
-                id=line["id"]
+                id=line["id"],
             )
             for line in lines
         ]
@@ -142,7 +169,7 @@ class TramApiService:
         image: str = "",
         page: int = 1,
         page_size: int = 100,
-        sort: str = ""
+        sort: str = "",
     ) -> List[TramStop]:
         params = {
             "name": name,
@@ -155,7 +182,7 @@ class TramApiService:
             "image": image,
             "page": page,
             "pageSize": page_size,
-            "sort": sort
+            "sort": sort,
         }
         params = {k: v for k, v in params.items() if v is not None}
 
@@ -175,7 +202,7 @@ class TramApiService:
         image: str = "",
         page: int = 1,
         page_size: int = 100,
-        sort: str = ""
+        sort: str = "",
     ) -> List[TramStop]:
         params = {
             "name": name,
@@ -188,7 +215,7 @@ class TramApiService:
             "image": image,
             "page": page,
             "pageSize": page_size,
-            "sort": sort
+            "sort": sort,
         }
         params = {k: v for k, v in params.items() if v is not None}
         stops = await self._request("GET", f"/stops", params=params)
@@ -203,7 +230,7 @@ class TramApiService:
         longitude: float | None = None,
         page: int = 1,
         page_size: int = 100,
-        sort: str = ""
+        sort: str = "",
     ) -> List[TramConnection]:
         params = {
             "name": name,
@@ -212,21 +239,25 @@ class TramApiService:
             "longitude": longitude,
             "page": page,
             "pageSize": page_size,
-            "sort": sort
+            "sort": sort,
         }
         params = {k: v for k, v in params.items() if v is not None}
 
-        connections = await self._request("GET", f"/stops/{stop_id}/connections", params=params)
+        connections = await self._request(
+            "GET", f"/stops/{stop_id}/connections", params=params
+        )
 
         return [
             TramConnection(
-                id=connection['id'],
-                name=connection['name'],
-                latitude=connection['latitude'],
-                longitude=connection['longitude'],
-                order=connection['order'],
-                image=connection['image'],
-                stopConnections=[TramStopConnection(**sc) for sc in connection['stopConnections']]
+                id=connection["id"],
+                name=connection["name"],
+                latitude=connection["latitude"],
+                longitude=connection["longitude"],
+                order=connection["order"],
+                image=connection["image"],
+                stopConnections=[
+                    TramStopConnection(**sc) for sc in connection["stopConnections"]
+                ],
             )
             for connection in connections
         ]
@@ -236,17 +267,22 @@ class TramApiService:
             "GET",
             f"https://tram-web-service.tram.cat/api/opendata/stopTimes"
             f"?outboundCode={outbound_code}&returnCode={return_code}",
-            use_base_url=False
+            use_base_url=False,
         )
 
         routes_dict = {}
         for item in next_trams:
-            key = (item["lineName"], item["code"], item["stopName"], item["destination"])
+            key = (
+                item["lineName"],
+                item["code"],
+                item["stopName"],
+                item["destination"],
+            )
 
             next_tram = NextTram(
                 vehicle_id=item["vehicleId"],
                 occupancy=item["occupancy"],
-                arrival_time=datetime.fromisoformat(item["arrivalTime"])
+                arrival_time=datetime.fromisoformat(item["arrivalTime"]),
             )
 
             if key not in routes_dict:
@@ -255,7 +291,7 @@ class TramApiService:
                     code=item["code"],
                     stop_name=item["stopName"],
                     destination=item["destination"],
-                    next_trams=[next_tram]
+                    next_trams=[next_tram],
                 )
             else:
                 routes_dict[key].next_trams.append(next_tram)

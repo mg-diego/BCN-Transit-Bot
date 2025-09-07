@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import List
 
+
 @dataclass
 class MetroConnection:
     ID_ESTACIO: int
@@ -43,7 +44,7 @@ class MetroConnection:
         }
         emoji = emojis.get(self.NOM_LINIA, "")
         return f"     {emoji} {self.NOM_LINIA} - {self.DESC_LINIA}"
-    
+
 
 def format_metro_connections(metro_connections: List[MetroConnection]):
-    return ("\n".join(str(c) for c in metro_connections))
+    return "\n".join(str(c) for c in metro_connections)

@@ -1,8 +1,10 @@
-import os
 import json
+import os
+
 import requests
-from google.transit import gtfs_realtime_pb2
 from google.protobuf.json_format import MessageToDict
+from google.transit import gtfs_realtime_pb2
+
 
 class GTFSRealtimeReader:
     """
@@ -76,14 +78,11 @@ class GTFSRealtimeReader:
             if entity.HasField("trip_update"):
                 print(f"- Trip update: {entity.trip_update.trip.trip_id}")
             if entity.HasField("vehicle"):
-                print(f"- Vehicle: {entity.vehicle.vehicle.id}, Position: {entity.vehicle.position}")
+                print(
+                    f"- Vehicle: {entity.vehicle.vehicle.id}, Position: {entity.vehicle.position}"
+                )
             if entity.HasField("alert"):
                 print(f"- Alert: {entity.alert.header_text.translation[0].text}")
-
-
-
-
-
 
 
 reader = GTFSRealtimeReader("tripupdates.pb")

@@ -1,17 +1,21 @@
 import asyncio
+import json
+import time
 from collections import defaultdict
-import time, json
 from typing import Awaitable, Callable, List
+
+from telegram import Update
+from telegram.error import RetryAfter
+from telegram.ext import ContextTypes
+
+from application import MessageService, TelegraphService, UpdateManager
 from domain.common.alert import Alert
 from domain.transport_type import TransportType
-from telegram import Update
-from telegram.ext import ContextTypes
-from telegram.error import RetryAfter
-from application import MessageService, UpdateManager, TelegraphService
+from providers.helpers import logger
 from providers.manager.language_manager import LanguageManager
 from providers.manager.user_data_manager import UserDataManager
-from providers.helpers import logger
 from ui.keyboard_factory import KeyboardFactory
+
 
 class HandlerBase:
     """

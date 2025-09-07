@@ -4,6 +4,7 @@ from typing import Optional
 
 from domain.common.alert import Alert
 
+
 @dataclass
 class MetroLine:
     ID_LINIA: int

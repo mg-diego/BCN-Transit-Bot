@@ -1,15 +1,36 @@
-from domain.transport_type import TransportType
-from providers.helpers import BoolConverter
 from telegram import Update
 from telegram.ext import ContextTypes
 
-from application import MetroService, BusService, TramService, RodaliesService, MessageService, BicingService, FgcService
-from providers.manager import UserDataManager, LanguageManager
+from application import (
+    BicingService,
+    BusService,
+    FgcService,
+    MessageService,
+    MetroService,
+    RodaliesService,
+    TramService,
+)
+from domain.transport_type import TransportType
+from providers.helpers import BoolConverter
+from providers.manager import LanguageManager, UserDataManager
 from ui.keyboard_factory import KeyboardFactory
+
 
 class FavoritesHandler:
 
-    def __init__(self, message_service: MessageService, user_data_manager: UserDataManager, keyboard_factory: KeyboardFactory, metro_service: MetroService, bus_service: BusService, tram_service: TramService, rodalies_service: RodaliesService, bicing_service: BicingService, fgc_service: FgcService, language_manager: LanguageManager):
+    def __init__(
+        self,
+        message_service: MessageService,
+        user_data_manager: UserDataManager,
+        keyboard_factory: KeyboardFactory,
+        metro_service: MetroService,
+        bus_service: BusService,
+        tram_service: TramService,
+        rodalies_service: RodaliesService,
+        bicing_service: BicingService,
+        fgc_service: FgcService,
+        language_manager: LanguageManager,
+    ):
         self.message_service = message_service
         self.user_data_manager = user_data_manager
         self.keyboard_factory = keyboard_factory
@@ -27,22 +48,22 @@ class FavoritesHandler:
 
         await self.message_service.send_new_message(
             update,
-            self.language_manager.t('common.loading.favorites'),
-            reply_markup=self.keyboard_factory._back_reply_button()
+            self.language_manager.t("common.loading.favorites"),
+            reply_markup=self.keyboard_factory._back_reply_button(),
         )
 
         if favs == []:
             await self.message_service.send_new_message(
                 update,
-                self.language_manager.t('favorites.empty'),
-                reply_markup=self.keyboard_factory.help_menu()
+                self.language_manager.t("favorites.empty"),
+                reply_markup=self.keyboard_factory.help_menu(),
             )
 
         else:
             await self.message_service.send_new_message(
                 update,
-                self.language_manager.t('favorites.message'),
-                reply_markup=self.keyboard_factory.favorites_menu(favs)
+                self.language_manager.t("favorites.message"),
+                reply_markup=self.keyboard_factory.favorites_menu(favs),
             )
 
     async def add_favorite(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -51,19 +72,21 @@ class FavoritesHandler:
 
         user_id = query.from_user.id
         data = query.data
-        _, item_type, line_id, item_id, previous_callback, has_connections = data.split(":")
+        _, item_type, line_id, item_id, previous_callback, has_connections = data.split(
+            ":"
+        )
 
         # Añadir favorito
         if item_type == TransportType.METRO.value:
             item = await self.metro_service.get_station_by_id(item_id)
-            
+
             new_fav_item = {
                 "STATION_CODE": item_id,
                 "STATION_NAME": item.NOM_ESTACIO,
                 "STATION_GROUP_CODE": item.CODI_GRUP_ESTACIO,
                 "LINE_NAME": item.EMOJI_NOM_LINIA,
                 "LINE_CODE": line_id,
-                "coordinates": item.coordinates
+                "coordinates": item.coordinates,
             }
         elif item_type == TransportType.BUS.value:
             item = await self.bus_service.get_stop_by_id(item_id)
@@ -72,7 +95,7 @@ class FavoritesHandler:
                 "STOP_CODE": item_id,
                 "STOP_NAME": item.NOM_PARADA,
                 "LINE_CODE": line_id,
-                "coordinates": item.coordinates
+                "coordinates": item.coordinates,
             }
         elif item_type == TransportType.TRAM.value:
             item = await self.tram_service.get_stop_by_id(item_id, line_id)
@@ -83,8 +106,8 @@ class FavoritesHandler:
                 "STOP_NAME": item.name,
                 "LINE_NAME": line.name,
                 "LINE_CODE": line_id,
-                "coordinates": [item.latitude, item.longitude]
-            }        
+                "coordinates": [item.latitude, item.longitude],
+            }
         elif item_type == TransportType.RODALIES.value:
             item = await self.rodalies_service.get_station_by_id(item_id, line_id)
             line = await self.rodalies_service.get_line_by_id(line_id)
@@ -94,20 +117,20 @@ class FavoritesHandler:
                 "STOP_NAME": item.name,
                 "LINE_NAME": line.emoji_name,
                 "LINE_CODE": line_id,
-                "coordinates": [item.latitude, item.longitude]
+                "coordinates": [item.latitude, item.longitude],
             }
-                
+
         elif item_type == TransportType.BICING.value:
             item = await self.bicing_service.get_station_by_id(item_id)
 
             new_fav_item = {
                 "STATION_CODE": item.id,
                 "STATION_NAME": item.streetName,
-                "LINE_NAME": '',
-                "LINE_CODE": '',
-                "coordinates": [item.latitude, item.longitude]
+                "LINE_NAME": "",
+                "LINE_CODE": "",
+                "coordinates": [item.latitude, item.longitude],
             }
-                
+
         elif item_type == TransportType.FGC.value:
             item = await self.fgc_service.get_station_by_id(item_id, line_id)
             line = await self.fgc_service.get_line_by_id(line_id)
@@ -117,11 +140,18 @@ class FavoritesHandler:
                 "STATION_NAME": item.name,
                 "LINE_NAME": line.name_with_emoji,
                 "LINE_CODE": line_id,
-                "coordinates": [item.lat, item.lon]
+                "coordinates": [item.lat, item.lon],
             }
 
         self.user_data_manager.add_favorite(user_id, item_type, new_fav_item)
-        keyboard = self.keyboard_factory.update_menu(is_favorite=True, item_type=item_type, item_id=item_id, line_id=line_id, previous_callback=previous_callback, has_connections=BoolConverter.from_string(has_connections))
+        keyboard = self.keyboard_factory.update_menu(
+            is_favorite=True,
+            item_type=item_type,
+            item_id=item_id,
+            line_id=line_id,
+            previous_callback=previous_callback,
+            has_connections=BoolConverter.from_string(has_connections),
+        )
 
         await query.edit_message_reply_markup(reply_markup=keyboard)
 
@@ -131,9 +161,18 @@ class FavoritesHandler:
 
         user_id = query.from_user.id
         data = query.data
-        _, item_type, line_id, item_id, previous_callback, has_connections = data.split(":")
+        _, item_type, line_id, item_id, previous_callback, has_connections = data.split(
+            ":"
+        )
 
         self.user_data_manager.remove_favorite(user_id, item_type, item_id)
-        keyboard = self.keyboard_factory.update_menu(is_favorite=False, item_type=item_type, item_id=item_id, line_id=line_id, previous_callback=previous_callback, has_connections=BoolConverter.from_string(has_connections))
+        keyboard = self.keyboard_factory.update_menu(
+            is_favorite=False,
+            item_type=item_type,
+            item_id=item_id,
+            line_id=line_id,
+            previous_callback=previous_callback,
+            has_connections=BoolConverter.from_string(has_connections),
+        )
 
         await query.edit_message_reply_markup(reply_markup=keyboard)

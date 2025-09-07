@@ -1,17 +1,15 @@
-from domain.transport_type import TransportType
-from domain.metro import get_alert_by_language, format_metro_connections
 from telegram import Update
 from telegram.ext import ContextTypes
 
+from application import MessageService, MetroService, TelegraphService, UpdateManager
+from domain.metro import format_metro_connections, get_alert_by_language
+from domain.transport_type import TransportType
+from providers.helpers import GoogleMapsHelper, TransportDataCompressor, logger
+from providers.manager import LanguageManager, UserDataManager
 from ui.keyboard_factory import KeyboardFactory
 
-from application import MetroService, UpdateManager, MessageService, TelegraphService
-
-from providers.manager import UserDataManager
-from providers.manager import LanguageManager
-from providers.helpers import TransportDataCompressor, GoogleMapsHelper, logger
-
 from .handler_base import HandlerBase
+
 
 class MetroHandler(HandlerBase):
     """

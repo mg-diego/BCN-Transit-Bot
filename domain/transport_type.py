@@ -1,5 +1,6 @@
 from enum import Enum
 
+
 class TransportType(Enum):
     BUS = (7, "bus", "🚌")
     METRO = (2, "metro", "🚇")

@@ -1,7 +1,9 @@
 import asyncio
-from application.message_service import MessageService
+
 from telegram import Update
 from telegram.ext import ContextTypes
+
+from application.message_service import MessageService
 from providers.helpers import logger
 
 
@@ -26,9 +28,13 @@ class UpdateManager:
         task = self.tasks.pop(user_id, None)
         if task:
             task.cancel()
-            logger.info(f"[{self.__class__.__name__}] Update task cancelled for user {user_id}")
+            logger.info(
+                f"[{self.__class__.__name__}] Update task cancelled for user {user_id}"
+            )
         else:
-            logger.debug(f"[{self.__class__.__name__}] No active update task to cancel for user {user_id}")
+            logger.debug(
+                f"[{self.__class__.__name__}] No active update task to cancel for user {user_id}"
+            )
 
     def start_task(self, user_id: int, update_coro):
         """
@@ -38,10 +44,17 @@ class UpdateManager:
         self.cancel_task(user_id)
         task = asyncio.create_task(update_coro())
         self.tasks[user_id] = task
-        logger.info(f"[{self.__class__.__name__}] Update task started for user {user_id}")
+        logger.info(
+            f"[{self.__class__.__name__}] Update task started for user {user_id}"
+        )
 
-    async def _animate_loading(self, user_id: int, context: ContextTypes.DEFAULT_TYPE,
-                               chat_id: int, base_text: str):
+    async def _animate_loading(
+        self,
+        user_id: int,
+        context: ContextTypes.DEFAULT_TYPE,
+        chat_id: int,
+        base_text: str,
+    ):
         """
         Internal coroutine that updates the message text with an animated loading indicator.
         """
@@ -54,14 +67,21 @@ class UpdateManager:
                 await context.bot.edit_message_text(
                     chat_id=chat_id,
                     message_id=message_id,
-                    text=f"⏳ {base_text}{'.' * dots}"
+                    text=f"⏳ {base_text}{'.' * dots}",
                 )
         except asyncio.CancelledError:
-            logger.info(f"[{self.__class__.__name__}] Animation cancelled for user {user_id}")
+            logger.info(
+                f"[{self.__class__.__name__}] Animation cancelled for user {user_id}"
+            )
             raise
 
-    async def start_loading(self, update: Update, context: ContextTypes.DEFAULT_TYPE,
-                            base_text: str = '', reply_markup = None):
+    async def start_loading(
+        self,
+        update: Update,
+        context: ContextTypes.DEFAULT_TYPE,
+        base_text: str = "",
+        reply_markup=None,
+    ):
         """
         Sends an initial loading message and starts the animated update task.
         """
@@ -72,13 +92,14 @@ class UpdateManager:
         await self.stop_loading(update, context)
 
         # Enviar mensaje inicial
-        message = await self.message_service.handle_interaction(update, text=f"⏳ {base_text}", reply_markup=reply_markup)
+        message = await self.message_service.handle_interaction(
+            update, text=f"⏳ {base_text}", reply_markup=reply_markup
+        )
         self.loading_messages[user_id] = message.message_id
 
         # Crear tarea de animación usando start_task existente
         self.start_task(
-            user_id,
-            lambda: self._animate_loading(user_id, context, chat_id, base_text)
+            user_id, lambda: self._animate_loading(user_id, context, chat_id, base_text)
         )
 
         return message
@@ -92,4 +113,3 @@ class UpdateManager:
 
         # Cancelar animación si está activa
         self.cancel_task(user_id)
-        

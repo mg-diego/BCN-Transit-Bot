@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import List
 
+
 @dataclass
 class MetroAccess:
     ID_ACCES: int
@@ -14,6 +15,7 @@ class MetroAccess:
     NUM_ASCENSORS: int
     DATA: str
     coordinates: List[float]
+
 
 def create_metro_access(feature: dict) -> MetroAccess:
     props = feature["properties"]
@@ -29,5 +31,5 @@ def create_metro_access(feature: dict) -> MetroAccess:
         NOM_TIPUS_ACCESSIBILITAT=props["NOM_TIPUS_ACCESSIBILITAT"],
         NUM_ASCENSORS=props["NUM_ASCENSORS"],
         DATA=props["DATA"],
-        coordinates=coords
+        coordinates=coords,
     )

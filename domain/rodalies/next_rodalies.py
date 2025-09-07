@@ -1,15 +1,16 @@
+import html
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-import html
 from typing import List
 from zoneinfo import ZoneInfo
 
 SPAIN_TZ = ZoneInfo("Europe/Madrid")
 
+
 @dataclass
 class NextRodalies:
     id: str
-    arrival_time: datetime       # Hora programada
+    arrival_time: datetime  # Hora programada
     delay_in_minutes: int
     platform: str = field(default_factory=str)
 
@@ -37,7 +38,7 @@ class NextRodalies:
             return f" {hours}h {minutes}m {seconds}s"
         else:
             return f" {minutes}m {seconds}s"
-    
+
     def scheduled_arrival(self) -> datetime:
         """Devuelve la hora programada de llegada en base al retraso."""
         if not self.arrival_time:
@@ -53,11 +54,25 @@ class RodaliesLineRoute:
     next_rodalies: List[NextRodalies] = field(default_factory=list)
 
     EMOJIS = {
-        "R1": "🟦", "R2": "🟩", "R2 Nord": "🟩", "R2 Sud": "🟩",
-        "R3": "🟥", "R4": "🟨", "R7": "⬜", "R8": "🟪",
-        "R11": "🟦", "R13": "⬛", "R14": "🟪", "R15": "🟫",
-        "R16": "🟥", "R17": "🟧", "RG1": "🟦", "RT1": "🟦",
-        "RT2": "⬜", "RL3": "🟩", "RL4": "🟨",
+        "R1": "🟦",
+        "R2": "🟩",
+        "R2 Nord": "🟩",
+        "R2 Sud": "🟩",
+        "R3": "🟥",
+        "R4": "🟨",
+        "R7": "⬜",
+        "R8": "🟪",
+        "R11": "🟦",
+        "R13": "⬛",
+        "R14": "🟪",
+        "R15": "🟫",
+        "R16": "🟥",
+        "R17": "🟧",
+        "RG1": "🟦",
+        "RT1": "🟦",
+        "RT2": "⬜",
+        "RL3": "🟩",
+        "RL4": "🟨",
     }
 
     def __post_init__(self):
@@ -74,18 +89,22 @@ class RodaliesLineRoute:
         )
 
         return f"{header}\n{tram_info}"
-    
+
     def _format_rodalies_info(self, i, rodalies: NextRodalies, number_emojis):
         """Formatea la información de cada tren de Rodalies."""
         number_emoji = number_emojis[i] if i < len(number_emojis) else f"{i+1}."
 
         # Vía si existe
-        via_text = f" (Vía {rodalies.platform} - {rodalies.id})" if rodalies.platform else ""
+        via_text = (
+            f" (Vía {rodalies.platform} - {rodalies.id})" if rodalies.platform else ""
+        )
 
         # Horas programada y estimada
         scheduled_time = rodalies.scheduled_arrival()
         scheduled = scheduled_time.strftime("%H:%M") if scheduled_time else "?"
-        estimated = rodalies.arrival_time.strftime("%H:%M") if rodalies.arrival_time else "?"
+        estimated = (
+            rodalies.arrival_time.strftime("%H:%M") if rodalies.arrival_time else "?"
+        )
 
         # Retraso
         if rodalies.delay_in_minutes is None or rodalies.delay_in_minutes == 0:

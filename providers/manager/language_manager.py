@@ -1,6 +1,8 @@
 import json
 import os
+
 from providers.helpers import logger
+
 
 class LanguageManager:
     """
@@ -19,25 +21,35 @@ class LanguageManager:
         self.locales_path = locales_path
         self.default_lang = default_lang
         self.locales = {}
-        logger.info(f"[{self.__class__.__name__}] Initializing LanguageManager with default language '{default_lang}'")
+        logger.info(
+            f"[{self.__class__.__name__}] Initializing LanguageManager with default language '{default_lang}'"
+        )
         self._load_locales()
 
     def _load_locales(self):
         """Load all JSON files from the locales folder."""
         if not os.path.exists(self.locales_path):
-            logger.warning(f"[{self.__class__.__name__}] Locales path '{self.locales_path}' does not exist")
+            logger.warning(
+                f"[{self.__class__.__name__}] Locales path '{self.locales_path}' does not exist"
+            )
             return
 
         for filename in os.listdir(self.locales_path):
             if filename.endswith(".json"):
                 lang_code = filename.replace(".json", "")
                 try:
-                    with open(os.path.join(self.locales_path, filename), "r", encoding="utf-8") as f:
+                    with open(
+                        os.path.join(self.locales_path, filename), "r", encoding="utf-8"
+                    ) as f:
                         self.locales[lang_code] = json.load(f)
-                        logger.info(f"[{self.__class__.__name__}] Loaded translations for language '{lang_code}'")
+                        logger.info(
+                            f"[{self.__class__.__name__}] Loaded translations for language '{lang_code}'"
+                        )
                 except Exception as e:
-                    logger.error(f"[{self.__class__.__name__}] Failed to load '{filename}': {e}")   
-    
+                    logger.error(
+                        f"[{self.__class__.__name__}] Failed to load '{filename}': {e}"
+                    )
+
     def t(self, key: str, lang: str = None, **kwargs):
         """
         Return translation for the given key and language, with optional interpolation.
@@ -51,14 +63,16 @@ class LanguageManager:
             str: Translated and formatted string.
         """
         lang = lang or self.default_lang
-        template = self.locales.get(lang, {}).get(key) or self.locales[self.default_lang].get(key)
+        template = self.locales.get(lang, {}).get(key) or self.locales[
+            self.default_lang
+        ].get(key)
         if template is None:
             return key
         if "{s}" in template:
             plural_suffix = "s" if kwargs.get("count", 0) != 1 else ""
             template = template.replace("{s}", plural_suffix)
         return template.format(**kwargs)
-    
+
     def set_language(self, new_language: str):
         """
         Set the default language for translations.
@@ -66,7 +80,9 @@ class LanguageManager:
         Args:
             new_language (str): New default language code.
         """
-        logger.info(f"[{self.__class__.__name__}] Changing default language from '{self.default_lang}' to '{new_language}'")
+        logger.info(
+            f"[{self.__class__.__name__}] Changing default language from '{self.default_lang}' to '{new_language}'"
+        )
         self.default_lang = new_language
 
     def get_available_languages(self):

@@ -1,16 +1,16 @@
-import json
 import html
-import lzstring
+import json
 import unicodedata
+from typing import Any, Dict, List
 
-from typing import List, Dict, Any
+import lzstring
 
+from domain.bicing import BicingStation
 from domain.bus import BusStop
+from domain.fgc import FgcLine, FgcStation
 from domain.metro import MetroStation
 from domain.rodalies import RodaliesLine, RodaliesStation
 from domain.tram import TramStop
-from domain.bicing import BicingStation
-from domain.fgc import FgcStation, FgcLine
 from domain.transport_type import TransportType
 
 from .logger import logger
@@ -35,11 +35,14 @@ class TransportDataCompressor:
         Returns:
             str: Normalized name without accents.
         """
-        normalized = ''.join(
-            c for c in unicodedata.normalize('NFKD', name)
+        normalized = "".join(
+            c
+            for c in unicodedata.normalize("NFKD", name)
             if not unicodedata.combining(c)
         )
-        logger.debug(f"[{self.__class__.__name__}] Normalized name '{name}' -> '{normalized}'")
+        logger.debug(
+            f"[{self.__class__.__name__}] Normalized name '{name}' -> '{normalized}'"
+        )
         return normalized
 
     def _compress_data(self, data: Dict[str, Any]) -> str:
@@ -57,7 +60,9 @@ class TransportDataCompressor:
         logger.debug(f"[{self.__class__.__name__}] Compressed data: \n{compressed}")
         return compressed
 
-    def _log_mapping_start(self, transport_type: str, count: int, line_id: str, line_name: str):
+    def _log_mapping_start(
+        self, transport_type: str, count: int, line_id: str, line_name: str
+    ):
         """
         Logs the start of the mapping process for a given transport type.
 
@@ -87,7 +92,7 @@ class TransportDataCompressor:
         self,
         stops: List[Dict[str, Any]],
         direction_forward: str,
-        direction_reverse: str
+        direction_reverse: str,
     ) -> List[Dict[str, Any]]:
         """
         Creates a list of stops in both forward and reverse directions.
@@ -100,16 +105,16 @@ class TransportDataCompressor:
         Returns:
             list: Stops duplicated for both directions.
         """
-        forward = [
-            {**stop, "direction": direction_forward} for stop in stops
-        ]
-        reverse = [
-            {**stop, "direction": direction_reverse} for stop in reversed(stops)
-        ]
+        forward = [{**stop, "direction": direction_forward} for stop in stops]
+        reverse = [{**stop, "direction": direction_reverse} for stop in reversed(stops)]
         return forward + reverse
 
-    def map_metro_stations(self, stations: List[MetroStation], line_id: str, line_name: str) -> str:
-        self._log_mapping_start(TransportType.METRO.value, len(stations), line_id, line_name)
+    def map_metro_stations(
+        self, stations: List[MetroStation], line_id: str, line_name: str
+    ) -> str:
+        self._log_mapping_start(
+            TransportType.METRO.value, len(stations), line_id, line_name
+        )
 
         stops_base = [
             {
@@ -117,8 +122,10 @@ class TransportDataCompressor:
                 "lon": station.coordinates[0],
                 "name": f"{station.CODI_ESTACIO} - {self._normalize_name(station.NOM_ESTACIO)}",
                 "color": station.COLOR_LINIA,
-                "alert": '⚠️' if station.has_alerts else '',
-                "connections": "".join(connection.NOM_LINIA for connection in station.connections)
+                "alert": "⚠️" if station.has_alerts else "",
+                "connections": "".join(
+                    connection.NOM_LINIA for connection in station.connections
+                ),
             }
             for station in stations
         ]
@@ -126,14 +133,14 @@ class TransportDataCompressor:
         stops = self._map_stops_bidirectional(
             stops_base,
             direction_forward=stations[0].DESTI_SERVEI,
-            direction_reverse=stations[0].ORIGEN_SERVEI
+            direction_reverse=stations[0].ORIGEN_SERVEI,
         )
 
         data = {
             "type": TransportType.METRO.value,
             "line_id": line_id,
             "line_name": html.escape(line_name),
-            "stops": stops
+            "stops": stops,
         }
 
         compressed = self._compress_data(data)
@@ -153,19 +160,23 @@ class TransportDataCompressor:
                     "lon": stop.coordinates[0],
                     "name": f"{stop.CODI_PARADA} - {self._normalize_name(stop.NOM_PARADA)}",
                     "color": stop.COLOR_REC,
-                    "alert": '⚠️' if stop.has_alerts else '',
-                    "direction": stop.DESTI_SENTIT
+                    "alert": "⚠️" if stop.has_alerts else "",
+                    "direction": stop.DESTI_SENTIT,
                 }
                 for stop in stops
-            ]
+            ],
         }
 
         compressed = self._compress_data(data)
         self._log_mapping_end(TransportType.BUS.value, line_id)
         return compressed
 
-    def map_tram_stops(self, stops: List[TramStop], line_id: str, line_name: str) -> str:
-        self._log_mapping_start(TransportType.TRAM.value, len(stops), line_id, line_name)
+    def map_tram_stops(
+        self, stops: List[TramStop], line_id: str, line_name: str
+    ) -> str:
+        self._log_mapping_start(
+            TransportType.TRAM.value, len(stops), line_id, line_name
+        )
 
         origin = stops[0].name
         destination = stops[-1].name
@@ -175,38 +186,40 @@ class TransportDataCompressor:
                 "lat": stop.latitude,
                 "lon": stop.longitude,
                 "name": f"{stop.id} - {self._normalize_name(stop.name)}",
-                "alert": '',
+                "alert": "",
                 "color": "008E78",
             }
             for stop in stops
         ]
 
         tram_stops = self._map_stops_bidirectional(
-            stops_base,
-            direction_forward=destination,
-            direction_reverse=origin
+            stops_base, direction_forward=destination, direction_reverse=origin
         )
 
         data = {
             "type": TransportType.TRAM.value,
             "line_id": line_id,
             "line_name": html.escape(line_name),
-            "stops": tram_stops
+            "stops": tram_stops,
         }
 
         compressed = self._compress_data(data)
         self._log_mapping_end(TransportType.TRAM.value, line_id)
         return compressed
-    
-    def map_rodalies_stations(self, stations: List[RodaliesStation], line: RodaliesLine):
-        self._log_mapping_start(TransportType.RODALIES.value, len(stations), line.id, line.name)
+
+    def map_rodalies_stations(
+        self, stations: List[RodaliesStation], line: RodaliesLine
+    ):
+        self._log_mapping_start(
+            TransportType.RODALIES.value, len(stations), line.id, line.name
+        )
 
         stops_base = [
             {
                 "lat": station.latitude,
                 "lon": station.longitude,
                 "name": f"{station.id} - {self._normalize_name(station.name)}",
-                "alert": '',
+                "alert": "",
                 "color": line.color,
             }
             for station in stations
@@ -215,28 +228,30 @@ class TransportDataCompressor:
         stops = self._map_stops_bidirectional(
             stops_base,
             direction_forward=line.origin_station_name,
-            direction_reverse=line.destination_station_name
+            direction_reverse=line.destination_station_name,
         )
 
         data = {
             "type": TransportType.RODALIES.value,
             "line_id": line.id,
             "line_name": html.escape(line.name),
-            "stops": stops
+            "stops": stops,
         }
 
         compressed = self._compress_data(data)
         self._log_mapping_end(TransportType.RODALIES.value, line.id)
         return compressed
-    
-    def map_bicing_stations(self, stations: List[BicingStation], user_location_lat, user_location_long):
-        self._log_mapping_start(TransportType.BICING.value, len(stations), '', '')
+
+    def map_bicing_stations(
+        self, stations: List[BicingStation], user_location_lat, user_location_long
+    ):
+        self._log_mapping_start(TransportType.BICING.value, len(stations), "", "")
 
         data = {
             "type": TransportType.BICING.value,
             "user_location": {
                 "latitude": user_location_lat,
-                "longitude": user_location_long
+                "longitude": user_location_long,
             },
             "stops": [
                 {
@@ -246,25 +261,27 @@ class TransportDataCompressor:
                     "slots": station.slots,
                     "electrical_bikes": station.electrical_bikes,
                     "mechanical_bikes": station.mechanical_bikes,
-                    "availability": station.disponibilidad
+                    "availability": station.disponibilidad,
                 }
                 for station in stations
-            ]
+            ],
         }
 
         compressed = self._compress_data(data)
-        self._log_mapping_end(TransportType.BICING.value, '')
+        self._log_mapping_end(TransportType.BICING.value, "")
         return compressed
-    
+
     def map_fgc_stations(self, stations: List[FgcStation], line: FgcLine):
-        self._log_mapping_start(TransportType.FGC.value, len(stations), line.id, line.name)
+        self._log_mapping_start(
+            TransportType.FGC.value, len(stations), line.id, line.name
+        )
 
         stops_base = [
             {
                 "lat": station.lat,
                 "lon": station.lon,
                 "name": f"{station.id} - {self._normalize_name(station.name)}",
-                "alert": '',
+                "alert": "",
                 "color": line.color,
             }
             for station in stations
@@ -273,14 +290,14 @@ class TransportDataCompressor:
         stops = self._map_stops_bidirectional(
             stops_base,
             direction_forward=line.origin,
-            direction_reverse=line.destination
+            direction_reverse=line.destination,
         )
 
         data = {
             "type": TransportType.FGC.value,
             "line_id": line.id,
             "line_name": html.escape(line.name),
-            "stops": stops
+            "stops": stops,
         }
 
         compressed = self._compress_data(data)

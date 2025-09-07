@@ -1,10 +1,18 @@
-import aiohttp
 import inspect
 from datetime import datetime
 from typing import Any, List
 
+import aiohttp
+
+from domain.rodalies import (
+    NextRodalies,
+    RodaliesLine,
+    RodaliesLineRoute,
+    RodaliesStation,
+    create_rodalies_line,
+    create_rodalies_station,
+)
 from providers.helpers import logger
-from domain.rodalies import RodaliesLine, RodaliesStation, RodaliesLineRoute, NextRodalies, create_rodalies_line, create_rodalies_station
 
 
 class RodaliesApiService:
@@ -15,20 +23,26 @@ class RodaliesApiService:
     def __init__(self):
         self.logger = logger.getChild(self.__class__.__name__)
 
-    async def _request(self, method: str, endpoint: str, use_base_url: bool = True, **kwargs) -> Any:
+    async def _request(
+        self, method: str, endpoint: str, use_base_url: bool = True, **kwargs
+    ) -> Any:
         """Generic HTTP request handler with token authentication."""
         current_method = inspect.currentframe().f_code.co_name
         headers = kwargs.pop("headers", {})
         headers["Accept"] = "application/json"
 
         url = f"{self.BASE_URL}{endpoint}" if use_base_url else endpoint
-        self.logger.info(f"[{current_method}] {method.upper()} → {url} | Params: {kwargs.get('params', {})}")
+        self.logger.info(
+            f"[{current_method}] {method.upper()} → {url} | Params: {kwargs.get('params', {})}"
+        )
 
         async with aiohttp.ClientSession() as session:
             async with session.request(method, url, headers=headers, **kwargs) as resp:
                 if resp.status == 401:
                     self.logger.warning(f"[{current_method}] Token expired → retrying")
-                    async with session.request(method, url, headers=headers, **kwargs) as retry_resp:
+                    async with session.request(
+                        method, url, headers=headers, **kwargs
+                    ) as retry_resp:
                         retry_resp.raise_for_status()
                         return await retry_resp.json()
 
@@ -41,14 +55,16 @@ class RodaliesApiService:
 
         lines = []
         for type in ["RODALIES", "REGIONAL"]:
-            data = await self._request("GET", f"/lines?type={type}&page=0&limit=100&lang=ca", params=None)
-            
+            data = await self._request(
+                "GET", f"/lines?type={type}&page=0&limit=100&lang=ca", params=None
+            )
+
             for line_data in data["included"]:
                 stations = []
                 for station_data in line_data["stations"]:
                     stations.append(create_rodalies_station(station_data))
                 lines.append(create_rodalies_line(line_data, stations))
-            
+
         return lines
 
     async def get_line_by_id(self, line_id: int) -> RodaliesLine:
@@ -60,14 +76,21 @@ class RodaliesApiService:
         return create_rodalies_line(line_data, stations)
 
     async def get_global_alerts(self):
-        alerts = await self._request("GET", "/notices?limit=500&sort=date,desc&sort=time,desc")
-        return alerts['included']
+        alerts = await self._request(
+            "GET", "/notices?limit=500&sort=date,desc&sort=time,desc"
+        )
+        return alerts["included"]
 
     # ==== Stations ====
-    async def get_next_trains_at_station(self, station_id: int, line_id: str) -> List[RodaliesStation]:
+    async def get_next_trains_at_station(
+        self, station_id: int, line_id: str
+    ) -> List[RodaliesStation]:
         """Fetch all stations for a given line."""
-        next_rodalies = await self._request("GET", f"/departures?stationId={station_id}&minute=90&fullResponse=true&lang=ca")       
-        
+        next_rodalies = await self._request(
+            "GET",
+            f"/departures?stationId={station_id}&minute=90&fullResponse=true&lang=ca",
+        )
+
         routes_dict = {}
         for item in next_rodalies["trains"]:
             line = item["line"]
@@ -75,21 +98,22 @@ class RodaliesApiService:
                 key = (line["name"], line["id"], item["destinationStation"]["name"])
 
                 next_rodalies = NextRodalies(
-                        id=item["technicalNumber"],
-                        arrival_time=datetime.fromisoformat(item["departureDateHourSelectedStation"]),
-                        platform=item["platformSelectedStation"],
-                        delay_in_minutes=item["delay"]
-                    )
-                
+                    id=item["technicalNumber"],
+                    arrival_time=datetime.fromisoformat(
+                        item["departureDateHourSelectedStation"]
+                    ),
+                    platform=item["platformSelectedStation"],
+                    delay_in_minutes=item["delay"],
+                )
+
                 if key not in routes_dict:
                     routes_dict[key] = RodaliesLineRoute(
                         code=line_id,
                         destination=item["destinationStation"]["name"],
                         line_name=line_id,
-                        next_rodalies=[next_rodalies]
+                        next_rodalies=[next_rodalies],
                     )
                 else:
                     routes_dict[key].next_rodalies.append(next_rodalies)
 
         return list(routes_dict.values())
-        

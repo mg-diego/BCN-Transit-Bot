@@ -1,11 +1,12 @@
 import math
-from typing import List, Optional, Tuple, Dict
+from typing import Dict, List, Optional, Tuple
 
+from domain.bicing import BicingStation
 from domain.bus import BusStop
 from domain.metro import MetroStation
-from domain.tram import TramStop
 from domain.rodalies import RodaliesStation
-from domain.bicing import BicingStation
+from domain.tram import TramStop
+
 
 class DistanceHelper:
     """
@@ -21,7 +22,7 @@ class DistanceHelper:
         tram_stops: List[TramStop],
         rodalies_stations: List[RodaliesStation],
         bicing_stations: List[BicingStation],
-        user_location: Optional[object] = None
+        user_location: Optional[object] = None,
     ) -> List[Dict]:
         """
         Generates a unified list of stops (metro, bus, tram) with distances to user_location.
@@ -43,87 +44,105 @@ class DistanceHelper:
             distance_km = None
             if user_location:
                 distance_km = DistanceHelper.haversine_distance(
-                    m.coordinates[1], m.coordinates[0],
-                    user_location.latitude, user_location.longitude
+                    m.coordinates[1],
+                    m.coordinates[0],
+                    user_location.latitude,
+                    user_location.longitude,
                 )
-            stops.append({
-                "type": "metro",
-                "line_name": m.EMOJI_NOM_LINIA,
-                "line_code": m.CODI_LINIA,                
-                "station_name": m.NOM_ESTACIO,
-                "station_code": m.CODI_ESTACIO,
-                "coordinates": m.coordinates,
-                "distance_km": distance_km
-            })
+            stops.append(
+                {
+                    "type": "metro",
+                    "line_name": m.EMOJI_NOM_LINIA,
+                    "line_code": m.CODI_LINIA,
+                    "station_name": m.NOM_ESTACIO,
+                    "station_code": m.CODI_ESTACIO,
+                    "coordinates": m.coordinates,
+                    "distance_km": distance_km,
+                }
+            )
 
         # --- Tram ---
         for t in tram_stops:
             distance_km = None
             if user_location:
                 distance_km = DistanceHelper.haversine_distance(
-                    t.latitude, t.longitude,
-                    user_location.latitude, user_location.longitude
+                    t.latitude,
+                    t.longitude,
+                    user_location.latitude,
+                    user_location.longitude,
                 )
 
-            stops.append({
-                "type": "tram",
-                "line_name": t.lineName,
-                "line_code": t.lineId,
-                "stop_name": t.name,
-                "stop_code": t.id,
-                "coordinates": (t.latitude, t.longitude),
-                "distance_km": distance_km
-            })
-            
+            stops.append(
+                {
+                    "type": "tram",
+                    "line_name": t.lineName,
+                    "line_code": t.lineId,
+                    "stop_name": t.name,
+                    "stop_code": t.id,
+                    "coordinates": (t.latitude, t.longitude),
+                    "distance_km": distance_km,
+                }
+            )
+
         # --- Rodalies ---
         for t in rodalies_stations:
             distance_km = None
             if user_location:
                 distance_km = DistanceHelper.haversine_distance(
-                    t.latitude, t.longitude,
-                    user_location.latitude, user_location.longitude
+                    t.latitude,
+                    t.longitude,
+                    user_location.latitude,
+                    user_location.longitude,
                 )
 
-            stops.append({
-                "type": "rodalies",
-                "line_name": t.line_name,
-                "line_code": t.line_id,
-                "station_name": t.name,
-                "station_code": t.id,
-                "coordinates": (t.latitude, t.longitude),
-                "distance_km": distance_km
-            }) 
-            
+            stops.append(
+                {
+                    "type": "rodalies",
+                    "line_name": t.line_name,
+                    "line_code": t.line_id,
+                    "station_name": t.name,
+                    "station_code": t.id,
+                    "coordinates": (t.latitude, t.longitude),
+                    "distance_km": distance_km,
+                }
+            )
+
         # --- Bicing ---
         for b in bicing_stations:
             distance_km = None
             if user_location:
                 distance_km = DistanceHelper.haversine_distance(
-                    b.latitude, b.longitude,
-                    user_location.latitude, user_location.longitude
+                    b.latitude,
+                    b.longitude,
+                    user_location.latitude,
+                    user_location.longitude,
                 )
 
-            stops.append({
-                "type": "bicing",
-                "line_name": '',
-                "line_code": '',
-                "station_name": b.streetName,
-                "station_code": b.id,
-                "coordinates": (b.latitude, b.longitude),
-                "slots": b.slots,
-                "mechanical": b.mechanical_bikes,
-                "electrical": b.electrical_bikes,
-                "availability": b.disponibilidad,
-                "distance_km": distance_km
-            })
+            stops.append(
+                {
+                    "type": "bicing",
+                    "line_name": "",
+                    "line_code": "",
+                    "station_name": b.streetName,
+                    "station_code": b.id,
+                    "coordinates": (b.latitude, b.longitude),
+                    "slots": b.slots,
+                    "mechanical": b.mechanical_bikes,
+                    "electrical": b.electrical_bikes,
+                    "availability": b.disponibilidad,
+                    "distance_km": distance_km,
+                }
+            )
 
         # --- Bus --- (Adding bus stops as last option to avoid consuming the 50 slots just by bus stops in case of generic searches)
         for b in bus_stops:
             distance_km = None
             if user_location:
                 distance_km = DistanceHelper.haversine_distance(
-                    b.coordinates[1], b.coordinates[0],
-                    user_location.latitude, user_location.longitude
+                    b.coordinates[1],
+                    b.coordinates[0],
+                    user_location.latitude,
+                    user_location.longitude,
                 )
 
             new_stop = {
@@ -132,9 +151,13 @@ class DistanceHelper:
                 "stop_name": b.NOM_PARADA,
                 "stop_code": b.CODI_PARADA,
                 "coordinates": b.coordinates,
-                "distance_km": distance_km
+                "distance_km": distance_km,
             }
-            if not any(stop.get("stop_code") == new_stop["stop_code"] and stop.get("type") == new_stop["type"] for stop in stops):
+            if not any(
+                stop.get("stop_code") == new_stop["stop_code"]
+                and stop.get("type") == new_stop["type"]
+                for stop in stops
+            ):
                 stops.append(new_stop)
 
         stops.sort(key=lambda x: (x["distance_km"] is None, x["distance_km"]))
@@ -161,12 +184,14 @@ class DistanceHelper:
         delta_lambda = math.radians(lon2 - lon1)
 
         # Haversine formula
-        a = (math.sin(delta_phi / 2) ** 2 +
-             math.cos(phi1) * math.cos(phi2) * math.sin(delta_lambda / 2) ** 2)
+        a = (
+            math.sin(delta_phi / 2) ** 2
+            + math.cos(phi1) * math.cos(phi2) * math.sin(delta_lambda / 2) ** 2
+        )
         c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
 
         return DistanceHelper.EARTH_RADIUS_KM * c
-    
+
     @staticmethod
     def format_distance(distance_km: float) -> str:
         """
@@ -186,10 +211,7 @@ class DistanceHelper:
 
     @staticmethod
     def get_closest_locations(
-        user_lat: float,
-        user_lon: float,
-        locations: List[Dict],
-        top_n: int = 5
+        user_lat: float, user_lon: float, locations: List[Dict], top_n: int = 5
     ) -> List[Tuple[Dict, float]]:
         """
         Returns the N closest locations to the user's coordinates.
@@ -208,8 +230,7 @@ class DistanceHelper:
         # Calculate the distance for each location
         for location in locations:
             distance = DistanceHelper.haversine_distance(
-                user_lat, user_lon,
-                location["lat"], location["lon"]
+                user_lat, user_lon, location["lat"], location["lon"]
             )
             distances.append((location, distance))
 

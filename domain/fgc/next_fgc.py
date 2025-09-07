@@ -1,7 +1,8 @@
-from dataclasses import dataclass
-from typing import List
-from datetime import datetime
 import html
+from dataclasses import dataclass
+from datetime import datetime
+from typing import List
+
 
 @dataclass
 class NextFgc:
@@ -39,6 +40,7 @@ class NextFgc:
         # Caso 4: No es hoy → mostrar fecha y hora completa
         return arrival_dt.strftime("%d-%m-%Y %H:%M")
 
+
 @dataclass
 class FgcLineRoute:
     codi_linia: int
@@ -50,15 +52,14 @@ class FgcLineRoute:
 
     def __post_init__(self):
         emojis = {
-            #Barcelona – Vallés
+            # Barcelona – Vallés
             "L1": "🟥",
             "S1": "🟥",
             "S2": "🟩",
             "L6": "🟪",
             "L7": "🟫",
             "L12": "🟪",
-
-            #Llobregat – Anoia
+            # Llobregat – Anoia
             "L8": "🟪",
             "S3": "🟦",
             "S4": "🟨",
@@ -68,10 +69,9 @@ class FgcLineRoute:
             "R50": "🟦",
             "R6": "⬛",
             "R60": "⬛",
-
-            #Lleida – La Pobla de Segur
+            # Lleida – La Pobla de Segur
             "RL1": "🟩",
-            "RL2": "🟩"
+            "RL2": "🟩",
         }
         emoji = emojis.get(self.nom_linia, "")
         self.nom_linia = f"{emoji} {self.nom_linia}"
@@ -85,5 +85,5 @@ class FgcLineRoute:
             f"           <i>{number_emojis[i] if i < len(number_emojis) else f'{i+1}.'} {tren.arrival_time_str()}</i>"
             for i, tren in enumerate(self.propers_trens[:5])
         )
-        
+
         return f"{header}\n{tren_info}"

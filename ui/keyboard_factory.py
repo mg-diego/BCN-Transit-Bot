@@ -1,17 +1,24 @@
 import re
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton, WebAppInfo
 from typing import List
 
-from domain.metro import MetroLine, MetroStation, MetroAccess
-from domain.bus import BusLine, BusStop
-from domain.tram import TramLine, TramStop
-from domain.rodalies import RodaliesLine
-from domain.transport_type import TransportType
-from domain.fgc import FgcLine, FgcStation
-from domain.callbacks import Callbacks
+from telegram import (
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+    KeyboardButton,
+    ReplyKeyboardMarkup,
+    WebAppInfo,
+)
 
-from providers.manager import LanguageManager
+from domain.bus import BusLine, BusStop
+from domain.callbacks import Callbacks
+from domain.fgc import FgcLine, FgcStation
+from domain.metro import MetroAccess, MetroLine, MetroStation
+from domain.rodalies import RodaliesLine
+from domain.tram import TramLine, TramStop
+from domain.transport_type import TransportType
 from providers.helpers import DistanceHelper, GoogleMapsHelper
+from providers.manager import LanguageManager
+
 
 class KeyboardFactory:
 

@@ -3,7 +3,9 @@ from dataclasses import dataclass, field
 from typing import List, Optional
 
 from domain.common.alert import Alert
+
 from .rodalies_station import RodaliesStation
+
 
 @dataclass
 class RodaliesLine:
@@ -66,23 +68,23 @@ class RodaliesLine:
         "RL4": "FFDD00",
     }
 
-
     def __post_init__(self):
         emoji = self.EMOJIS.get(self.name, "❓")
         color = self.COLORS.get(self.name, "808080")
         self.emoji_name = f"{emoji} {self.name}"
         self.color = color
 
+
 def create_rodalies_line(line, stations):
     return RodaliesLine(
-                id=line["id"],
-                name=line["name"],
-                description=line["journeyDescription"],
-                type=line["type"]["id"],
-                order_number=line["orderNumber"],
-                origin_station_id=line["originStation"]["id"],
-                origin_station_name=line["originStation"]["name"],
-                destination_station_id=line["destinationStation"]["id"],
-                destination_station_name=line["destinationStation"]["name"],
-                stations=stations
-            )
+        id=line["id"],
+        name=line["name"],
+        description=line["journeyDescription"],
+        type=line["type"]["id"],
+        order_number=line["orderNumber"],
+        origin_station_id=line["originStation"]["id"],
+        origin_station_name=line["originStation"]["name"],
+        destination_station_id=line["destinationStation"]["id"],
+        destination_station_name=line["destinationStation"]["name"],
+        stations=stations,
+    )

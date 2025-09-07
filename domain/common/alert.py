@@ -1,12 +1,12 @@
-
+import html
 from dataclasses import dataclass
 from datetime import datetime
 from typing import List
-import html
 
 from domain.transport_type import TransportType
 from providers.helpers.html_helper import HtmlHelper
 from providers.helpers.logger import logger
+
 
 @dataclass
 class Publication:
@@ -16,6 +16,7 @@ class Publication:
     textCa: str
     textEn: str
     textEs: str
+
 
 @dataclass
 class AffectedEntity:
@@ -27,6 +28,7 @@ class AffectedEntity:
     line_name: str
     station_code: str
     station_name: str
+
 
 @dataclass
 class Alert:
@@ -41,8 +43,16 @@ class Alert:
 
     def format_alert(self):
         # Tomamos el primer texto en español como descripción principal
-        title = self.publications[0].headerEs if self.publications and self.publications[0].headerEs else ""
-        description = self.publications[0].textEs if self.publications and self.publications[0].textEs else "Sin descripción"
+        title = (
+            self.publications[0].headerEs
+            if self.publications and self.publications[0].headerEs
+            else ""
+        )
+        description = (
+            self.publications[0].textEs
+            if self.publications and self.publications[0].textEs
+            else "Sin descripción"
+        )
         description = html.escape(description)
 
         # Fecha de inicio y fin
@@ -50,7 +60,9 @@ class Alert:
         end_str = self.end_date.strftime("%d/%m/%Y %H:%M")
 
         # Sacamos las estaciones afectadas
-        estaciones = sorted({e.station_name for e in self.affected_entities if e.station_name})
+        estaciones = sorted(
+            {e.station_name for e in self.affected_entities if e.station_name}
+        )
         estaciones_str = ", ".join(estaciones) if estaciones else "Varias estaciones"
 
         # Sacamos las líneas afectadas
@@ -62,7 +74,7 @@ class Alert:
             "ACTIVE": "🚨",
             "INACTIVE": "✅",
             "RESOLVED": "✅",
-            "PLANNED": "📅"
+            "PLANNED": "📅",
         }
         status_emoji = status_emojis.get(self.status.upper(), "ℹ️")
 
@@ -72,7 +84,7 @@ class Alert:
             "ACCIDENT": "🚑 Accidente",
             "WORKS": "🚧 Obras",
             "EVENT": "🎉 Evento",
-            "OTHER": "ℹ️ Otros"
+            "OTHER": "ℹ️ Otros",
         }
         cause_str = cause_map.get(self.cause.upper(), self.cause)
 
@@ -90,114 +102,136 @@ class Alert:
     @staticmethod
     def map_from_metro_alert(metro_alert):
         publications = []
-        for metro_alert_publication in metro_alert.get('publications'):
-            publications.append(Publication(
-                headerCa=metro_alert_publication.get('headerCa', None),
-                headerEn=metro_alert_publication.get('headerEn', None),
-                headerEs=metro_alert_publication.get('headerEs', None),
-                textCa=HtmlHelper.clean_text(metro_alert_publication.get('textCa', '')),
-                textEn=HtmlHelper.clean_text(metro_alert_publication.get('textEn', '')),
-                textEs=HtmlHelper.clean_text(metro_alert_publication.get('textEs', '')),
-            ))
+        for metro_alert_publication in metro_alert.get("publications"):
+            publications.append(
+                Publication(
+                    headerCa=metro_alert_publication.get("headerCa", None),
+                    headerEn=metro_alert_publication.get("headerEn", None),
+                    headerEs=metro_alert_publication.get("headerEs", None),
+                    textCa=HtmlHelper.clean_text(
+                        metro_alert_publication.get("textCa", "")
+                    ),
+                    textEn=HtmlHelper.clean_text(
+                        metro_alert_publication.get("textEn", "")
+                    ),
+                    textEs=HtmlHelper.clean_text(
+                        metro_alert_publication.get("textEs", "")
+                    ),
+                )
+            )
 
         affected_entities = []
-        for entity in metro_alert.get('entities'):
-            affected_entities.append(AffectedEntity(
-                direction_code=entity.get('direction_code'),
-                direction_name=entity.get('direction_name'),
-                entrance_code=entity.get('entrance_code'),
-                entrance_name=entity.get('entrance_name'),
-                line_code=entity.get('line_code'),
-                line_name=entity.get('line_name'),
-                station_code=entity.get('station_code'),
-                station_name=entity.get('station_name')
-            ))
+        for entity in metro_alert.get("entities"):
+            affected_entities.append(
+                AffectedEntity(
+                    direction_code=entity.get("direction_code"),
+                    direction_name=entity.get("direction_name"),
+                    entrance_code=entity.get("entrance_code"),
+                    entrance_name=entity.get("entrance_name"),
+                    line_code=entity.get("line_code"),
+                    line_name=entity.get("line_name"),
+                    station_code=entity.get("station_code"),
+                    station_name=entity.get("station_name"),
+                )
+            )
 
         return Alert(
-            id=metro_alert.get('id'),
+            id=metro_alert.get("id"),
             transport_type=TransportType.METRO,
-            begin_date=datetime.fromtimestamp(metro_alert.get('disruption_dates')[0].get('begin_date', None) / 1000),
-            end_date=datetime.fromtimestamp(metro_alert.get('disruption_dates')[0].get('end_date', None) / 1000),
+            begin_date=datetime.fromtimestamp(
+                metro_alert.get("disruption_dates")[0].get("begin_date", None) / 1000
+            ),
+            end_date=datetime.fromtimestamp(
+                metro_alert.get("disruption_dates")[0].get("end_date", None) / 1000
+            ),
             publications=publications,
             affected_entities=affected_entities,
-            status=metro_alert.get('effect').get('status'),
-            cause=metro_alert.get('cause').get('code')
+            status=metro_alert.get("effect").get("status"),
+            cause=metro_alert.get("cause").get("code"),
         )
-    
+
     @staticmethod
     def map_from_bus_alert(bus_alert):
-        channel_info = bus_alert.get('channelInfoTO')
+        channel_info = bus_alert.get("channelInfoTO")
 
-        publications = [Publication(
-                headerCa=HtmlHelper.clean_text(bus_alert.get('typeName', '')),
-                headerEn=HtmlHelper.clean_text(bus_alert.get('typeName', '')),
-                headerEs=HtmlHelper.clean_text(bus_alert.get('typeName', '')),
-                textCa=HtmlHelper.clean_text(channel_info.get('textCa', '')),
-                textEn=HtmlHelper.clean_text(channel_info.get('textEn', '')),
-                textEs=HtmlHelper.clean_text(channel_info.get('textEs', '')),
-            )]
-        
+        publications = [
+            Publication(
+                headerCa=HtmlHelper.clean_text(bus_alert.get("typeName", "")),
+                headerEn=HtmlHelper.clean_text(bus_alert.get("typeName", "")),
+                headerEs=HtmlHelper.clean_text(bus_alert.get("typeName", "")),
+                textCa=HtmlHelper.clean_text(channel_info.get("textCa", "")),
+                textEn=HtmlHelper.clean_text(channel_info.get("textEn", "")),
+                textEs=HtmlHelper.clean_text(channel_info.get("textEs", "")),
+            )
+        ]
+
         affected_entities = []
-        for entity in bus_alert.get('linesAffected'):
-            ways = entity.get('ways')
+        for entity in bus_alert.get("linesAffected"):
+            ways = entity.get("ways")
             for way in ways:
-                for stop in way.get('stops'):
-                    affected_entities.append(AffectedEntity(
-                        direction_code=way.get('wayId'),
-                        direction_name=way.get('wayName'),
-                        entrance_code=None,
-                        entrance_name=None,
-                        line_code=entity.get('lineId'),
-                        line_name=entity.get('commercialLineId'),
-                        station_code=stop.get('stopId'),
-                        station_name=stop.get('stopName')
-                    ))
+                for stop in way.get("stops"):
+                    affected_entities.append(
+                        AffectedEntity(
+                            direction_code=way.get("wayId"),
+                            direction_name=way.get("wayName"),
+                            entrance_code=None,
+                            entrance_name=None,
+                            line_code=entity.get("lineId"),
+                            line_name=entity.get("commercialLineId"),
+                            station_code=stop.get("stopId"),
+                            station_name=stop.get("stopName"),
+                        )
+                    )
 
         return Alert(
-            id=bus_alert.get('id'),
+            id=bus_alert.get("id"),
             transport_type=TransportType.BUS,
-            begin_date=datetime.fromtimestamp(bus_alert.get('begin') / 1000),
-            end_date=datetime.fromtimestamp(bus_alert.get('end') / 1000),
+            begin_date=datetime.fromtimestamp(bus_alert.get("begin") / 1000),
+            end_date=datetime.fromtimestamp(bus_alert.get("end") / 1000),
             publications=publications,
             affected_entities=affected_entities,
-            status=HtmlHelper.clean_text(bus_alert.get('causeName')),
-            cause=bus_alert.get('categories').get('messageType')
+            status=HtmlHelper.clean_text(bus_alert.get("causeName")),
+            cause=bus_alert.get("categories").get("messageType"),
         )
-    
+
     @staticmethod
     def map_from_rodalies_alert(rodalies_alert):
         publications = []
-        title = rodalies_alert.get('title')
-        description = rodalies_alert.get('description')
-        publications.append(Publication(
-            headerCa=title.get('ca', None),
-            headerEn=title.get('en', None),
-            headerEs=title.get('es', None),
-            textCa=HtmlHelper.clean_text(description.get('ca', '')),
-            textEn=HtmlHelper.clean_text(description.get('en', '')),
-            textEs=HtmlHelper.clean_text(description.get('es', '')),
-        ))
+        title = rodalies_alert.get("title")
+        description = rodalies_alert.get("description")
+        publications.append(
+            Publication(
+                headerCa=title.get("ca", None),
+                headerEn=title.get("en", None),
+                headerEs=title.get("es", None),
+                textCa=HtmlHelper.clean_text(description.get("ca", "")),
+                textEn=HtmlHelper.clean_text(description.get("en", "")),
+                textEs=HtmlHelper.clean_text(description.get("es", "")),
+            )
+        )
 
         affected_entities = []
-        for entity in rodalies_alert.get('lines'):
-            affected_entities.append(AffectedEntity(
-                direction_code=None,
-                direction_name=None,
-                entrance_code=None,
-                entrance_name=None,
-                line_code=entity.get('id'),
-                line_name=entity.get('name'),
-                station_code=None,
-                station_name=None
-            ))
+        for entity in rodalies_alert.get("lines"):
+            affected_entities.append(
+                AffectedEntity(
+                    direction_code=None,
+                    direction_name=None,
+                    entrance_code=None,
+                    entrance_name=None,
+                    line_code=entity.get("id"),
+                    line_name=entity.get("name"),
+                    station_code=None,
+                    station_name=None,
+                )
+            )
 
         return Alert(
-            id=rodalies_alert.get('externalId'),
+            id=rodalies_alert.get("externalId"),
             transport_type=TransportType.RODALIES,
-            begin_date=datetime.fromisoformat(rodalies_alert.get('date')),
+            begin_date=datetime.fromisoformat(rodalies_alert.get("date")),
             end_date=None,
             publications=publications,
             affected_entities=affected_entities,
             status=None,
-            cause=None
+            cause=None,
         )
