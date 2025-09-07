@@ -5,7 +5,7 @@ name = "python"
 enabled = true
 
   [analyzers.meta]
-  runtime_version = "3.x"
+  runtime_version = "3.x.x"
 
 [[transformers]]
 name = "black" # Formateador automático
