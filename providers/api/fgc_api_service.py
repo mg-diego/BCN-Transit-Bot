@@ -81,7 +81,7 @@ class FgcApiService:
 
     async def get_all_lines(self) -> List[FgcLine]:
         data = await self._request(
-            "GET", f"/lineas-red-fgc/records?limit=100", params=None
+            "GET", "/lineas-red-fgc/records?limit=100", params=None
         )
         lines = [create_fgc_line(l) for l in data["results"]]
         lines.sort(key=lambda x: x.id)
