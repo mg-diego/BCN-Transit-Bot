@@ -1,5 +1,4 @@
 import asyncio
-import json
 import time
 from collections import defaultdict
 from typing import Awaitable, Callable, List

@@ -1,7 +1,7 @@
 from typing import List
 
 from application.cache_service import CacheService
-from domain.tram import NextTram, TramConnection, TramLine, TramLineRoute, TramStop
+from domain.tram import TramConnection, TramLine, TramStop
 from providers.api import TramApiService
 from providers.helpers import logger
 from providers.manager import LanguageManager

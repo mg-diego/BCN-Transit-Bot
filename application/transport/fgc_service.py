@@ -3,7 +3,6 @@ from typing import List
 
 from application.cache_service import CacheService
 from domain.fgc import FgcLine, FgcLineRoute, FgcStation, NextFgc
-from domain.transport_type import TransportType
 from providers.api import FgcApiService
 from providers.helpers import logger
 from providers.manager import LanguageManager

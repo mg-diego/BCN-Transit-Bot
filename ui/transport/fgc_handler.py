@@ -2,7 +2,6 @@ from telegram import Update
 from telegram.ext import ContextTypes
 
 from application import FgcService, MessageService, TelegraphService, UpdateManager
-from domain.metro import format_metro_connections, get_alert_by_language
 from domain.transport_type import TransportType
 from providers.helpers import GoogleMapsHelper, TransportDataCompressor, logger
 from providers.manager import LanguageManager, UserDataManager
