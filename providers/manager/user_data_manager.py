@@ -279,6 +279,13 @@ class UserDataManager:
                     '', item.get('LINE_NAME'), item.get('LINE_CODE'),
                     coordinates[1], coordinates[0]
                 ])
+            elif type.lower() == TransportType.FGC.value:
+                self.favorites_ws.append_row([
+                    user_id, type.lower(),
+                    item.get('STATION_CODE'), item.get('STATION_NAME'),
+                    '', item.get('LINE_NAME'), item.get('LINE_CODE'),
+                    coordinates[1], coordinates[0]
+                ])
 
             logger.info(f"Added {type} favorite for user_id={user_id}")
             self._invalidate_favorites_cache()

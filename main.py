@@ -130,7 +130,7 @@ class BotApp:
         self.bicing_handler = BicingHandler(self.keyboard_factory, self.bicing_service, self.update_manager, self.user_data_manager, self.message_service, self.language_manager, self.telegraph_service)
         self.fgc_handler = FgcHandler(self.keyboard_factory, self.fgc_service, self.update_manager, self.user_data_manager, self.message_service, self.language_manager, self.telegraph_service)
 
-        self.favorites_handler = FavoritesHandler(self.message_service, self.user_data_manager, self.keyboard_factory, self.metro_service, self.bus_service, self.tram_service, self.rodalies_service, self.bicing_service, self.language_manager)
+        self.favorites_handler = FavoritesHandler(self.message_service, self.user_data_manager, self.keyboard_factory, self.metro_service, self.bus_service, self.tram_service, self.rodalies_service, self.bicing_service, self.fgc_service, self.language_manager)
         self.help_handler = HelpHandler(self.message_service, self.keyboard_factory, self.language_manager)
         self.language_handler = LanguageHandler(self.keyboard_factory, self.user_data_manager, self.message_service, self.language_manager, self.update_manager)
         self.web_app_handler = WebAppHandler(self.metro_handler, self.bus_handler, self.tram_handler, self.rodalies_handler, self.bicing_handler)

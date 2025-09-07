@@ -56,10 +56,9 @@ class FgcHandler(HandlerBase):
         )
 
     async def show_station(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        await self.message_service.handle_interaction(update, "🚧 This feature isn't available yet, but it's coming in a future update!")
+        #await self.message_service.handle_interaction(update, "🚧 This feature isn't available yet, but it's coming in a future update!")
 
         """Display a specific rodalies station with next arrivals."""
-        '''
         user_id, chat_id, line_id, fgc_station_id = self.message_service.extract_context(update, context)
         logger.info(f"Showing station info for user {user_id}, line {line_id}, stop {fgc_station_id}")
 
@@ -67,11 +66,11 @@ class FgcHandler(HandlerBase):
 
         fgc_station = await self.fgc_service.get_station_by_id(fgc_station_id, line_id)
         message = await self.show_stop_intro(update, context, TransportType.FGC.value, line_id, fgc_station_id, fgc_station.name)
-        await self.fgc_service.get_station_routes(fgc_station.name, line_id)
+        await self.fgc_service.get_station_routes(fgc_station.name, fgc_station.moute_id, line_id)
         await self.update_manager.stop_loading(update, context)
         
         async def update_text():
-            next_fgc = await self.fgc_service.get_station_routes(fgc_station.name, line_id)
+            next_fgc = await self.fgc_service.get_station_routes(fgc_station.name, fgc_station.moute_id, line_id)
             is_fav = self.user_data_manager.has_favorite(user_id, TransportType.FGC.value, fgc_station_id)
             text = (
                 f"{self.language_manager.t(f'{TransportType.FGC.value}.station.name', name=fgc_station.name.upper())}\n\n"
@@ -84,4 +83,4 @@ class FgcHandler(HandlerBase):
 
         self.start_update_loop(user_id, chat_id, message.message_id, get_text_callable=update_text, previous_callback=default_callback)
         logger.info(f"Started update loop task for user {user_id}, station {fgc_station_id}")
-        '''
+

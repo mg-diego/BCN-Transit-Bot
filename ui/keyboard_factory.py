@@ -194,7 +194,7 @@ class KeyboardFactory:
         return InlineKeyboardMarkup([self._back_button(self.BACK_TO_MENU_CALLBACK)])
     
     def update_menu(self, is_favorite: bool, item_type:str, item_id: str, line_id: str, previous_callback: str, has_connections: bool = False):
-        stop_type = "station" if item_type == TransportType.METRO.value or item_type == TransportType.RODALIES.value or item_type == TransportType.BICING.value else "stop"
+        stop_type = "station" if item_type == TransportType.METRO.value or item_type == TransportType.RODALIES.value or item_type == TransportType.BICING.value or TransportType.FGC.value else "stop"
         if is_favorite:
             fav_button = InlineKeyboardButton(
                 self.language_manager.t('keyboard.favorites.remove'),
@@ -271,6 +271,14 @@ class KeyboardFactory:
                 "name_fmt": "({code}) {name}",
                 "callback": lambda item: Callbacks.BICING_STATION.format(
                     line_code='bicing',
+                    station_code=item.get("code")
+                ),
+            },
+            TransportType.FGC.value: {
+                "emoji": TransportType.FGC.emoji,
+                "name_fmt": "{nom_linia} - {name}",
+                "callback": lambda item: Callbacks.FGC_STATION.format(
+                    line_code=item.get("codi_linia"),
                     station_code=item.get("code")
                 ),
             },

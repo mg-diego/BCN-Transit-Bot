@@ -50,15 +50,16 @@ class FgcService(ServiceBase):
         stations = []
         for line in lines:
             line_stations = await self.fgc_api_service.get_stations_by_line(line.id)
-            '''
+            
             for line_station in line_stations:
                 moute_station = await self.fgc_api_service.get_near_stations(line_station.lat, line_station.lon)
                 #moute_station = next((s for s in moute_stations if str(TransportType.FGC.id) in s.get('tipusTransports') and line_station.name in s.get('desc')), None)
                 if any(moute_station):
                     line_station.moute_id = moute_station[0].get('id')
-            '''
+            
             stations += line_stations
 
+        logger.warning(f"The following FGC stations where not found:\n {[s for s in stations if s.moute_id is None]}")
         return await self._get_from_cache_or_data(fgc_stations_key, stations, cache_ttl=3600*24)
 
     
@@ -66,7 +67,7 @@ class FgcService(ServiceBase):
         stations = await self.get_all_stations()
         return [s for s in stations if s.line_id == line_id]
     
-    async def get_station_routes(self, station_name, line_name):
+    async def get_station_routes(self, station_name, moute_id, line_name):
         routes = await self._get_from_cache_or_data(
             f"fgc_station_{station_name}_routes",
             None,
@@ -74,25 +75,46 @@ class FgcService(ServiceBase):
         )
 
         if routes is None:
-            raw_routes = await self.fgc_api_service.get_next_departures(station_name, line_name)
+            if moute_id != None:
+                raw_routes = await self.fgc_api_service.get_moute_next_departures(moute_id, line_name)
 
-            routes =  []
-            for direction, trips in raw_routes.items():            
-                nextFgc = []
-                for trip in trips:
-                    nextFgc.append(NextFgc(
-                        codi_servei=trip.get('trip_id'),
-                        temps_arribada=trip.get('departure_time')
+                routes = []
+                for direction, trips in raw_routes.items():
+                    nextFgc = []
+                    for trip in trips:
+                        nextFgc.append(NextFgc(
+                            codi_servei='',
+                            temps_arribada=trip.get('departure_time')
+                        )
                     )
-                )
-                routes.append(FgcLineRoute(
-                    desti_trajecte=direction,
-                    propers_trens=nextFgc,
-                    nom_linia="L6",
-                    codi_linia="L6",
-                    color_linia=None,
-                    codi_trajecte=None
-                ))
+                    routes.append(FgcLineRoute(
+                        desti_trajecte=direction,
+                        propers_trens=nextFgc,
+                        nom_linia=line_name,
+                        codi_linia=line_name,
+                        color_linia=None,
+                        codi_trajecte=None
+                    ))
+            else:
+                raw_routes = await self.fgc_api_service.get_next_departures(station_name, line_name)
+
+                routes =  []
+                for direction, trips in raw_routes.items():            
+                    nextFgc = []
+                    for trip in trips:
+                        nextFgc.append(NextFgc(
+                            codi_servei=trip.get('trip_id'),
+                            temps_arribada=trip.get('departure_time')
+                        )
+                    )
+                    routes.append(FgcLineRoute(
+                        desti_trajecte=direction,
+                        propers_trens=nextFgc,
+                        nom_linia=line_name,
+                        codi_linia=line_name,
+                        color_linia=None,
+                        codi_trajecte=None
+                    ))
 
             routes = await self._get_from_cache_or_data(
                 f"fgc_station_{station_name}_routes",
@@ -102,7 +124,7 @@ class FgcService(ServiceBase):
 
         return "\n\n".join(str(route) for route in routes)
     
-    async def get_station_by_id(self, station_id, line_id):
+    async def get_station_by_id(self, station_id, line_id) -> FgcStation:
         """
         Retrieve a station by its code.
         """
@@ -110,3 +132,12 @@ class FgcService(ServiceBase):
         station = next((s for s in stations if str(s.id) == str(station_id)), None)
         logger.debug(f"[{self.__class__.__name__}] get_station_by_id({station_id}, line {line_id}) -> {station}")
         return station
+    
+    async def get_line_by_id(self, line_id) -> FgcLine:
+        """
+        Retrieve a station by its code.
+        """
+        lines = await self.get_all_lines(line_id)
+        line = next((l for l in lines if str(l.id) == str(line_id)), None)
+        logger.debug(f"[{self.__class__.__name__}] get_line_by_id({line_id}) -> {line}")
+        return line

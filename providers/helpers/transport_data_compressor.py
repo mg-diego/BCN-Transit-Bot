@@ -10,6 +10,7 @@ from domain.metro import MetroStation
 from domain.rodalies import RodaliesLine, RodaliesStation
 from domain.tram import TramStop
 from domain.bicing import BicingStation
+from domain.fgc import FgcStation, FgcLine
 from domain.transport_type import TransportType
 
 from .logger import logger
@@ -108,17 +109,6 @@ class TransportDataCompressor:
         return forward + reverse
 
     def map_metro_stations(self, stations: List[MetroStation], line_id: str, line_name: str) -> str:
-        """
-        Maps a list of metro stations into a compressed JSON format.
-
-        Args:
-            stations (list): List of MetroStation objects.
-            line_id (str): Metro line ID.
-            line_name (str): Metro line name.
-
-        Returns:
-            str: Compressed JSON string representing mapped metro stations.
-        """
         self._log_mapping_start(TransportType.METRO.value, len(stations), line_id, line_name)
 
         stops_base = [
@@ -151,17 +141,6 @@ class TransportDataCompressor:
         return compressed
 
     def map_bus_stops(self, stops: List[BusStop], line_id: str, line_name: str) -> str:
-        """
-        Maps a list of bus stops into a compressed JSON format.
-
-        Args:
-            stops (list): List of BusStop objects.
-            line_id (str): Bus line ID.
-            line_name (str): Bus line name.
-
-        Returns:
-            str: Compressed JSON string representing mapped bus stops.
-        """
         self._log_mapping_start(TransportType.BUS.value, len(stops), line_id, line_name)
 
         data = {
@@ -186,17 +165,6 @@ class TransportDataCompressor:
         return compressed
 
     def map_tram_stops(self, stops: List[TramStop], line_id: str, line_name: str) -> str:
-        """
-        Maps a list of tram stops into a compressed JSON format.
-
-        Args:
-            stops (list): List of TramStop objects.
-            line_id (str): Tram line ID.
-            line_name (str): Tram line name.
-
-        Returns:
-            str: Compressed JSON string representing mapped tram stops.
-        """
         self._log_mapping_start(TransportType.TRAM.value, len(stops), line_id, line_name)
 
         origin = stops[0].name
@@ -231,17 +199,6 @@ class TransportDataCompressor:
         return compressed
     
     def map_rodalies_stations(self, stations: List[RodaliesStation], line: RodaliesLine):
-        """
-        Maps a list of rodalies stations into a compressed JSON format.
-
-        Args:
-            stations (list): List of RodaliesStation objects.
-            line_id (str): Rodalies line ID.
-            line_name (str): Rodalies line name.
-
-        Returns:
-            str: Compressed JSON string representing mapped rodalies stations.
-        """
         self._log_mapping_start(TransportType.RODALIES.value, len(stations), line.id, line.name)
 
         stops_base = [
@@ -273,17 +230,6 @@ class TransportDataCompressor:
         return compressed
     
     def map_bicing_stations(self, stations: List[BicingStation], user_location_lat, user_location_long):
-        """
-        Maps a list of bus stops into a compressed JSON format.
-
-        Args:
-            stops (list): List of BusStop objects.
-            line_id (str): Bus line ID.
-            line_name (str): Bus line name.
-
-        Returns:
-            str: Compressed JSON string representing mapped bus stops.
-        """
         self._log_mapping_start(TransportType.BICING.value, len(stations), '', '')
 
         data = {
@@ -308,4 +254,35 @@ class TransportDataCompressor:
 
         compressed = self._compress_data(data)
         self._log_mapping_end(TransportType.BICING.value, '')
+        return compressed
+    
+    def map_fgc_stations(self, stations: List[FgcStation], line: FgcLine):
+        self._log_mapping_start(TransportType.FGC.value, len(stations), line.id, line.name)
+
+        stops_base = [
+            {
+                "lat": station.lat,
+                "lon": station.lon,
+                "name": f"{station.id} - {self._normalize_name(station.name)}",
+                "alert": '',
+                "color": line.color,
+            }
+            for station in stations
+        ]
+
+        stops = self._map_stops_bidirectional(
+            stops_base,
+            direction_forward=line.origin,
+            direction_reverse=line.destination
+        )
+
+        data = {
+            "type": TransportType.FGC.value,
+            "line_id": line.id,
+            "line_name": html.escape(line.name),
+            "stops": stops
+        }
+
+        compressed = self._compress_data(data)
+        self._log_mapping_end(TransportType.FGC.value, line.id)
         return compressed

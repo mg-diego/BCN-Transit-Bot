@@ -76,7 +76,7 @@ class FgcApiService:
         data = await self._request("GET", f"{self.MOUTE_BASE_URL}/nearbyotp?radius=5000000&coordX=2.1528975837826656&coordY=41.40267994115967&language=ca_ES", params=None, use_FGC_BASE_URL=False)
         return data['transports']
     
-    async def get_near_stations(self, lat, lon, radius = 100):
+    async def get_near_stations(self, lat, lon, radius = 250):
         data = await self._request("GET", f"{self.MOUTE_BASE_URL}/nearbyotp?radius={radius}&coordX={lon}&coordY={lat}&language=ca_ES", params=None, use_FGC_BASE_URL=False)
         return [s for s in data['transports'] if str(TransportType.FGC.id) in s.get("tipusTransports")]
 
@@ -149,7 +149,37 @@ class FgcApiService:
         # 6. Ordenar la lista por 'order'
         stations.sort(key=lambda x: x.order)
         return stations
-    
+
+    async def get_moute_next_departures(self, moute_id, line_name):
+        data = await self._request("GET", f"{self.MOUTE_BASE_URL}/nextdeparturesNEW?paradaId={moute_id}&useRealTime=true&language=ca_ES", params=None, use_FGC_BASE_URL=False)
+        lines = data["parada"]["lineas"]["linia"]
+        line_id = next(l['idLinia'] for l in lines if l['nomLinia'] == line_name)
+        directions = set([s["direccio"] for s in data["sortides"]["sortida"] if line_id in s["tripId"]])
+
+        next_departures = {}
+        for direction in directions:
+            next_departures[direction] = []
+            sortides_realtime = [s for s in data["sortides"]["sortida"] if line_id in s["tripId"] and s["realtime"] and s["direccio"] == direction]
+            sortides_scheduled = [s for s in data["sortides"]["sortida"] if line_id in s["tripId"] and s["realtime"] == False and s["direccio"] == direction]
+
+            for rt in sortides_realtime:
+                next_departures[direction].append({
+                    "departure_time": datetime(year=int(rt["any"]), month=int(rt["mes"]), day=int(rt["dia"]), hour=int(rt["hora"]), minute=int(rt["minuts"])).timestamp(),
+                    "type": "RT"
+                })
+
+            for scheduled in sortides_scheduled:
+                if len(next_departures[direction]) < 3:
+                    next_departures[direction].append({
+                        "departure_time": datetime(year=int(scheduled["any"]), month=int(scheduled["mes"]), day=int(scheduled["dia"]), hour=int(scheduled["hora"]), minute=int(scheduled["minuts"])).timestamp(),
+                        "type": "Scheduled"
+                    })
+                else:
+                    break
+
+        return next_departures
+        
+
     async def get_next_departures(self, station_name: str, line_name: str, max_results: int = 5) -> Dict[str, List[Dict]]:
         log_file = "realtime_departures.log"
 
@@ -157,9 +187,11 @@ class FgcApiService:
             with open(log_file, "a", encoding="utf-8") as f:
                 f.write(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} - {msg}\n")
 
+        # Resetear log
         with open(log_file, "w", encoding="utf-8") as f:
             f.write("=== Nueva ejecución ===\n")
 
+        # Cargar CSVs
         await self._load_csvs()
 
         # 1️⃣ Buscar estación
@@ -180,6 +212,7 @@ class FgcApiService:
 
         # 3️⃣ Obtener todos los trip_id de esta línea
         trip_ids = set(self._trips[self._trips["route_id"] == route_id]["trip_id"])
+        log(f"TRIPS_IDS for '{route_id}':\n{trip_ids}")
 
         departures_by_direction = {}
         now_ts = time.time()
@@ -197,6 +230,7 @@ class FgcApiService:
         rt_trip_ids = set()
 
         if feed:
+            log(f"FEED: \n{feed.entity}")
             for entity in feed.entity:
                 if not entity.HasField("trip_update"):
                     continue
@@ -207,6 +241,8 @@ class FgcApiService:
                 stop_time_updates = trip_update.stop_time_update
                 if not stop_time_updates:
                     continue
+
+                # Última parada para nombre de dirección
                 last_stop_id = stop_time_updates[-1].stop_id
                 last_stop_row = self._stops[self._stops["stop_id"] == last_stop_id]
                 direction_name = last_stop_row.iloc[0]["stop_name"] if not last_stop_row.empty else f"dir_{direction_id}"
@@ -237,55 +273,103 @@ class FgcApiService:
                     if len(departures_by_direction[direction_name]) >= max_results:
                         break
 
-        # 5️⃣ Procesar planificados
+        # 5️⃣ Procesar planificados (100% vectorizado y robusto)
         stop_times_for_stop = self._stop_times[
             (self._stop_times["stop_id"] == stop_id) &
             (self._stop_times["trip_id"].isin(trip_ids - rt_trip_ids))
         ].copy()
 
-        def dep_seconds(dep_time_str: str) -> int:
-            h, m, s = map(int, dep_time_str.split(":"))
-            return h * 3600 + m * 60 + s
+        # Si no hay datos, devolvemos lo que tengamos
+        if stop_times_for_stop.empty:
+            log(f"No hay salidas planificadas para {station_name}")
+            return departures_by_direction
 
-        stop_times_for_stop["dep_seconds"] = stop_times_for_stop["departure_time"].apply(dep_seconds)
-        stop_times_for_stop = stop_times_for_stop.sort_values("dep_seconds")
-
-        for _, row in stop_times_for_stop.iterrows():
-            h, m, s = map(int, row["departure_time"].split(":"))
+        # Vectorizamos el cálculo de departure_ts
+        def to_timestamp(dep_time: str) -> float:
+            try:
+                h, m, s = map(int, dep_time.split(":"))
+            except ValueError:
+                return float("inf")  # Si hay datos corruptos, los descartamos
             extra_days = h // 24
-            h = h % 24
-            dep_ts = datetime.now().replace(hour=h, minute=m, second=s, microsecond=0).timestamp()
-            dep_ts += extra_days * 24 * 3600
-            if dep_ts < now_ts:
-                continue
+            h %= 24
+            ts = datetime.now().replace(hour=h, minute=m, second=s, microsecond=0).timestamp()
+            return ts + extra_days * 24 * 3600
 
-            trip_row = self._trips[self._trips["trip_id"] == row["trip_id"]]
-            direction_id = trip_row.iloc[0]["direction_id"] if "direction_id" in trip_row.columns else 0
-            stop_times_trip = self._stop_times[self._stop_times["trip_id"] == row["trip_id"]]
-            last_stop_id = stop_times_trip.iloc[-1]["stop_id"]
-            last_stop_row = self._stops[self._stops["stop_id"] == last_stop_id]
-            direction_name = last_stop_row.iloc[0]["stop_name"] if not last_stop_row.empty else f"dir_{direction_id}"
+        stop_times_for_stop["departure_ts"] = stop_times_for_stop["departure_time"].map(to_timestamp)
+        stop_times_for_stop = stop_times_for_stop[stop_times_for_stop["departure_ts"] >= now_ts]
 
-            trip_instance_id = row["trip_id"].split("|")[1]
-            key = (trip_instance_id, direction_name)
-            if key in seen_departures:
-                continue
-            seen_departures.add(key)
+        # Si no hay salidas futuras, devolvemos lo que tengamos
+        if stop_times_for_stop.empty:
+            return departures_by_direction
 
-            departures_by_direction.setdefault(direction_name, []).append({
-                "trip_id": row["trip_id"],
-                "departure_time": dep_ts,
-                "type": "Scheduled"
-            })
-            log(f"--> Coincidencia planificada: trip_id={row['trip_id']}, ts={dep_ts}, direction={direction_name}")
+        # Si falta la columna direction_id, la creamos
+        trips_df = self._trips.copy()
+        if "direction_id" not in trips_df.columns:
+            trips_df["direction_id"] = 0
 
-            if len(departures_by_direction[direction_name]) >= max_results:
-                continue
+        # Merge para añadir direction_id
+        stop_times_for_stop = stop_times_for_stop.merge(
+            trips_df[["trip_id", "direction_id"]],
+            on="trip_id",
+            how="left"
+        )
 
-        # Ordenar cada lista por departure_time y limitar a max_results
+        # Calcular última parada de cada trip, renombrando explícitamente la columna
+        last_stops = (
+            self._stop_times
+            .sort_values("stop_sequence")
+            .groupby("trip_id", as_index=False)
+            .agg({"stop_id": "last"})
+            .rename(columns={"stop_id": "last_stop_id"})
+        )
+        stop_times_for_stop = stop_times_for_stop.merge(last_stops, on="trip_id", how="left")
+
+        # Merge con stops usando last_stop_id
+        stop_times_for_stop = stop_times_for_stop.merge(
+            self._stops[["stop_id", "stop_name"]],
+            left_on="last_stop_id",
+            right_on="stop_id",
+            how="left"
+        )
+
+        # Crear trip_instance_id vectorizado
+        stop_times_for_stop["trip_instance_id"] = stop_times_for_stop["trip_id"].str.split("|").str[1]
+
+        # Crear direction_name con fallback
+        stop_times_for_stop["direction_name"] = stop_times_for_stop.apply(
+            lambda r: r["stop_name"] if pd.notna(r["stop_name"]) else f"dir_{r['direction_id']}",
+            axis=1
+        )
+
+        # Eliminar duplicados usando trip_instance_id + direction_name
+        stop_times_for_stop = stop_times_for_stop.drop_duplicates(subset=["trip_instance_id", "direction_name"])
+
+        # Agrupar por dirección y coger los max_results primeros
+        departures_by_direction_df = (
+            stop_times_for_stop
+            .sort_values("departure_ts")
+            .groupby("direction_name")
+            .head(max_results)
+            [["direction_name", "trip_id", "departure_ts"]]
+        )
+
+        # Convertir DataFrame a diccionario final
+        for direction_name, group in departures_by_direction_df.groupby("direction_name"):
+            departures_by_direction.setdefault(direction_name, []).extend([
+                {
+                    "trip_id": row.trip_id,
+                    "departure_time": row.departure_ts,
+                    "type": "Scheduled"
+                }
+                for row in group.itertuples()
+            ])
+
+        # Ordenar cada lista de salidas por departure_time
         for direction, trips in departures_by_direction.items():
             trips.sort(key=lambda x: x["departure_time"])
-            departures_by_direction[direction] = trips[:max_results]
+
+        # Ordenar las claves del dict alfabéticamente
+        departures_by_direction = dict(sorted(departures_by_direction.items(), key=lambda x: x[0]))
 
         log(f"Salidas agrupadas por dirección para {station_name} ({line_name}): {departures_by_direction}")
         return departures_by_direction

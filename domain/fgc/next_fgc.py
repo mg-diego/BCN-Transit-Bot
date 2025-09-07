@@ -36,13 +36,28 @@ class FgcLineRoute:
 
     def __post_init__(self):
         emojis = {
+            #Barcelona – Vallés
             "L1": "🟥",
-            "L2": "🟪",
-            "L3": "🟩",
-            "L4": "🟨",
-            "L5": "🟦",
-            "L9S": "🟧",
-            "L9N": "🟧",
+            "S1": "🟥",
+            "S2": "🟩",
+            "L6": "🟪",
+            "L7": "🟫",
+            "L12": "🟪",
+
+            #Llobregat – Anoia
+            "L8": "🟪",
+            "S3": "🟦",
+            "S4": "🟨",
+            "S8": "🟦",
+            "S9": "🟥",
+            "R5": "🟦",
+            "R50": "🟦",
+            "R6": "⬛",
+            "R60": "⬛",
+
+            #Lleida – La Pobla de Segur
+            "RL1": "🟩",
+            "RL2": "🟩"
         }
         emoji = emojis.get(self.nom_linia, "")
         self.nom_linia = f"{emoji} {self.nom_linia}"

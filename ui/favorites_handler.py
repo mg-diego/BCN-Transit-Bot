@@ -3,13 +3,13 @@ from providers.helpers import BoolConverter
 from telegram import Update
 from telegram.ext import ContextTypes
 
-from application import MetroService, BusService, TramService, RodaliesService, MessageService, BicingService
+from application import MetroService, BusService, TramService, RodaliesService, MessageService, BicingService, FgcService
 from providers.manager import UserDataManager, LanguageManager
 from ui.keyboard_factory import KeyboardFactory
 
 class FavoritesHandler:
 
-    def __init__(self, message_service: MessageService, user_data_manager: UserDataManager, keyboard_factory: KeyboardFactory, metro_service: MetroService, bus_service: BusService, tram_service: TramService, rodalies_service: RodaliesService, bicing_service: BicingService, language_manager: LanguageManager):
+    def __init__(self, message_service: MessageService, user_data_manager: UserDataManager, keyboard_factory: KeyboardFactory, metro_service: MetroService, bus_service: BusService, tram_service: TramService, rodalies_service: RodaliesService, bicing_service: BicingService, fgc_service: FgcService, language_manager: LanguageManager):
         self.message_service = message_service
         self.user_data_manager = user_data_manager
         self.keyboard_factory = keyboard_factory
@@ -18,6 +18,7 @@ class FavoritesHandler:
         self.tram_service = tram_service
         self.rodalies_service = rodalies_service
         self.bicing_service = bicing_service
+        self.fgc_service = fgc_service
         self.language_manager = language_manager
 
     async def show_favorites(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -105,6 +106,18 @@ class FavoritesHandler:
                 "LINE_NAME": '',
                 "LINE_CODE": '',
                 "coordinates": [item.latitude, item.longitude]
+            }
+                
+        elif item_type == TransportType.FGC.value:
+            item = await self.fgc_service.get_station_by_id(item_id, line_id)
+            line = await self.fgc_service.get_line_by_id(line_id)
+
+            new_fav_item = {
+                "STATION_CODE": item.id,
+                "STATION_NAME": item.name,
+                "LINE_NAME": line.name,
+                "LINE_CODE": line_id,
+                "coordinates": [item.lat, item.lon]
             }
 
         self.user_data_manager.add_favorite(user_id, item_type, new_fav_item)
