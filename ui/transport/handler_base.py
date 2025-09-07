@@ -169,12 +169,17 @@ class HandlerBase:
         async def loop():
             current_text = None
             current_reply_markup = None
+            start_time = time.monotonic()
             
             while True:
                 try:
+                    elapsed_time = time.monotonic() - start_time
+                    if elapsed_time > 300:
+                        await self.message_service.edit_message_by_id(chat_id, message_id, self.language_manager.t('common.reload.message'), reply_markup=self.keyboard_factory.restart_search_button(previous_callback))
+                        break
+
                     can_send, send_alert = self.should_send_update(user_id)
                     if can_send:
-                        # Si tenemos texto previo, mostrar versión con carga
                         if current_text is not None:
                             loading_text = current_text.replace(
                                 self.language_manager.t('common.updates.every_x_seconds', seconds=self.UPDATE_INTERVAL),
