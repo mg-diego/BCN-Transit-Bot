@@ -222,13 +222,11 @@ class FgcApiService:
         )
         lines = data["parada"]["lineas"]["linia"]
         line_id = next(l["idLinia"] for l in lines if l["nomLinia"] == line_name)
-        directions = set(
-            [
-                s["direccio"]
+        directions = {
+            s["direccio"]
                 for s in data["sortides"]["sortida"]
                 if line_id in s["tripId"]
-            ]
-        )
+        }
 
         next_departures = {}
         for direction in directions:
