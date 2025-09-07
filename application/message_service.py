@@ -72,8 +72,9 @@ class MessageService:
         )
         return msg
 
+    @staticmethod
     async def send_new_message_from_bot(
-        self, bot, user_id, text, parse_mode=ParseMode.HTML
+        bot, user_id, text, parse_mode=ParseMode.HTML
     ):
         await bot.send_message(chat_id=user_id, text=text, parse_mode=parse_mode)
 
