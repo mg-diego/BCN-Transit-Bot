@@ -2,7 +2,7 @@ from collections import defaultdict
 from typing import List
 from domain.common.alert import Alert
 from domain.rodalies import RodaliesLine, RodaliesStation
-
+from domain import LineRoute
 from domain.transport_type import TransportType
 from providers.api import RodaliesApiService
 from providers.manager import LanguageManager, UserDataManager
@@ -62,14 +62,6 @@ class RodaliesService(ServiceBase):
         await self._get_from_cache_or_data(alerts_key, alerts_dict, cache_ttl=3600)
 
         return lines
-
-        '''
-        return await self._get_from_cache_or_api(
-            "rodalies_lines",
-            self.rodalies_api_service.get_lines,
-            cache_ttl=3600*24
-        )
-        '''
     
     async def get_all_stations(self) -> List[RodaliesStation]:
         lines = await self.get_all_lines()
@@ -93,7 +85,7 @@ class RodaliesService(ServiceBase):
             lambda: self.rodalies_api_service.get_next_trains_at_station(station_id, line_id),
             cache_ttl=10
         )
-        return "\n\n".join(str(route) for route in routes)
+        return "\n\n".join(LineRoute.scheduled_list(route) for route in routes)
     
     async def get_line_by_id(self, line_id: str) -> RodaliesLine:
         lines = await self.get_all_lines()

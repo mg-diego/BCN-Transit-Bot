@@ -1,7 +1,7 @@
 from collections import defaultdict
-import json
 from typing import List
 
+from domain import LineRoute
 from domain.bus.bus_stop import update_bus_stop_with_line_info
 from domain.common.alert import Alert
 from domain.transport_type import TransportType
@@ -106,7 +106,7 @@ class BusService(ServiceBase):
             lambda: self.tmb_api_service.get_next_bus_at_stop(stop_id),
             cache_ttl=10
         )
-        return "\n\n".join(str(route) for route in routes)
+        return "\n\n".join(LineRoute.simple_list(route, arriving_threshold=60) for route in routes)
     
     # === OTHER CALLS ===
     async def get_stops_by_name(self, stop_name) -> List[BusLine]:

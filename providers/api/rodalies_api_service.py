@@ -3,9 +3,10 @@ import inspect
 from datetime import datetime
 from typing import Any, List
 
+from domain.transport_type import TransportType
 from providers.helpers import logger
-from domain.rodalies import RodaliesLine, RodaliesStation, RodaliesLineRoute, create_rodalies_line, create_rodalies_station
-from domain import NextTrip, normalize_to_seconds
+from domain.rodalies import RodaliesLine, RodaliesStation, create_rodalies_line, create_rodalies_station
+from domain import NextTrip, LineRoute, normalize_to_seconds
 
 
 class RodaliesApiService:
@@ -85,14 +86,17 @@ class RodaliesApiService:
                     )
                 
                 if key not in routes_dict:
-                    routes_dict[key] = RodaliesLineRoute(
-                        code=line_id,
+                    routes_dict[key] = LineRoute(
+                        route_id=line_id,
+                        name=line_id,
                         destination=item["destinationStation"]["name"],
                         line_name=line_id,
-                        next_rodalies=[next_rodalies]
+                        next_trips=[next_rodalies],
+                        color=None,
+                        line_type=TransportType.RODALIES
                     )
                 else:
-                    routes_dict[key].next_rodalies.append(next_rodalies)
+                    routes_dict[key].next_trips.append(next_rodalies)
 
         return list(routes_dict.values())
         

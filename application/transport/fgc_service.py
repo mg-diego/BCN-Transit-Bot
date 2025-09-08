@@ -1,8 +1,8 @@
 from typing import List
 import json
 
-from domain.fgc import FgcLine, FgcStation, FgcLineRoute
-from domain import NextTrip, normalize_to_seconds
+from domain.fgc import FgcLine, FgcStation
+from domain import NextTrip, LineRoute, normalize_to_seconds
 from providers.api import FgcApiService
 from providers.manager import LanguageManager
 from providers.helpers import logger
@@ -90,13 +90,15 @@ class FgcService(ServiceBase):
                         )
                         for trip in trips
                     ]
-                    routes.append(FgcLineRoute(
-                        desti_trajecte=direction,
-                        propers_trens=nextFgc,
-                        nom_linia=line_name,
-                        codi_linia=line_name,
-                        color_linia=None,
-                        codi_trajecte=None
+                    routes.append(LineRoute(
+                        destination=direction,
+                        next_trips=nextFgc,
+                        line_name=line_name,
+                        line_id=line_name,
+                        name=line_name,
+                        line_type=TransportType.FGC,
+                        color=None,
+                        route_id=line_name
                     ))
             else:
                 raw_routes = await self.fgc_api_service.get_next_departures(station_name, line_name)
@@ -110,13 +112,15 @@ class FgcService(ServiceBase):
                         )
                         for trip in trips
                     ]
-                    routes.append(FgcLineRoute(
-                        desti_trajecte=direction,
-                        propers_trens=nextFgc,
-                        nom_linia=line_name,
-                        codi_linia=line_name,
-                        color_linia=None,
-                        codi_trajecte=None
+                    routes.append(LineRoute(
+                        destination=direction,
+                        next_trips=nextFgc,
+                        line_name=line_name,
+                        line_id=line_name,
+                        name=line_name,
+                        line_type=TransportType.FGC,
+                        color=None,
+                        route_id=line_name
                     ))
 
             routes = await self._get_from_cache_or_data(
@@ -125,7 +129,7 @@ class FgcService(ServiceBase):
                 cache_ttl=30
             )
 
-        return "\n\n".join(str(route) for route in routes)
+        return "\n\n".join(LineRoute.scheduled_list(route) for route in routes)
     
     async def get_station_by_id(self, station_id, line_id) -> FgcStation:
         """

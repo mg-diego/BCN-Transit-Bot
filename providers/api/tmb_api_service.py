@@ -5,7 +5,7 @@ import inspect
 
 from domain import NextTrip, LineRoute, normalize_to_seconds
 from domain.metro import MetroLine, MetroConnection, MetroStation, create_metro_station, create_metro_access
-from domain.bus import BusStop, BusLine, create_bus_stop, BusLineRoute
+from domain.bus import BusStop, BusLine, create_bus_stop
 
 from domain.transport_type import TransportType
 from providers.helpers import logger
@@ -160,7 +160,7 @@ class TmbApiService:
                     routes.append(route)
         return routes
 
-    async def get_next_bus_at_stop(self, station_id) -> List[BusLineRoute]:
+    async def get_next_bus_at_stop(self, station_id) -> List[LineRoute]:
         url = f"{self.BASE_URL_ITRANSIT}/bus/parades/{station_id}"
         data = await self._get(url)
 
@@ -174,15 +174,14 @@ class TmbApiService:
                     )
                     for bus in route_data.get("propers_busos", [])
                 ]
-                route = BusLineRoute(
-                    id_operador=route_data["id_operador"],
-                    transit_namespace=route_data["transit_namespace"],
-                    codi_linia=route_data["codi_linia"],
-                    nom_linia=route_data["nom_linia"],
-                    codi_trajecte=route_data["codi_trajecte"],
-                    desti_trajecte=route_data["desti_trajecte"],
-                    id_sentit=route_data["id_sentit"],
-                    propers_busos=next_buses
+                route = LineRoute(
+                    line_id=route_data["codi_linia"],
+                    name=route_data["nom_linia"],
+                    route_id=route_data["codi_trajecte"],
+                    destination=route_data["desti_trajecte"],
+                    line_type=TransportType.BUS,
+                    next_trips=next_buses,
+                    color=None
                 )
                 routes.append(route)
         return routes

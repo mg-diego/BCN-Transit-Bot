@@ -42,7 +42,7 @@ class NextTrip:
             return arrival_dt.strftime("%H:%Mh")
 
         # Caso 4: No es hoy → mostrar fecha y hora completa
-        return arrival_dt.strftime("%d-%m-%Y %H:%M")
+        return arrival_dt.strftime("%d-%m-%Y %H:%Mh")
     
     def scheduled_arrival(self) -> datetime:
         """Devuelve la hora programada de llegada en base al retraso."""
