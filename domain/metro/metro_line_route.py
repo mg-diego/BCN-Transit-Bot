@@ -1,30 +1,8 @@
 from dataclasses import dataclass
 from typing import List
-from datetime import datetime
 import html
 
-@dataclass
-class NextMetro:
-    codi_servei: str
-    temps_arribada: int  # Epoch en milisegundos
-
-    def arrival_time_str(self) -> str:
-        now = datetime.now().timestamp() * 1000  # en ms
-        delta_ms = self.temps_arribada - now
-
-        if delta_ms <= 40000:
-            return "🔜"
-
-        total_seconds = int(delta_ms / 1000)
-        minutes, seconds = divmod(total_seconds, 60)
-
-        parts = []
-        if minutes:
-            parts.append(f"{minutes}min")
-        if seconds or not minutes:
-            parts.append(f"{seconds}s")
-
-        return " ".join(parts)
+from domain import NextTrip
 
 @dataclass
 class MetroLineRoute:
@@ -33,7 +11,7 @@ class MetroLineRoute:
     color_linia: str
     codi_trajecte: str
     desti_trajecte: str
-    propers_trens: List[NextMetro]
+    propers_trens: List[NextTrip]
 
     def __post_init__(self):
         emojis = {
@@ -54,7 +32,7 @@ class MetroLineRoute:
         number_emojis = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣"]
 
         tren_info = "\n".join(
-            f"           <i>{number_emojis[i] if i < len(number_emojis) else f'{i+1}.'} {tren.arrival_time_str()}</i>"
+            f"           <i>{number_emojis[i] if i < len(number_emojis) else f'{i+1}.'} {tren.remaining_time()}</i>"
             for i, tren in enumerate(self.propers_trens[:5])
         )
         

@@ -3,28 +3,7 @@ from typing import List, Optional
 from datetime import datetime
 import html
 
-@dataclass
-class NextBus:
-    temps_arribada: int
-    id_bus: Optional[str] = None
-
-    def arrival_time_str(self) -> str:
-        now = datetime.now().timestamp() * 1000  # en ms
-        delta_ms = self.temps_arribada - now
-
-        if delta_ms <= 60000:
-            return "🔜"
-
-        total_seconds = int(delta_ms / 1000)
-        minutes, seconds = divmod(total_seconds, 60)
-
-        parts = []
-        if minutes:
-            parts.append(f"{minutes}min")
-        if seconds or not minutes:
-            parts.append(f"{seconds}s")
-
-        return " ".join(parts)
+from domain import NextTrip
 
 @dataclass
 class BusLineRoute:
@@ -35,7 +14,7 @@ class BusLineRoute:
     id_sentit: int
     codi_trajecte: str
     desti_trajecte: str
-    propers_busos: List[NextBus]
+    propers_busos: List[NextTrip]
     original_nom_linia: Optional[str] = None
 
     def __post_init__(self):
@@ -63,7 +42,7 @@ class BusLineRoute:
         number_emojis = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣"]
 
         bus_info = "\n".join(
-            f"           <i>{number_emojis[i] if i < len(number_emojis) else f'{i+1}.'} {bus.arrival_time_str()}</i>"
+            f"           <i>{number_emojis[i] if i < len(number_emojis) else f'{i+1}.'} {bus.remaining_time(arriving_threshold=60)}</i>"
             for i, bus in enumerate(self.propers_busos[:5])
         )
         

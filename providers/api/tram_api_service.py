@@ -4,7 +4,8 @@ import inspect
 from datetime import datetime
 from typing import Any, Dict, List
 
-from domain.tram import TramLine, TramNetwork, TramStop, TramConnection, TramStopConnection, TramLineRoute, NextTram
+from domain.tram import TramLine, TramNetwork, TramStop, TramConnection, TramStopConnection, TramLineRoute
+from domain import NextTrip, normalize_to_seconds
 
 from providers.helpers import logger
 
@@ -191,7 +192,7 @@ class TramApiService:
             "sort": sort
         }
         params = {k: v for k, v in params.items() if v is not None}
-        stops = await self._request("GET", f"/stops", params=params)
+        stops = await self._request("GET", "/stops", params=params)
         return [TramStop(**stop) for stop in stops]
 
     async def get_connections_at_stop(
@@ -243,10 +244,9 @@ class TramApiService:
         for item in next_trams:
             key = (item["lineName"], item["code"], item["stopName"], item["destination"])
 
-            next_tram = NextTram(
-                vehicle_id=item["vehicleId"],
-                occupancy=item["occupancy"],
-                arrival_time=datetime.fromisoformat(item["arrivalTime"])
+            next_tram = NextTrip(
+                id=item["vehicleId"],
+                arrival_time=normalize_to_seconds(int(datetime.fromisoformat(item["arrivalTime"]).timestamp())) #datetime.fromisoformat
             )
 
             if key not in routes_dict:

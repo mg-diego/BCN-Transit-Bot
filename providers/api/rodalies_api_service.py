@@ -4,7 +4,8 @@ from datetime import datetime
 from typing import Any, List
 
 from providers.helpers import logger
-from domain.rodalies import RodaliesLine, RodaliesStation, RodaliesLineRoute, NextRodalies, create_rodalies_line, create_rodalies_station
+from domain.rodalies import RodaliesLine, RodaliesStation, RodaliesLineRoute, create_rodalies_line, create_rodalies_station
+from domain import NextTrip, normalize_to_seconds
 
 
 class RodaliesApiService:
@@ -42,13 +43,15 @@ class RodaliesApiService:
         lines = []
         for type in ["RODALIES", "REGIONAL"]:
             data = await self._request("GET", f"/lines?type={type}&page=0&limit=100&lang=ca", params=None)
-            
+
             for line_data in data["included"]:
                 stations = []
-                for station_data in line_data["stations"]:
-                    stations.append(create_rodalies_station(station_data))
+                stations.extend(
+                    create_rodalies_station(station_data)
+                    for station_data in line_data["stations"]
+                )
                 lines.append(create_rodalies_line(line_data, stations))
-            
+
         return lines
 
     async def get_line_by_id(self, line_id: int) -> RodaliesLine:
@@ -74,9 +77,9 @@ class RodaliesApiService:
             if str(line["id"]) == str(line_id):
                 key = (line["name"], line["id"], item["destinationStation"]["name"])
 
-                next_rodalies = NextRodalies(
+                next_rodalies = NextTrip(
                         id=item["technicalNumber"],
-                        arrival_time=datetime.fromisoformat(item["departureDateHourSelectedStation"]),
+                        arrival_time=normalize_to_seconds(datetime.fromisoformat(item["departureDateHourSelectedStation"]).timestamp()),
                         platform=item["platformSelectedStation"],
                         delay_in_minutes=item["delay"]
                     )

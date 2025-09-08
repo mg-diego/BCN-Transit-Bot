@@ -1,4 +1,4 @@
-from domain.tram.next_tram import TramLineRoute
+from domain.tram.tram_line_route import TramLineRoute
 from domain.transport_type import TransportType
 
 from telegram import Update

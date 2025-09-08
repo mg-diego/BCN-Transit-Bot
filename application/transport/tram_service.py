@@ -4,7 +4,7 @@ from providers.api import TramApiService
 from providers.manager import LanguageManager
 from providers.helpers import logger
 
-from domain.tram import TramLine, TramStop, TramConnection, TramLineRoute, NextTram
+from domain.tram import TramLine, TramStop, TramConnection, TramLineRoute
 
 from application.cache_service import CacheService
 from .service_base import ServiceBase
@@ -52,12 +52,13 @@ class TramService(ServiceBase):
         )
     
     async def get_stop_routes(self, outbound_code: int, return_code: int) -> str:
-        routes = await self._get_from_cache_or_api(
+        return await self._get_from_cache_or_api(
             f"tram_routes_{outbound_code}_{return_code}",
-            lambda: self.tram_api_service.get_next_trams_at_stop(outbound_code, return_code),
-            cache_ttl=30
+            lambda: self.tram_api_service.get_next_trams_at_stop(
+                outbound_code, return_code
+            ),
+            cache_ttl=30,
         )
-        return routes
 
     async def get_tram_stop_connections(self, stop_id) -> List[TramConnection]:
         connections = await self._get_from_cache_or_api(
@@ -66,8 +67,7 @@ class TramService(ServiceBase):
             cache_ttl=3600*24
         )
 
-        formatted_connections = "\n".join(str(c) for c in connections)
-        return formatted_connections
+        return "\n".join(str(c) for c in connections)
     
     # === OTHER CALLS ===
     async def get_stops_by_name(self, stop_name):

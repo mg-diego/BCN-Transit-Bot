@@ -4,8 +4,9 @@ import re
 import inspect
 import json
 
-from domain.metro import MetroLine, MetroLineRoute, NextMetro, MetroConnection, MetroStation, create_metro_station, create_metro_access
-from domain.bus import BusStop, BusLine, create_bus_stop, BusLineRoute, NextBus
+from domain import NextTrip, normalize_to_seconds
+from domain.metro import MetroLine, MetroLineRoute, MetroConnection, MetroStation, create_metro_station, create_metro_access
+from domain.bus import BusStop, BusLine, create_bus_stop, BusLineRoute
 
 from domain.transport_type import TransportType
 from providers.helpers import logger
@@ -141,19 +142,6 @@ class TmbApiService:
         stations.sort(key=lambda x: x.ORDRE_ESTACIO)
         return stations
 
-    # WIP
-    async def get_next_scheduled_metro_at_station(self, station_id):
-        url = f'{self.BASE_URL_ITRANSIT}/metro/estacions?estacions={station_id}&temps_teoric=true'
-        data = await self._get(url)
-
-        scheduled_routes = []
-        for line in data.get("linies", []):
-            for station in line.get("estacions", []):
-                for route_data in station.get("linies_trajectes", []):
-                    next_scheduled_metros = [
-                    # NextMetro(**metro) for metro in route_data.get("propers_trens", [])
-                    ]
-
     async def get_next_metro_at_station(self, station_id) -> List[MetroLineRoute]:
         url = f'{self.BASE_URL_ITRANSIT}/metro/estacions?estacions={station_id}'
         data = await self._get(url)
@@ -162,8 +150,10 @@ class TmbApiService:
         for line in data.get("linies", []):
             for station in line.get("estacions", []):
                 for route_data in station.get("linies_trajectes", []):
-                    next_metros = [
-                        NextMetro(**metro) for metro in route_data.get("propers_trens", [])
+                    next_metros = [NextTrip(
+                            id=metro["codi_servei"],
+                            arrival_time=normalize_to_seconds(int(metro["temps_arribada"]))
+                        ) for metro in route_data.get("propers_trens", [])
                     ]
                     route = MetroLineRoute(
                         codi_linia=route_data["codi_linia"],
@@ -184,7 +174,11 @@ class TmbApiService:
         for stop in data.get("parades", []):
             for route_data in stop.get("linies_trajectes", []):
                 next_buses = [
-                    NextBus(**bus) for bus in route_data.get("propers_busos", [])
+                    NextTrip(
+                        id=bus.get("id_bus"),
+                        arrival_time=normalize_to_seconds(int(bus["temps_arribada"]))
+                    )
+                    for bus in route_data.get("propers_busos", [])
                 ]
                 route = BusLineRoute(
                     id_operador=route_data["id_operador"],

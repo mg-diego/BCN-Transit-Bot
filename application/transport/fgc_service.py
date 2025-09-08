@@ -1,7 +1,8 @@
 from typing import List
 import json
 
-from domain.fgc import FgcLine, FgcStation, NextFgc, FgcLineRoute
+from domain.fgc import FgcLine, FgcStation, FgcLineRoute
+from domain import NextTrip, normalize_to_seconds
 from providers.api import FgcApiService
 from providers.manager import LanguageManager
 from providers.helpers import logger
@@ -80,13 +81,15 @@ class FgcService(ServiceBase):
 
                 routes = []
                 for direction, trips in raw_routes.items():
-                    nextFgc = []
-                    for trip in trips:
-                        nextFgc.append(NextFgc(
-                            codi_servei='',
-                            temps_arribada=trip.get('departure_time')
+                    nextFgc = [
+                        NextTrip(
+                            id='',
+                            arrival_time=normalize_to_seconds(
+                                int(trip.get('departure_time'))
+                            ),
                         )
-                    )
+                        for trip in trips
+                    ]
                     routes.append(FgcLineRoute(
                         desti_trajecte=direction,
                         propers_trens=nextFgc,
@@ -99,14 +102,14 @@ class FgcService(ServiceBase):
                 raw_routes = await self.fgc_api_service.get_next_departures(station_name, line_name)
 
                 routes =  []
-                for direction, trips in raw_routes.items():            
-                    nextFgc = []
-                    for trip in trips:
-                        nextFgc.append(NextFgc(
-                            codi_servei=trip.get('trip_id'),
-                            temps_arribada=trip.get('departure_time')
+                for direction, trips in raw_routes.items():
+                    nextFgc = [
+                        NextTrip(
+                            id=trip.get('trip_id'),
+                            arrival_time=normalize_to_seconds(trip.get('departure_time'))
                         )
-                    )
+                        for trip in trips
+                    ]
                     routes.append(FgcLineRoute(
                         desti_trajecte=direction,
                         propers_trens=nextFgc,
