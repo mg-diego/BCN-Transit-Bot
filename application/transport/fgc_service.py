@@ -68,6 +68,14 @@ class FgcService(ServiceBase):
         stations = await self.get_all_stations()
         return [s for s in stations if s.line_id == line_id]
     
+    async def get_stations_by_name(self, station_name) -> List[FgcStation]:
+        stations = await self.get_all_stations()
+        return self.fuzzy_search(
+            query=station_name,
+            items=stations,
+            key=lambda station: station.name
+        )
+    
     async def get_station_routes(self, station_name, moute_id, line_name):
         routes = await self._get_from_cache_or_data(
             f"fgc_station_{station_name}_routes",

@@ -386,11 +386,17 @@ class KeyboardFactory:
                 callback = Callbacks.RODALIES_STATION.format(
                     line_code=stop["line_code"],
                     station_code=stop["station_code"]
-                )            
+                )
             elif stop["type"] == "bicing":
                 text = f"{TransportType.BICING.emoji} {stop['station_name']} (🅿️:{stop['slots']} 🔋:{stop["electrical"]} 🚲:{stop["mechanical"]}){distance_str}"
                 callback = Callbacks.BICING_STATION.format(
                     line_code='bicing',
+                    station_code=stop["station_code"]
+                )
+            elif stop["type"] == "fgc":
+                text = f"{TransportType.FGC.emoji} {stop['line_name']} - {stop['station_name']}{distance_str}"
+                callback = Callbacks.FGC_STATION.format(
+                    line_code=stop["line_code"],
                     station_code=stop["station_code"]
                 )
             else:

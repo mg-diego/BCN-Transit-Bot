@@ -6,6 +6,7 @@ from domain.metro import MetroStation
 from domain.tram import TramStop
 from domain.rodalies import RodaliesStation
 from domain.bicing import BicingStation
+from domain.fgc import FgcStation
 
 class DistanceHelper:
     """
@@ -21,6 +22,7 @@ class DistanceHelper:
         tram_stops: List[TramStop],
         rodalies_stations: List[RodaliesStation],
         bicing_stations: List[BicingStation],
+        fgc_stations: List[FgcStation],
         user_location: Optional[object] = None
     ) -> List[Dict]:
         """
@@ -116,6 +118,25 @@ class DistanceHelper:
                 "availability": b.disponibilidad,
                 "distance_km": distance_km
             })
+
+        # --- FGC ---
+        for t in fgc_stations:
+            distance_km = None
+            if user_location:
+                distance_km = DistanceHelper.haversine_distance(
+                    t.lat, t.lon,
+                    user_location.latitude, user_location.longitude
+                )
+
+            stops.append({
+                "type": "fgc",
+                "line_name": t.line_id,
+                "line_code": t.line_id,
+                "station_name": t.name,
+                "station_code": t.id,
+                "coordinates": (t.lat, t.lon),
+                "distance_km": distance_km
+            }) 
 
         # --- Bus --- (Adding bus stops as last option to avoid consuming the 50 slots just by bus stops in case of generic searches)
         for b in bus_stops:

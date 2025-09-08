@@ -87,6 +87,7 @@ class ReplyHandler:
         tram_service = self.tram_handler.tram_service
         rodalies_service = self.rodalies_handler.rodalies_service
         bicing_service = self.bicing_handler.bicing_service
+        fgc_service = self.fgc_handler.fgc_service
 
         if user_location is None:
             await message_service.send_new_message(update, language_manager.t('results.location.ask'), keyboard_factory.location_keyboard())
@@ -96,7 +97,7 @@ class ReplyHandler:
         if len(self.current_search) < 3:
             await update.message.reply_text(language_manager.t('results.minimum.letters'))
             return
-        
+
         message = await update_manager.start_loading(update, context, language_manager.t('results.searching'))
         chat_id = message_service.get_chat_id(update)
 
@@ -106,36 +107,37 @@ class ReplyHandler:
         rodalies_stations = []
         bicing_stations = []
 
-        if not only_bicing:
-            if self.current_search.isdigit(): # ONLY FOR BUS STOPS AND BICING
-                bicing = await bicing_service.get_station_by_id(self.current_search)
-                if bicing is not None:
-                    bicing_stations.append(bicing)
-                
-                stop = await bus_service.get_stop_by_id(self.current_search)
-                if stop is not None:
-                    bus_stops.append(stop)
-
-            else: # METRO STATIONS | BUS STOPS | TRAM STOPS | RODALIES STATIONS
-                tram_stops = await tram_service.get_stops_by_name(self.current_search)
-                metro_stations = await metro_service.get_stations_by_name(self.current_search)
-                bus_stops = await bus_service.get_stops_by_name(self.current_search)
-                rodalies_stations = await rodalies_service.get_stations_by_name(self.current_search)
-                bicing_stations = await bicing_service.get_stations_by_name(self.current_search)
-
-        else: 
+        if only_bicing: 
             bicing_stations = await bicing_service.get_all_stations()
-        
+
+        elif self.current_search.isdigit(): # ONLY FOR BUS STOPS AND BICING
+            bicing = await bicing_service.get_station_by_id(self.current_search)
+            if bicing is not None:
+                bicing_stations.append(bicing)
+
+            stop = await bus_service.get_stop_by_id(self.current_search)
+            if stop is not None:
+                bus_stops.append(stop)
+
+        else: # METRO STATIONS | BUS STOPS | TRAM STOPS | RODALIES STATIONS
+            tram_stops = await tram_service.get_stops_by_name(self.current_search)
+            metro_stations = await metro_service.get_stations_by_name(self.current_search)
+            bus_stops = await bus_service.get_stops_by_name(self.current_search)
+            rodalies_stations = await rodalies_service.get_stations_by_name(self.current_search)
+            bicing_stations = await bicing_service.get_stations_by_name(self.current_search)
+            fgc_stations = await fgc_service.get_stations_by_name(self.current_search)
+
         await update_manager.stop_loading(update, context)
 
-        stops_with_distance = DistanceHelper.build_stops_list(metro_stations, bus_stops, tram_stops, rodalies_stations, bicing_stations, user_location)
-        metro_count = len([s for s in stops_with_distance if s["type"] == TransportType.METRO.value])
-        bus_count = len([s for s in stops_with_distance if s["type"] == TransportType.BUS.value])
-        tram_count = len([s for s in stops_with_distance if s["type"] == TransportType.TRAM.value])
-        rodalies_count = len([s for s in stops_with_distance if s["type"] == TransportType.RODALIES.value])
-        bicing_count = len([s for s in stops_with_distance if s["type"] == TransportType.BICING.value])
-
+        stops_with_distance = DistanceHelper.build_stops_list(metro_stations, bus_stops, tram_stops, rodalies_stations, bicing_stations, fgc_stations, user_location)
         if not only_bicing:
+            metro_count = len([s for s in stops_with_distance if s["type"] == TransportType.METRO.value])
+            bus_count = len([s for s in stops_with_distance if s["type"] == TransportType.BUS.value])
+            tram_count = len([s for s in stops_with_distance if s["type"] == TransportType.TRAM.value])
+            rodalies_count = len([s for s in stops_with_distance if s["type"] == TransportType.RODALIES.value])
+            bicing_count = len([s for s in stops_with_distance if s["type"] == TransportType.BICING.value])
+            fgc_count = len([s for s in stops_with_distance if s["type"] == TransportType.FGC.value])
+
             msg = language_manager.t(
                 "results.found",
                 count=len(stops_with_distance),
@@ -144,12 +146,12 @@ class ReplyHandler:
                 bus_results=bus_count,
                 tram_results=tram_count,
                 rodalies_results=rodalies_count,
-                bicing_results=bicing_count
+                bicing_results=bicing_count,
+                fgc_results=fgc_count
             )
         else:
-            near_bicing_stations = []
-            for stop in stops_with_distance:
-                near_bicing_stations.append(BicingStation(
+            near_bicing_stations = [
+                BicingStation(
                     streetName=stop.get('station_name'),
                     id=stop.get('station_code'),
                     latitude=stop.get('coordinates')[0],
@@ -166,9 +168,11 @@ class ReplyHandler:
                     icon='',
                     transition_end=None,
                     transition_start=None,
-                    obcn=None
-                ))
-            encoded = self.mapper.map_bicing_stations(near_bicing_stations, user_location.latitude, user_location.longitude)      
+                    obcn=None,
+                )
+                for stop in stops_with_distance
+            ]
+            encoded = self.mapper.map_bicing_stations(near_bicing_stations, user_location.latitude, user_location.longitude)
             await message_service.send_new_message(update, language_manager.t('results.location.received'), keyboard_factory.map_reply_menu(encoded))
             self.current_search = self.previous_search
             msg = language_manager.t('bicing.station.near')
