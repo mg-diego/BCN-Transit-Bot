@@ -4,7 +4,7 @@ from providers.api import TramApiService
 from providers.manager import LanguageManager
 from providers.helpers import logger
 
-from domain.tram import TramLine, TramStop, TramConnection, TramLineRoute
+from domain.tram import TramLine, TramStop, TramConnection
 
 from application.cache_service import CacheService
 from .service_base import ServiceBase

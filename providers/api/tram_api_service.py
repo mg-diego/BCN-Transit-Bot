@@ -4,9 +4,10 @@ import inspect
 from datetime import datetime
 from typing import Any, Dict, List
 
-from domain.tram import TramLine, TramNetwork, TramStop, TramConnection, TramStopConnection, TramLineRoute
-from domain import NextTrip, normalize_to_seconds
+from domain.tram import TramLine, TramNetwork, TramStop, TramConnection, TramStopConnection
+from domain import NextTrip, LineRoute, normalize_to_seconds
 
+from domain.transport_type import TransportType
 from providers.helpers import logger
 
 
@@ -250,14 +251,16 @@ class TramApiService:
             )
 
             if key not in routes_dict:
-                routes_dict[key] = TramLineRoute(
+                routes_dict[key] = LineRoute(
                     line_name=item["lineName"],
-                    code=item["code"],
-                    stop_name=item["stopName"],
+                    route_id=item["code"],
+                    name=item["stopName"],
                     destination=item["destination"],
-                    next_trams=[next_tram]
+                    next_trips=[next_tram],
+                    line_type=TransportType.TRAM,
+                    color="008E78"
                 )
             else:
-                routes_dict[key].next_trams.append(next_tram)
+                routes_dict[key].next_trips.append(next_tram)
 
         return list(routes_dict.values())

@@ -1,5 +1,5 @@
-from domain.tram.tram_line_route import TramLineRoute
 from domain.transport_type import TransportType
+from domain import LineRoute
 
 from telegram import Update
 from telegram.ext import ContextTypes
@@ -79,7 +79,7 @@ class TramHandler(HandlerBase):
 
         async def update_text():
             routes = await self.tram_service.get_stop_routes(stop.outboundCode, stop.returnCode)
-            grouped_routes = TramLineRoute.group_by_line(routes)
+            grouped_routes = LineRoute.grouped_list(routes)
             text = (
                 f"{self.language_manager.t(f'{TransportType.TRAM.value}.stop.name', name=stop.name.upper())}\n\n"
                 f"<a href='{GoogleMapsHelper.build_directions_url(latitude=stop.latitude, longitude=stop.longitude)}'>{self.language_manager.t('common.map.view.location')}</a>\n\n"

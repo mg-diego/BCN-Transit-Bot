@@ -2,10 +2,9 @@ from typing import List
 import aiohttp
 import re
 import inspect
-import json
 
-from domain import NextTrip, normalize_to_seconds
-from domain.metro import MetroLine, MetroLineRoute, MetroConnection, MetroStation, create_metro_station, create_metro_access
+from domain import NextTrip, LineRoute, normalize_to_seconds
+from domain.metro import MetroLine, MetroConnection, MetroStation, create_metro_station, create_metro_access
 from domain.bus import BusStop, BusLine, create_bus_stop, BusLineRoute
 
 from domain.transport_type import TransportType
@@ -108,13 +107,11 @@ class TmbApiService:
     async def get_metro_stations(self) -> List[MetroStation]:
         url = f'{self.BASE_URL_TRANSIT}/estacions'
         data = await self._get(url)
-        
+
         features = data['features']
 
         stations = []
-        for feature in features:
-            stations.append(create_metro_station(feature))
-
+        stations.extend(create_metro_station(feature) for feature in features)
         stations.sort(key=lambda x: x.ORDRE_ESTACIO)
         return stations
     
@@ -124,9 +121,7 @@ class TmbApiService:
         features = data['features']
 
         stations = []
-        for feature in features:
-            stations.append(create_bus_stop(feature))
-
+        stations.extend(create_bus_stop(feature) for feature in features)
         stations.sort(key=lambda x: x.ORDRE_LINIA)
         return stations
 
@@ -136,13 +131,11 @@ class TmbApiService:
         features = data['features']
 
         stations = []
-        for feature in features:
-            stations.append(create_metro_station(feature))
-
+        stations.extend(create_metro_station(feature) for feature in features)
         stations.sort(key=lambda x: x.ORDRE_ESTACIO)
         return stations
 
-    async def get_next_metro_at_station(self, station_id) -> List[MetroLineRoute]:
+    async def get_next_metro_at_station(self, station_id) -> List[LineRoute]:
         url = f'{self.BASE_URL_ITRANSIT}/metro/estacions?estacions={station_id}'
         data = await self._get(url)
 
@@ -155,13 +148,14 @@ class TmbApiService:
                             arrival_time=normalize_to_seconds(int(metro["temps_arribada"]))
                         ) for metro in route_data.get("propers_trens", [])
                     ]
-                    route = MetroLineRoute(
-                        codi_linia=route_data["codi_linia"],
-                        nom_linia=route_data["nom_linia"],
-                        color_linia=route_data["color_linia"],
-                        codi_trajecte=route_data["codi_trajecte"],
-                        desti_trajecte=route_data["desti_trajecte"],
-                        propers_trens=next_metros
+                    route = LineRoute(
+                        line_id=route_data["codi_linia"],
+                        name=route_data["nom_linia"],
+                        color=route_data["color_linia"],
+                        route_id=route_data["codi_trajecte"],
+                        destination=route_data["desti_trajecte"],
+                        next_trips=next_metros,
+                        line_type=TransportType.METRO
                     )
                     routes.append(route)
         return routes

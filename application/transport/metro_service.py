@@ -2,6 +2,7 @@ from collections import defaultdict
 from typing import List
 import json
 
+from domain import LineRoute
 from domain.metro import MetroLine, MetroStation, MetroAccess, update_metro_station_with_line_info, update_metro_station_with_connections
 from domain.common.alert import Alert
 from domain.transport_type import TransportType
@@ -116,7 +117,7 @@ class MetroService(ServiceBase):
             lambda: self.tmb_api_service.get_next_metro_at_station(metro_station_id),
             cache_ttl=10
         )
-        return "\n\n".join(str(route) for route in routes)
+        return "\n\n".join(LineRoute.simple_list(route) for route in routes)
     
     # ===== OTHER CALLS ====
     async def get_stations_by_name(self, station_name) -> List[MetroStation]:
