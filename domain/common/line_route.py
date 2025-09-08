@@ -116,7 +116,7 @@ class LineRoute:
         lines = []
         for routes in grouped_routes.values():
             for route in routes:
-                header = f"     <b>lroute.name_with_emoji → {html.escape(route.destination)}</b>"
+                header = f"     <b>{route.name_with_emoji} → {html.escape(route.destination)}</b>"
                 tram_info = "\n".join(
                     f"           <i>{number_emojis[i] if i < len(number_emojis) else f'{i+1}.'} {tram.remaining_time()}</i>"
                     for i, tram in enumerate(route.next_trips[:5])
@@ -127,7 +127,7 @@ class LineRoute:
         return "\n".join(lines)
     
     @staticmethod
-    def scheduled_list(route):
+    def scheduled_list(route, with_arrival_date=True) -> str:
         header = f"     <b>{route.name_with_emoji} → {html.escape(route.destination)}</b>"
         number_emojis = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣"]
 
@@ -136,13 +136,13 @@ class LineRoute:
             number_emoji = number_emojis[i] if i < len(number_emojis) else f"{i + 1}."
 
             # Vía y número de tren si existen
-            via_text = f" | Vía {trip.platform} · {trip.id}" if trip.platform else ""
+            via_text = f" | Vía {trip.platform} | 🚆 {trip.id}" if trip.platform else ""
 
             # Horas programada y estimada
             scheduled_time = trip.scheduled_arrival()
-            scheduled = scheduled_time.strftime("%H:%M") if scheduled_time else "?"
+            scheduled = scheduled_time.strftime("%H:%Mh") if scheduled_time else "?"
             estimated = (
-                datetime.fromtimestamp(trip.arrival_time).strftime("%H:%M")
+                datetime.fromtimestamp(trip.arrival_time).strftime("%H:%Mh")
                 if trip.arrival_time
                 else "?"
             )
@@ -159,7 +159,7 @@ class LineRoute:
                     delay_text = f"({trip.delay_in_minutes}m ⏪)"
 
             # Tiempo restante
-            remaining = trip.remaining_time()
+            remaining = trip.remaining_time_and_arrival_date() if with_arrival_date else trip.remaining_time()
 
             # Si la hora programada ya está incluida en remaining y no hay retraso → mostrar versión simple
             if scheduled in remaining and delay_text == "":

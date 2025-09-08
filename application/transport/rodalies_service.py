@@ -85,7 +85,7 @@ class RodaliesService(ServiceBase):
             lambda: self.rodalies_api_service.get_next_trains_at_station(station_id, line_id),
             cache_ttl=10
         )
-        return "\n\n".join(LineRoute.scheduled_list(route) for route in routes)
+        return "\n\n".join(LineRoute.scheduled_list(route, with_arrival_date=False) for route in routes)
     
     async def get_line_by_id(self, line_id: str) -> RodaliesLine:
         lines = await self.get_all_lines()

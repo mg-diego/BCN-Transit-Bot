@@ -11,7 +11,7 @@ class NextTrip:
     delay_in_minutes: int = 0
     platform: str = ""
 
-    def remaining_time(self, arriving_threshold = 40) -> str:
+    def remaining_time(self, arriving_threshold=40) -> str:
         if not self.arrival_time:
             return "-"
     
@@ -23,26 +23,35 @@ class NextTrip:
             return "🔜"
 
         # Caso 2: Menos de 1 hora → mostrar minutos y segundos
-        if delta_s < 60 * 60:
-            minutes, seconds = divmod(int(delta_s), 60)
+        hours, remainder = divmod(int(delta_s), 3600)
+        minutes, seconds = divmod(remainder, 60)
 
-            parts = []
-            if minutes:
-                parts.append(f"{minutes}min")
-            if seconds or not minutes:
-                parts.append(f"{seconds}s")
+        parts = []
+        if hours:
+            parts.append(f"{hours}h")
+        if minutes:
+            parts.append(f"{minutes}min")
+        # Siempre mostramos segundos si no hay minutos o si seconds > 0
+        if seconds or not minutes:
+            parts.append(f"{seconds}s")
 
-            return " ".join(parts)
+        return " ".join(parts)
+
+    def remaining_time_and_arrival_date(self, arriving_threshold = 40) -> str:
+        if not self.arrival_time:
+            return "-"
+    
+        remaining_time = self.remaining_time(arriving_threshold)
 
         # Convertimos el timestamp de llegada en datetime
         arrival_dt = datetime.fromtimestamp(self.arrival_time)
 
         # Caso 3: Es hoy pero dentro de más de 1 hora → mostrar hora exacta
         if arrival_dt.date() == datetime.now().date():
-            return arrival_dt.strftime("%H:%Mh")
+            return f"{remaining_time} → {arrival_dt.strftime("⏰ %H:%Mh")}" 
 
         # Caso 4: No es hoy → mostrar fecha y hora completa
-        return arrival_dt.strftime("%d-%m-%Y %H:%Mh")
+        return arrival_dt.strftime("%d-%m-%Y → ⏰ %H:%Mh")
     
     def scheduled_arrival(self) -> datetime:
         """Devuelve la hora programada de llegada en base al retraso."""
