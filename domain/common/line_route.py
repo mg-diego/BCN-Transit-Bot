@@ -11,13 +11,12 @@ from domain.transport_type import TransportType
 class LineRoute:
     route_id: str
     line_type: TransportType
-    name: str
+    line_name: str
     color: str
     destination: str
     next_trips: List[NextTrip]
     name_with_emoji: Optional[str] = ""
     line_id: Optional[str] = ""
-    line_name: Optional[str] = ""
 
     def __post_init__(self):
         if self.line_type == TransportType.METRO:
@@ -47,13 +46,13 @@ class LineRoute:
                 "M": "🔴",
                 "X": "🟨"
             }
-            for letter in self.name:
+            for letter in self.line_name:
                 if letter in emojis:
-                    self.name_with_emoji = f"{emojis[letter]} {self.name}"
+                    self.name_with_emoji = f"{emojis[letter]} {self.line_name}"
                     break
             else:
-                if self.name.isdigit():
-                    self.name_with_emoji = f"🔴 {self.name}"
+                if self.line_name.isdigit():
+                    self.name_with_emoji = f"🔴 {self.line_name}"
             return
         elif self.line_type == TransportType.FGC:
             emojis = {
@@ -89,8 +88,8 @@ class LineRoute:
                 "RT2": "⬜", "RL3": "🟩", "RL4": "🟨",
             }
 
-        emoji = emojis.get(self.name, "")
-        self.name_with_emoji = f"{emoji} {self.name}"
+        emoji = emojis.get(self.line_name, "")
+        self.name_with_emoji = f"{emoji} {self.line_name}"
 
     @staticmethod
     def simple_list(route, arriving_threshold=40) -> str:
@@ -111,7 +110,7 @@ class LineRoute:
 
         grouped_routes = defaultdict(list)
         for route in routes:
-            grouped_routes[route.name_with_emoji].append(route)
+            grouped_routes[route.line_name].append(route)
 
         lines = []
         for routes in grouped_routes.values():
@@ -124,7 +123,8 @@ class LineRoute:
                 lines.append(f"{header}\n{tram_info}")
             lines.append("\n")
 
-        return "\n".join(lines)
+        return "\n".join(lines)   
+    
     
     @staticmethod
     def scheduled_list(route, with_arrival_date=True) -> str:

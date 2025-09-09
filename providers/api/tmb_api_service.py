@@ -150,7 +150,7 @@ class TmbApiService:
                     ]
                     route = LineRoute(
                         line_id=route_data["codi_linia"],
-                        name=route_data["nom_linia"],
+                        line_name=route_data["nom_linia"],
                         color=route_data["color_linia"],
                         route_id=route_data["codi_trajecte"],
                         destination=route_data["desti_trajecte"],
@@ -176,7 +176,7 @@ class TmbApiService:
                 ]
                 route = LineRoute(
                     line_id=route_data["codi_linia"],
-                    name=route_data["nom_linia"],
+                    line_name=route_data["nom_linia"],
                     route_id=route_data["codi_trajecte"],
                     destination=route_data["desti_trajecte"],
                     line_type=TransportType.BUS,

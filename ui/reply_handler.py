@@ -1,6 +1,7 @@
 from domain.bicing import BicingStation
 from domain.transport_type import TransportType
 from providers.helpers.distance_helper import DistanceHelper
+from providers.manager import audit_action
 from telegram import Update
 from telegram.ext import (
     ContextTypes
@@ -39,6 +40,8 @@ class ReplyHandler:
         self.fgc_handler = fgc_handler
         self.notifications_handler = notifications_handler
 
+        self.audit_logger = self.menu_handler.audit_logger
+
         self.mapper = TransportDataCompressor()
 
         self.previous_search = None
@@ -50,7 +53,7 @@ class ReplyHandler:
         if self.current_search == f"{TransportType.METRO.emoji} Metro":
             await self.metro_handler.show_lines(update, context)
         elif self.current_search == f"{TransportType.BUS.emoji} Bus":
-            await self.bus_handler.show_lines(update, context)
+            await self.bus_handler.show_bus_categories(update, context)
         elif self.current_search == f"{TransportType.TRAM.emoji} Tram":
             await self.tram_handler.show_lines(update, context)
         elif self.current_search == f"{TransportType.RODALIES.emoji} Rodalies":
@@ -76,6 +79,7 @@ class ReplyHandler:
         
         self.previous_search = self.current_search
 
+    @audit_action(action_type="REPLY", command_or_button="reply_router", params_args=["user_location", "only_bicing"])
     async def handle_reply_from_user(self, update: Update, context: ContextTypes.DEFAULT_TYPE, user_location = None, only_bicing = False):
         message_service = self.menu_handler.message_service
         update_manager = self.menu_handler.update_manager
@@ -106,6 +110,7 @@ class ReplyHandler:
         tram_stops = []
         rodalies_stations = []
         bicing_stations = []
+        fgc_stations = []
 
         if only_bicing: 
             bicing_stations = await bicing_service.get_all_stations()
@@ -184,6 +189,7 @@ class ReplyHandler:
             keyboard_factory.reply_keyboard_stations_menu(stops_with_distance)
         )
 
+    @audit_action(action_type="REPLY", command_or_button="location_handler")
     async def location_handler(self, update, context):
         if self.previous_search == "🚴 Bicing":
             await self.handle_reply_from_user(update, context, update.message.location, only_bicing=True)

@@ -247,14 +247,14 @@ class TramApiService:
 
             next_tram = NextTrip(
                 id=item["vehicleId"],
-                arrival_time=normalize_to_seconds(int(datetime.fromisoformat(item["arrivalTime"]).timestamp())) #datetime.fromisoformat
+                arrival_time=normalize_to_seconds(int(datetime.fromisoformat(item["arrivalTime"]).timestamp()))
             )
 
             if key not in routes_dict:
                 routes_dict[key] = LineRoute(
-                    line_name=item["lineName"],
+                    line_id=item["lineName"],
                     route_id=item["code"],
-                    name=item["stopName"],
+                    line_name=item["lineName"],
                     destination=item["destination"],
                     next_trips=[next_tram],
                     line_type=TransportType.TRAM,

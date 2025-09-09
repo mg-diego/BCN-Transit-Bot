@@ -103,7 +103,6 @@ class FgcService(ServiceBase):
                         next_trips=nextFgc,
                         line_name=line_name,
                         line_id=line_name,
-                        name=line_name,
                         line_type=TransportType.FGC,
                         color=None,
                         route_id=line_name
@@ -125,7 +124,6 @@ class FgcService(ServiceBase):
                         next_trips=nextFgc,
                         line_name=line_name,
                         line_id=line_name,
-                        name=line_name,
                         line_type=TransportType.FGC,
                         color=None,
                         route_id=line_name

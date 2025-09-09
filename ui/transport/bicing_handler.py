@@ -7,7 +7,7 @@ from .handler_base import HandlerBase
 
 from application import BicingService, UpdateManager, MessageService, TelegraphService
 from providers.helpers import TransportDataCompressor, logger
-from providers.manager import LanguageManager, UserDataManager
+from providers.manager import LanguageManager, UserDataManager, audit_action
 
 
 class BicingHandler(HandlerBase):
@@ -24,14 +24,16 @@ class BicingHandler(HandlerBase):
     ):
         super().__init__(message_service, update_manager, language_manager, user_data_manager, keyboard_factory, telegraph_service)
         self.bicing_service = bicing_service
+        self.audit_logger = self.user_data_manager.audit_logger
         self.mapper = TransportDataCompressor()
 
+    @audit_action(action_type="SEARCH", command_or_button="show_bicing_instructions")
     async def show_instructions(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         self.message_service.set_bot_instance(context.bot)
 
         await self.message_service.send_new_message(update, self.language_manager.t('bicing.search.instructions'), reply_markup=self.keyboard_factory.location_keyboard())
 
-        # PENDING TO FIX MAP VIEW
+        #TODO: PENDING TO FIX MAP VIEW
         '''
         stations = await self.bicing_service.get_all_stations()
         encoded = self.mapper.map_bicing_stations(stations)

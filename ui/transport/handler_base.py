@@ -1,6 +1,6 @@
 import asyncio
 from collections import defaultdict
-import time, json
+import time
 from typing import Awaitable, Callable, List
 from domain.common.alert import Alert
 from domain.transport_type import TransportType
@@ -8,8 +8,7 @@ from telegram import Update
 from telegram.ext import ContextTypes
 from telegram.error import RetryAfter
 from application import MessageService, UpdateManager, TelegraphService
-from providers.manager.language_manager import LanguageManager
-from providers.manager.user_data_manager import UserDataManager, audit_action
+from providers.manager import LanguageManager, UserDataManager, audit_action
 from providers.helpers import logger
 from ui.keyboard_factory import KeyboardFactory
 

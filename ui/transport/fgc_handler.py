@@ -1,5 +1,4 @@
 from domain.transport_type import TransportType
-from domain.metro import get_alert_by_language, format_metro_connections
 from telegram import Update
 from telegram.ext import ContextTypes
 
@@ -71,9 +70,6 @@ class FgcHandler(HandlerBase):
         )
 
     async def show_station(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        #await self.message_service.handle_interaction(update, "🚧 This feature isn't available yet, but it's coming in a future update!")
-
-        """Display a specific rodalies station with next arrivals."""
         user_id, chat_id, line_id, fgc_station_id = self.message_service.extract_context(update, context)
         logger.info(f"Showing station info for user {user_id}, line {line_id}, stop {fgc_station_id}")
 

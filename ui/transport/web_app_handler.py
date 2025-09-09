@@ -3,6 +3,7 @@ from domain.transport_type import TransportType
 from telegram import Update
 from telegram.ext import ContextTypes
 from providers.helpers.logger import logger
+from providers.manager import audit_action
 
 from ui import MetroHandler, BusHandler, TramHandler, RodaliesHandler, BicingHandler, FgcHandler
 
@@ -19,8 +20,11 @@ class WebAppHandler:
         self.rodalies_handler = rodalies_handler
         self.bicing_handler = bicing_handler
         self.fgc_handler = fgc_handler
+        self.audit_logger = self.bus_handler.audit_logger
+
         logger.info(f"[{self.__class__.__name__}] WebAppHandler initialized")
 
+    @audit_action(action_type="MAP", command_or_button="web_app_data_router")
     def web_app_data_router(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """
         Route the web app data to the corresponding handler based on the payload type.

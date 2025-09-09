@@ -88,9 +88,9 @@ class RodaliesApiService:
                 if key not in routes_dict:
                     routes_dict[key] = LineRoute(
                         route_id=line_id,
-                        name=line_id,
-                        destination=item["destinationStation"]["name"],
                         line_name=line_id,
+                        line_id=line_id,
+                        destination=item["destinationStation"]["name"],
                         next_trips=[next_rodalies],
                         color=None,
                         line_type=TransportType.RODALIES

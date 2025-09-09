@@ -7,8 +7,7 @@ from ui.keyboard_factory import KeyboardFactory
 
 from application import MetroService, UpdateManager, MessageService, TelegraphService
 
-from providers.manager import UserDataManager
-from providers.manager import LanguageManager
+from providers.manager import LanguageManager, UserDataManager, audit_action
 from providers.helpers import TransportDataCompressor, GoogleMapsHelper, logger
 
 from .handler_base import HandlerBase
@@ -31,6 +30,7 @@ class MetroHandler(HandlerBase):
         super().__init__(message_service, update_manager, language_manager, user_data_manager, keyboard_factory, telegraph_service)
         self.metro_service = metro_service
         self.mapper = TransportDataCompressor()
+        self.audit_logger = self.user_data_manager.audit_logger
         logger.info(f"[{self.__class__.__name__}] MetroHandler initialized")
 
     async def show_lines(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -100,6 +100,7 @@ class MetroHandler(HandlerBase):
         self.start_update_loop(user_id, chat_id, message.message_id, update_text, default_callback)
         logger.info(f"Started update loop task for user {user_id}, station {metro_station_id}")
 
+    @audit_action(action_type="SEARCH", command_or_button="show_station_access")
     async def show_station_access(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_id = self.message_service.get_chat_id(update)
         self.message_service.set_bot_instance(context.bot)
@@ -136,6 +137,7 @@ class MetroHandler(HandlerBase):
             reply_markup=self.keyboard_factory.update_menu(is_fav, TransportType.METRO.value, station_id, line_id, self.message_service.get_callback_query(update), has_connections=any(station.connections))
         )
 
+    @audit_action(action_type="SEARCH", command_or_button="show_station_connections")
     async def show_station_connections(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_id = self.message_service.get_chat_id(update)
         self.message_service.set_bot_instance(context.bot)

@@ -4,7 +4,7 @@ from telegram import Update
 from telegram.ext import ContextTypes
 
 from application import MetroService, BusService, TramService, RodaliesService, MessageService, BicingService, FgcService
-from providers.manager import UserDataManager, LanguageManager
+from providers.manager import UserDataManager, LanguageManager, audit_action
 from ui.keyboard_factory import KeyboardFactory
 
 class FavoritesHandler:
@@ -20,7 +20,9 @@ class FavoritesHandler:
         self.bicing_service = bicing_service
         self.fgc_service = fgc_service
         self.language_manager = language_manager
+        self.audit_logger = self.user_data_manager.audit_logger        
 
+    @audit_action(action_type="FAVORITES", command_or_button="show_favorites")
     async def show_favorites(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_id = self.message_service.get_user_id(update)
         favs = self.user_data_manager.get_favorites_by_user(user_id)
@@ -45,6 +47,7 @@ class FavoritesHandler:
                 reply_markup=self.keyboard_factory.favorites_menu(favs)
             )
 
+    @audit_action(action_type="FAVORITES", command_or_button="add_favorite")
     async def add_favorite(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         query = update.callback_query
         await query.answer()
@@ -125,6 +128,7 @@ class FavoritesHandler:
 
         await query.edit_message_reply_markup(reply_markup=keyboard)
 
+    @audit_action(action_type="FAVORITES", command_or_button="remove_favorite")
     async def remove_favorite(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         query = update.callback_query
         await query.answer()

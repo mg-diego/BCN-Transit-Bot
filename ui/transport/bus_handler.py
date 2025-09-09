@@ -7,6 +7,7 @@ from ui.keyboard_factory import KeyboardFactory
 from application import BusService, MessageService, UpdateManager, TelegraphService
 from providers.manager import UserDataManager, LanguageManager
 from providers.helpers import TransportDataCompressor, logger
+from providers.manager import audit_action
 from domain.transport_type import TransportType
 
 from .handler_base import HandlerBase
@@ -24,9 +25,10 @@ class BusHandler(HandlerBase):
     ):
         super().__init__(message_service, update_manager, language_manager, user_data_manager, keyboard_factory, telegraph_service)
         self.bus_service = bus_service
+        self.audit_logger = self.user_data_manager.audit_logger
         self.mapper = TransportDataCompressor()
 
-    async def show_lines(self, update: Update, context: ContextTypes.DEFAULT_TYPE):        
+    async def show_bus_categories(self, update: Update, context: ContextTypes.DEFAULT_TYPE):        
         """Display all bus lines (paginated menu)."""
         await self.show_transport_lines(
             update,
@@ -36,7 +38,8 @@ class BusHandler(HandlerBase):
             keyboard_menu_builder=self.keyboard_factory.bus_category_menu
         )
 
-    async def show_bus_category_lines(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+    @audit_action(action_type="SEARCH", command_or_button="show_lines")
+    async def show_lines(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         _, category = self.message_service.get_callback_data(update)
         lines = await self.bus_service.get_lines_by_category(category)
         await self.message_service.handle_interaction(
@@ -45,6 +48,7 @@ class BusHandler(HandlerBase):
             reply_markup=self.keyboard_factory.bus_lines_menu(lines)
         )
 
+    @audit_action(action_type="SEARCH", command_or_button="show_bus_stops")
     async def show_line_stops(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Display stops of a bus line."""
         self.message_service.set_bot_instance(context.bot)

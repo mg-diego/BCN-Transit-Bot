@@ -4,7 +4,7 @@ from telegram.ext import (
 )
 from application import MessageService, UpdateManager
 from providers.helpers import logger
-from providers.manager import UserDataManager, LanguageManager
+from providers.manager import UserDataManager, LanguageManager, audit_action
 
 from .keyboard_factory import KeyboardFactory
 
@@ -15,6 +15,7 @@ class MenuHandler:
         self.user_data_manager = user_data_manager
         self.language_manager = language_manager
         self.update_manager = update_manager
+        self.audit_logger = self.user_data_manager.audit_logger
 
     async def back_to_menu(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         try:
@@ -24,6 +25,7 @@ class MenuHandler:
         finally:
             await self.show_menu(update, context, False)
 
+    @audit_action(action_type="SEARCH", command_or_button="show_menu", params_args=["is_first_message"])
     async def show_menu(self, update: Update, context: ContextTypes.DEFAULT_TYPE, is_first_message = True):
         if is_first_message:
             await self.update_manager.start_loading(update, context, base_text=self.language_manager.t('main.menu.loading'))
@@ -34,7 +36,8 @@ class MenuHandler:
             await self.update_manager.stop_loading(update, context)
 
         msg = await self.message_service.send_message_direct(self.message_service.get_chat_id(update), context, self.language_manager.t('main.menu.message'), reply_markup=self.keyboard_factory.create_main_menu_replykeyboard())
-            
+    
+    @audit_action(action_type="SEARCH", command_or_button="close_updates")
     async def close_updates(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_id = int(self.message_service.get_user_id(update))
         logger.info(f"Stopping updates for user {user_id}")

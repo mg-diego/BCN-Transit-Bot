@@ -4,7 +4,7 @@ from telegram.ext import ContextTypes
 
 from application import RodaliesService, MessageService, UpdateManager, TelegraphService
 
-from providers.manager import UserDataManager, LanguageManager
+from providers.manager import UserDataManager, LanguageManager, audit_action
 from providers.helpers import TransportDataCompressor, logger, GoogleMapsHelper
 
 from ui.keyboard_factory import KeyboardFactory
@@ -29,6 +29,8 @@ class RodaliesHandler(HandlerBase):
         super().__init__(message_service, update_manager, language_manager, user_data_manager, keyboard_factory, telegraph_service)
         self.rodalies_service = rodalies_service
         self.mapper = TransportDataCompressor()
+        self.audit_logger = self.user_data_manager.audit_logger
+
         logger.info(f"[{self.__class__.__name__}] RodaliesHandler initialized")
 
     async def show_lines(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -40,6 +42,7 @@ class RodaliesHandler(HandlerBase):
             keyboard_menu_builder=self.keyboard_factory.rodalies_lines_menu
         )
 
+    @audit_action(action_type="SEARCH", command_or_button="show_rodalies_stops")
     async def show_line_stops(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Display stations of a rodalies line."""
         self.message_service.set_bot_instance(context.bot)
