@@ -71,8 +71,8 @@ class DistanceHelper:
                 "type": "tram",
                 "line_name": t.lineName,
                 "line_code": t.lineId,
-                "stop_name": t.name,
-                "stop_code": t.id,
+                "station_name": t.name,
+                "station_code": t.id,
                 "coordinates": (t.latitude, t.longitude),
                 "distance_km": distance_km
             })
@@ -150,12 +150,12 @@ class DistanceHelper:
             new_stop = {
                 "type": "bus",
                 "line_code": b.CODI_LINIA,
-                "stop_name": b.NOM_PARADA,
-                "stop_code": b.CODI_PARADA,
+                "station_name": b.NOM_PARADA,
+                "station_code": b.CODI_PARADA,
                 "coordinates": b.coordinates,
                 "distance_km": distance_km
             }
-            if not any(stop.get("stop_code") == new_stop["stop_code"] and stop.get("type") == new_stop["type"] for stop in stops):
+            if not any(stop.get("station_code") == new_stop["station_name"] and stop.get("type") == new_stop["type"] for stop in stops):
                 stops.append(new_stop)
 
         stops.sort(key=lambda x: (x["distance_km"] is None, x["distance_km"]))

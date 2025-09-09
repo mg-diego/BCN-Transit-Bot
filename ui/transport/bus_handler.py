@@ -2,6 +2,7 @@ from telegram import Update
 from telegram.ext import ContextTypes
 
 from domain.bus.bus_stop import get_alert_by_language
+from domain.callbacks import Callbacks
 from providers.helpers.google_maps_helper import GoogleMapsHelper
 from ui.keyboard_factory import KeyboardFactory
 from application import BusService, MessageService, UpdateManager, TelegraphService
@@ -73,7 +74,7 @@ class BusHandler(HandlerBase):
         user_id, chat_id, line_id, bus_stop_id = self.message_service.extract_context(update, context)
         logger.info(f"Showing stop info for user {user_id}, line {line_id}, stop {bus_stop_id}")
 
-        default_callback = f"bus_stop:{line_id}:{bus_stop_id}"
+        default_callback = Callbacks.BUS_STATION.format(line_code=line_id, station_code=bus_stop_id)
 
         bus_stop = await self.bus_service.get_stop_by_id(bus_stop_id)
         station_alerts = get_alert_by_language(bus_stop, self.user_data_manager.get_user_language(user_id))

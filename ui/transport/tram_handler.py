@@ -1,3 +1,4 @@
+from domain.callbacks import Callbacks
 from domain.transport_type import TransportType
 from domain import LineRoute
 
@@ -69,7 +70,7 @@ class TramHandler(HandlerBase):
         user_id, chat_id, line_id, stop_id = self.message_service.extract_context(update, context)
         logger.info(f"Showing stop info for user {user_id}, line {line_id}, stop {stop_id}")
 
-        default_callback = f"tram_stop:{line_id}:{stop_id}"
+        default_callback = Callbacks.TRAM_STATION.format(line_code=line_id, station_code=stop_id)
 
         stop = await self.tram_service.get_stop_by_id(stop_id, line_id)
         message = await self.show_stop_intro(update, context, TransportType.TRAM.value, line_id, stop_id, stop.name)

@@ -150,7 +150,7 @@ class KeyboardFactory:
     
     def tram_stops_menu(self, tram_stops: List[TramStop], line_id):
         buttons = [
-            InlineKeyboardButton(f"{tram_stop.order}. {tram_stop.name}  ", callback_data=Callbacks.TRAM_STOP.format(line_code=line_id, stop_code=tram_stop.id))
+            InlineKeyboardButton(f"{tram_stop.order}. {tram_stop.name}  ", callback_data=Callbacks.TRAM_STATION.format(line_code=line_id, station_code=tram_stop.id))
             for tram_stop in tram_stops
         ]
         rows = self._chunk_buttons(buttons, 2)
@@ -194,7 +194,6 @@ class KeyboardFactory:
         return InlineKeyboardMarkup([self._back_button(self.BACK_TO_MENU_CALLBACK)])
     
     def update_menu(self, is_favorite: bool, item_type:str, item_id: str, line_id: str, previous_callback: str, has_connections: bool = False):
-        stop_type = "station" if item_type == TransportType.METRO.value or item_type == TransportType.RODALIES.value or item_type == TransportType.BICING.value or TransportType.FGC.value else "stop"
         if is_favorite:
             fav_button = InlineKeyboardButton(
                 self.language_manager.t('keyboard.favorites.remove'),
@@ -219,18 +218,17 @@ class KeyboardFactory:
             )
         
         inline_buttons = []
-        if stop_type not in previous_callback:
-            inline_buttons.append(InlineKeyboardButton(f'{self.language_manager.t('common.next')}  ', callback_data=f"{item_type}_{stop_type}:{line_id}:{item_id}"))
+        if "station" not in previous_callback:
+            inline_buttons.append(InlineKeyboardButton(f'{self.language_manager.t('common.next')}  ', callback_data=f"{item_type}_station:{line_id}:{item_id}"))
         if item_type == TransportType.METRO.value and "access" not in previous_callback:
             inline_buttons.append(InlineKeyboardButton(f'{self.language_manager.t('common.access')}  ', callback_data=f"{item_type}_access:{line_id}:{item_id}"))
         if has_connections and "connections" not in previous_callback:
             inline_buttons.append(InlineKeyboardButton(f'{self.language_manager.t('common.connections')}  ', callback_data=f"{item_type}_connections:{line_id}:{item_id}"))
 
-        keyboard = InlineKeyboardMarkup([
+        return InlineKeyboardMarkup([
             inline_buttons,
             [fav_button]
         ])
-        return keyboard
     
     def favorites_menu(self, favs):
         TRANSPORT_CONFIG = {
@@ -245,17 +243,17 @@ class KeyboardFactory:
             TransportType.BUS.value: {
                 "emoji": TransportType.BUS.emoji,
                 "name_fmt": "({code}) {name}",
-                "callback": lambda item: Callbacks.BUS_STOP.format(
+                "callback": lambda item: Callbacks.BUS_STATION.format(
                     line_code=item.get("codi_linia"),
-                    stop_code=item.get("code")
+                    station_code=item.get("code")
                 ),
             },
             TransportType.TRAM.value: {
                 "emoji": TransportType.TRAM.emoji,
                 "name_fmt": "{nom_linia} - {name}",
-                "callback": lambda item: Callbacks.TRAM_STOP.format(
+                "callback": lambda item: Callbacks.TRAM_STATION.format(
                     line_code=item.get("codi_linia"),
-                    stop_code=item.get("code")
+                    station_code=item.get("code")
                 ),
             },
             TransportType.RODALIES.value: {
@@ -370,16 +368,16 @@ class KeyboardFactory:
                     station_code=stop["station_code"]
                 )
             elif stop["type"] == "bus":
-                text = f"{TransportType.BUS.emoji} ({stop['stop_code']}) - {stop['stop_name']}{distance_str}"
-                callback = Callbacks.BUS_STOP.format(
+                text = f"{TransportType.BUS.emoji} ({stop['station_code']}) - {stop['station_name']}{distance_str}"
+                callback = Callbacks.BUS_STATION.format(
                     line_code=stop["line_code"],
-                    stop_code=stop["stop_code"]
+                    station_code=stop["station_code"]
                 )
             elif stop["type"] == "tram":
-                text = f"{TransportType.TRAM.emoji} {stop['line_name']} - {stop['stop_name']}{distance_str}"
-                callback = Callbacks.TRAM_STOP.format(
+                text = f"{TransportType.TRAM.emoji} {stop['line_name']} - {stop['station_name']}{distance_str}"
+                callback = Callbacks.TRAM_STATION.format(
                     line_code=stop["line_code"],
-                    stop_code=stop["stop_code"]
+                    station_code=stop["station_code"]
                 )
             elif stop["type"] == "rodalies":
                 text = f"{TransportType.RODALIES.emoji} {stop['line_name']} - {stop['station_name']}{distance_str}"

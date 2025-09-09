@@ -11,8 +11,8 @@ class Callbacks(Enum):
     FGC_LINE = "fgc_line:{line_code}:{line_name}"
 
     METRO_STATION = "metro_station:{line_code}:{station_code}"
-    BUS_STOP = "bus_stop:{line_code}:{stop_code}"
-    TRAM_STOP = "tram_stop:{line_code}:{stop_code}"
+    BUS_STATION = "bus_station:{line_code}:{station_code}"
+    TRAM_STATION = "tram_station:{line_code}:{station_code}"
     RODALIES_STATION = "rodalies_station:{line_code}:{station_code}"
     BICING_STATION = "bicing_station:{line_code}:{station_code}"
     FGC_STATION = "fgc_station:{line_code}:{station_code}"
