@@ -131,10 +131,10 @@ class BotApp:
         self.fgc_handler = FgcHandler(self.keyboard_factory, self.fgc_service, self.update_manager, self.user_data_manager, self.message_service, self.language_manager, self.telegraph_service)
 
         self.favorites_handler = FavoritesHandler(self.message_service, self.user_data_manager, self.keyboard_factory, self.metro_service, self.bus_service, self.tram_service, self.rodalies_service, self.bicing_service, self.fgc_service, self.language_manager)
-        self.help_handler = HelpHandler(self.message_service, self.keyboard_factory, self.language_manager)
+        self.help_handler = HelpHandler(self.message_service, self.keyboard_factory, self.language_manager, self.user_data_manager)
         self.language_handler = LanguageHandler(self.keyboard_factory, self.user_data_manager, self.message_service, self.language_manager, self.update_manager)
         self.web_app_handler = WebAppHandler(self.metro_handler, self.bus_handler, self.tram_handler, self.rodalies_handler, self.bicing_handler, self.fgc_handler)
-        self.settings_handler = SettingsHandler(self.message_service, self.keyboard_factory, self.language_manager)
+        self.settings_handler = SettingsHandler(self.message_service, self.keyboard_factory, self.language_manager, self.user_data_manager)
         self.notifications_handler = NotificationsHandler(self.message_service, self.keyboard_factory, self.language_manager, self.user_data_manager)
         self.reply_handler = ReplyHandler(self.menu_handler, self.metro_handler, self.bus_handler, self.tram_handler, self.rodalies_handler,self.favorites_handler, self.language_handler, self.help_handler, self.settings_handler, self.bicing_handler, self.fgc_handler, self.notifications_handler)
 
@@ -202,14 +202,14 @@ class BotApp:
         self.application.add_handler(CallbackQueryHandler(self.metro_handler.show_list, pattern=r"^metro_page"))
 
         # BUS
-        self.application.add_handler(CallbackQueryHandler(self.bus_handler.show_stop, pattern=r"^bus_stop"))
+        self.application.add_handler(CallbackQueryHandler(self.bus_handler.show_stop, pattern=r"^bus_station"))
         self.application.add_handler(CallbackQueryHandler(self.bus_handler.show_line_stops, pattern=r"^bus_line"))
-        self.application.add_handler(CallbackQueryHandler(self.bus_handler.show_bus_category_lines, pattern=r"^bus_category"))
+        self.application.add_handler(CallbackQueryHandler(self.bus_handler.show_lines, pattern=r"^bus_category"))
 
         # TRAM
         self.application.add_handler(CallbackQueryHandler(self.tram_handler.show_list, pattern=r"^tram_list"))
         self.application.add_handler(CallbackQueryHandler(self.tram_handler.show_map, pattern=r"^tram_map"))
-        self.application.add_handler(CallbackQueryHandler(self.tram_handler.show_stop, pattern=r"^tram_stop"))
+        self.application.add_handler(CallbackQueryHandler(self.tram_handler.show_stop, pattern=r"^tram_station"))
         self.application.add_handler(CallbackQueryHandler(self.tram_handler.ask_search_method, pattern=r"^tram_line"))
 
         # RODALIES
