@@ -41,5 +41,6 @@ class MenuHandler:
 
         self.update_manager.cancel_task(user_id)
         await self.message_service.handle_interaction(update, self.language_manager.t('search.cleaning'))
+        self.user_data_manager.audit_logger.flush()
         await self.message_service.clear_user_messages(user_id)
         logger.info(f"Updates stopped and messages cleared for user {user_id}")

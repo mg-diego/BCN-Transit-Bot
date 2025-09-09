@@ -1,5 +1,6 @@
 import json
 from typing import Dict, List
+import uuid
 from domain.common.alert import AffectedEntity, Alert, Publication
 from domain.common.user import User
 from domain.transport_type import TransportType
@@ -8,7 +9,69 @@ from oauth2client.service_account import ServiceAccountCredentials
 from datetime import datetime, timedelta
 from providers.helpers import logger
 import ast
+from functools import wraps
 
+from providers.manager.audit_logger import AuditLogger
+
+def audit_action(action_type: str, command_or_button: str = "", params_args: list = None):
+    """
+    Decorador para registrar auditoría de acciones de usuario.
+
+    :param action_type: Tipo de acción, ej. "SEARCH", "START", etc.
+    :param command_or_button: Nombre del comando o botón.
+    :param params_args: Lista de nombres de argumentos de la función que se guardarán en params.
+    """
+    def decorator(func):
+        @wraps(func)
+        def wrapper(self, *args, **kwargs):
+            try:
+                # Ejecutar la función original primero
+                result = func(self, *args, **kwargs)
+
+                # Intentar extraer audit_logger
+                audit_logger = getattr(self, "audit_logger", None)
+                if not audit_logger:
+                    return result
+
+                # Extraer user_id, username, chat_id si existen
+                update = args[0] if args else None
+                user_id = update.effective_user.id
+                username = update.effective_user.first_name
+                chat_type = update.effective_chat.type.value
+                callback = update.callback_query.data if update.callback_query else None
+
+                # Construir params automáticamente
+                params = {}
+                if params_args:
+                    func_params = func.__code__.co_varnames
+                    for name in params_args:
+                        if name in kwargs:
+                            if isinstance(kwargs[name], TransportType):
+                                params[name] = kwargs[name].value
+                            else:
+                                params[name] = kwargs[name]
+                        elif name in func_params:
+                            idx = func_params.index(name)
+                            if idx < len(args):
+                                params[name] = args[idx]
+
+                # Añadir evento a la caché del logger
+                audit_logger.add_event(
+                    user_id=user_id,
+                    username=username,
+                    chat_type=chat_type,
+                    action_type=action_type,
+                    command_or_button=command_or_button,
+                    callback=callback,
+                    params=params
+                )
+
+                return result
+            except Exception as e:
+                logger.warning(f"[audit_action] Error registrando auditoría en {func.__name__}: {e}")
+                return func(self, *args, **kwargs)
+        return wrapper
+    return decorator
 
 class UserDataManager:
     CACHE_TTL = 300
@@ -36,6 +99,8 @@ class UserDataManager:
             self.favorites_ws = self.sheet.worksheet("favorites")
             self.searches_ws = self.sheet.worksheet("searches")
             self.alerts_ws = self.sheet.worksheet("alerts")
+            self.audit_ws = self.sheet.worksheet("audit")
+            self.audit_logger = AuditLogger(self.audit_ws, max_buffer_size=50)
 
             self.USERS_LAST_START_COLUMN_INDEX = 4
             self.USERS_USES_COLUMN_INDEX = 5
@@ -51,6 +116,7 @@ class UserDataManager:
             self._favorites_cache = {"data": None, "timestamp": None}
             self._searches_cache = {"data": None, "timestamp": None}
             self._alerts_cache = {"data": None, "timestamp": None}
+            self._audit_cache = {"data": None, "timestamp": None}
 
             logger.info(f"Connected to Google Spreadsheet '{spreadsheet_name}' successfully.")
         except Exception as e:

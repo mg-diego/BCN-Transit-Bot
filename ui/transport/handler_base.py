@@ -9,7 +9,7 @@ from telegram.ext import ContextTypes
 from telegram.error import RetryAfter
 from application import MessageService, UpdateManager, TelegraphService
 from providers.manager.language_manager import LanguageManager
-from providers.manager.user_data_manager import UserDataManager
+from providers.manager.user_data_manager import UserDataManager, audit_action
 from providers.helpers import logger
 from ui.keyboard_factory import KeyboardFactory
 
@@ -26,6 +26,8 @@ class HandlerBase:
         self.keyboard_factory = keyboard_factory
         self.telegraph_service = telegraph_service
 
+        self.audit_logger = self.user_data_manager.audit_logger
+
         self.update_counters = defaultdict(lambda: {"count": 0, "last_reset": time.time()})
         self.ALERT_THRESHOLD = 120  # aviso preventivo
         self.INTERVAL = 60  # segundos
@@ -33,7 +35,7 @@ class HandlerBase:
 
         self.UPDATE_INTERVAL = 5
 
-
+    @audit_action(action_type="SEARCH", command_or_button="show_lines", params_args=["transport_type"])
     async def show_transport_lines(
         self,
         update: Update,
@@ -69,6 +71,7 @@ class HandlerBase:
             reply_markup=reply_markup
         )
 
+    @audit_action(action_type="SEARCH", command_or_button="ask_search_method", params_args=["transport_type"])
     async def ask_search_method(
         self,
         update: Update,
@@ -94,6 +97,7 @@ class HandlerBase:
             reply_markup=self.keyboard_factory.map_or_list_menu(transport_type.value, line_id, line_name)
         )
 
+    @audit_action(action_type="SEARCH", command_or_button="show_line_stations", params_args=["transport_type"])
     async def show_line_stations_list(
         self,
         update: Update,
@@ -124,6 +128,7 @@ class HandlerBase:
             reply_markup=reply_markup
         )
 
+    @audit_action(action_type="SEARCH", command_or_button="show_map", params_args=["transport_type"])
     async def show_line_map(
         self,
         update: Update,
@@ -153,6 +158,7 @@ class HandlerBase:
             reply_markup=keyboard_menu_builder(encoded_map),
         )
     
+    @audit_action(action_type="SEARCH", command_or_button="show_station", params_args=["line_id", "stop_id", "stop_name"])
     async def show_stop_intro(self, update: Update, context, transport_type: str, line_id, stop_id, stop_name):        
         message = await self.update_manager.start_loading(update, context, self.language_manager.t("common.stop.loading"))
         self.user_data_manager.register_search(transport_type, line_id, stop_id, stop_name)
