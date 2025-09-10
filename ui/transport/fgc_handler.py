@@ -85,7 +85,7 @@ class FgcHandler(HandlerBase):
             is_fav = self.user_data_manager.has_favorite(user_id, TransportType.FGC.value, fgc_station_id)
             text = (
                 f"{self.language_manager.t(f'{TransportType.FGC.value}.station.name', name=fgc_station.name.upper())}\n\n"
-                f"<a href='{GoogleMapsHelper.build_directions_url(latitude=fgc_station.lat, longitude=fgc_station.lon, travel_mode='transit')}'>{self.language_manager.t('common.map.view.location')}</a>\n\n"
+                f"<a href='{GoogleMapsHelper.build_directions_url(latitude=fgc_station.latitude, longitude=fgc_station.longitude, travel_mode='transit')}'>{self.language_manager.t('common.map.view.location')}</a>\n\n"
                 f"{self.language_manager.t(f'{TransportType.FGC.value}.station.next')}\n{next_fgc.replace('🔜', self.language_manager.t('common.arriving'))}\n\n"
                 f"{self.language_manager.t('common.updates.every_x_seconds', seconds=self.UPDATE_INTERVAL)}"
             ) 

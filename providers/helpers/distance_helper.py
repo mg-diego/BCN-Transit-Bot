@@ -124,7 +124,7 @@ class DistanceHelper:
             distance_km = None
             if user_location:
                 distance_km = DistanceHelper.haversine_distance(
-                    t.lat, t.lon,
+                    t.latitude, t.longitude,
                     user_location.latitude, user_location.longitude
                 )
 
@@ -134,7 +134,7 @@ class DistanceHelper:
                 "line_code": t.line_id,
                 "station_name": t.name,
                 "station_code": t.id,
-                "coordinates": (t.lat, t.lon),
+                "coordinates": (t.latitude, t.longitude),
                 "distance_km": distance_km
             }) 
 

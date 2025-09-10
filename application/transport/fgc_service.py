@@ -35,17 +35,11 @@ class FgcService(ServiceBase):
     async def get_all_stations(self) -> List[FgcStation]:
         #TODO: Complete integration
         fgc_stations_key = "fgc_stations"
-        moute_stations_key = "moute_stations"
 
         cached_stations = await self._get_from_cache_or_data(fgc_stations_key, None, cache_ttl=3600*24)
-        #moute_stations = await self._get_from_cache_or_data(moute_stations_key, None, cache_ttl=3600*24)
 
         if cached_stations is not None:
             return cached_stations
-        
-        #if moute_stations is None:
-        #    moute_stations = await self.fgc_api_service.get_all_stations()
-        #    await self._get_from_cache_or_data(moute_stations_key, moute_stations, cache_ttl=3600*24)
 
         lines = await self.get_all_lines()
         stations = []
@@ -53,8 +47,7 @@ class FgcService(ServiceBase):
             line_stations = await self.fgc_api_service.get_stations_by_line(line.id)
             
             for line_station in line_stations:
-                moute_station = await self.fgc_api_service.get_near_stations(line_station.lat, line_station.lon)
-                #moute_station = next((s for s in moute_stations if str(TransportType.FGC.id) in s.get('tipusTransports') and line_station.name in s.get('desc')), None)
+                moute_station = await self.fgc_api_service.get_near_stations(line_station.latitude, line_station.longitude)
                 if any(moute_station):
                     line_station.moute_id = moute_station[0].get('id')
             
@@ -92,9 +85,7 @@ class FgcService(ServiceBase):
                     nextFgc = [
                         NextTrip(
                             id='',
-                            arrival_time=normalize_to_seconds(
-                                int(trip.get('departure_time'))
-                            ),
+                            arrival_time=normalize_to_seconds(int(trip.get('departure_time'))),
                         )
                         for trip in trips
                     ]

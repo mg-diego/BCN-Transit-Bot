@@ -120,7 +120,7 @@ class FavoritesHandler:
                 "STATION_NAME": item.name,
                 "LINE_NAME": line.name_with_emoji,
                 "LINE_CODE": line_id,
-                "coordinates": [item.lat, item.lon]
+                "coordinates": [item.latitude, item.longitude]
             }
 
         self.user_data_manager.add_favorite(user_id, item_type, new_fav_item)

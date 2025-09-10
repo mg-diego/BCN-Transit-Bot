@@ -135,14 +135,7 @@ class FgcApiService:
 
         # 5. Crear lista de FgcStation con order correcto
         stations = [
-            FgcStation(
-                id=row["stop_id"],
-                name=row["stop_name"],
-                lat=float(row["stop_lat"]),
-                lon=float(row["stop_lon"]),
-                order=stop_order_map[row["stop_id"]],
-                line_id=line_name
-            )
+            FgcStation.create_fgc_station(row, line_name=line_name, order=stop_order_map[row["stop_id"]])
             for _, row in stations_df.iterrows()
         ]
 

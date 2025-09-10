@@ -261,8 +261,8 @@ class TransportDataCompressor:
 
         stops_base = [
             {
-                "lat": station.lat,
-                "lon": station.lon,
+                "lat": station.latitude,
+                "lon": station.longitude,
                 "name": f"{station.id} - {self._normalize_name(station.name)}",
                 "alert": '',
                 "color": line.color,
