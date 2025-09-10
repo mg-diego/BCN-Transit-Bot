@@ -34,8 +34,9 @@ class MenuHandler:
             user_language = self.user_data_manager.get_user_language(user_id)
             self.language_manager.set_language(user_language)
             await self.update_manager.stop_loading(update, context)
+            self.user_data_manager.audit_logger.flush()
 
-        msg = await self.message_service.send_message_direct(self.message_service.get_chat_id(update), context, self.language_manager.t('main.menu.message'), reply_markup=self.keyboard_factory.create_main_menu_replykeyboard())
+        await self.message_service.send_message_direct(self.message_service.get_chat_id(update), context, self.language_manager.t('main.menu.message'), reply_markup=self.keyboard_factory.create_main_menu_replykeyboard())
     
     @audit_action(action_type="SEARCH", command_or_button="close_updates")
     async def close_updates(self, update: Update, context: ContextTypes.DEFAULT_TYPE):

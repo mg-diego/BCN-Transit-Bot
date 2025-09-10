@@ -12,6 +12,7 @@ import ast
 from functools import wraps
 
 from providers.manager.audit_logger import AuditLogger
+from telegram import Update
 
 def audit_action(action_type: str, command_or_button: str = "", params_args: list = None):
     """
@@ -32,13 +33,19 @@ def audit_action(action_type: str, command_or_button: str = "", params_args: lis
                 audit_logger = getattr(self, "audit_logger", None)
                 if not audit_logger:
                     return result
+                
+                user_id = None
+                username = None 
+                chat_type = None
+                callback = None
 
                 # Extraer user_id, username, chat_id si existen
-                update = args[0] if args else None
-                user_id = update.effective_user.id
-                username = update.effective_user.first_name
-                chat_type = update.effective_chat.type.value
-                callback = update.callback_query.data if update.callback_query else None
+                if isinstance(args[0], Update):
+                    update = args[0] if args else None
+                    user_id = update.effective_user.id
+                    username = update.effective_user.first_name
+                    chat_type = update.effective_chat.type.value
+                    callback = update.callback_query.data if update.callback_query else None
 
                 # Construir params automáticamente
                 params = {}
@@ -57,12 +64,12 @@ def audit_action(action_type: str, command_or_button: str = "", params_args: lis
 
                 # Añadir evento a la caché del logger
                 audit_logger.add_event(
-                    user_id=user_id,
-                    username=username,
-                    chat_type=chat_type,
+                    user_id=user_id or '',
+                    username=username or '',
+                    chat_type=chat_type or '',
                     action_type=action_type,
                     command_or_button=command_or_button,
-                    callback=callback,
+                    callback=callback or '',
                     params=params
                 )
 
@@ -102,11 +109,9 @@ class UserDataManager:
             self.audit_ws = self.sheet.worksheet("audit")
             self.audit_logger = AuditLogger(self.audit_ws, max_buffer_size=50)
 
-            self.USERS_LAST_START_COLUMN_INDEX = 4
-            self.USERS_USES_COLUMN_INDEX = 5
-            self.USERS_LANGUAGE_INDEX = 6
-            self.USERS_RECEIVE_NOTIFICATIONS_INDEX = 7
-            self.USERS_ALREADY_NOTIFIED = 8
+            self.USERS_LANGUAGE_INDEX = 4
+            self.USERS_RECEIVE_NOTIFICATIONS_INDEX = 5
+            self.USERS_ALREADY_NOTIFIED = 6
 
             self.SEARCHES_LAST_SEARCH_COLUMN_INDEX = 6
             self.SEARCHES_USES_COLUMN_INDEX = 7
@@ -173,32 +178,23 @@ class UserDataManager:
     # USERS
     # ---------------------------
 
+    @audit_action(action_type="START", command_or_button="register_user", params_args=["user_id", "username"])
     def register_user(self, user_id: int, username: str):
-        """Registra usuario en 'users' o incrementa usos si ya existe"""
+        """Registra usuario en 'users' si no existe, o actualiza 'last_start' si ya existe """
         logger.debug(f"Registering user_id={user_id}, username={username}")
         users = self._load_users()
         now = datetime.now().strftime("%Y:%m:%d %H:%M:%S")
-
-        for idx, user in enumerate(users, start=2):
-            if str(user["user_id"]) == str(user_id):
-                new_uses = int(user["uses"]) + 1
-                self.users_ws.update_cell(idx, self.USERS_LAST_START_COLUMN_INDEX, now)
-                self.users_ws.update_cell(idx, self.USERS_USES_COLUMN_INDEX, new_uses)
-                self._users_cache["data"][idx - 2]["uses"] = new_uses
-                return new_uses
-
-        self.users_ws.append_row([user_id, username, now, now, 1, 'en', True, json.dumps([])])
-        self._users_cache["data"].append({
-            "user_id": user_id,
-            "username": username,
-            "last_start": now,
-            "created_at": now,
-            "uses": 1,
-            "language": "en",
-            "receive_notifications": True,
-            "already_notified": json.dumps([e.__dict__ for e in []], ensure_ascii=False)
-        })
-        return 1
+        if user_id not in [u["user_id"] for u in users]:
+            self.users_ws.append_row([user_id, username, now, 'en', True, json.dumps([])])
+            self._users_cache["data"].append({
+                "user_id": user_id,
+                "username": username,
+                "created_at": now,
+                "language": "en",
+                "receive_notifications": True,
+                "already_notified": json.dumps([e.__dict__ for e in []], ensure_ascii=False)
+            })
+            return 1
 
     def update_user_language(self, user_id: int, new_language: str):
         logger.debug(f"Updating language for user_id={user_id} to '{new_language}'")
@@ -213,10 +209,14 @@ class UserDataManager:
     def get_user_language(self, user_id: int):
         logger.debug(f"Fetching language for user_id={user_id}")
         users = self._load_users()
-        for user in users:
-            if str(user["user_id"]) == str(user_id):
-                return user["language"]
-        return "en"
+        return next(
+            (
+                user["language"]
+                for user in users
+                if str(user["user_id"]) == str(user_id)
+            ),
+            "en",
+        )
     
     def get_users(self) -> List[User]:
         ws_users = self._load_users()
@@ -249,10 +249,14 @@ class UserDataManager:
     def get_user_receive_notifications(self, user_id) -> bool:
         logger.debug(f"Fetching receive_notifications for user_id={user_id}")
         users = self._load_users()
-        for user in users:
-            if str(user["user_id"]) == str(user_id):
-                return user["receive_notifications"]
-        return False
+        return next(
+            (
+                user["receive_notifications"]
+                for user in users
+                if str(user["user_id"]) == str(user_id)
+            ),
+            False,
+        )
     
     def update_user_receive_notifications(self, user_id, value: bool):
         bool_value = value.lower() == "true" if isinstance(value, str) else value
@@ -268,16 +272,14 @@ class UserDataManager:
     def row_to_user(self, row: List[str]) -> User:
         """
         row: [
-            user_id, username, initial_start, last_start, uses,
+            user_id, username, created_at, last_start, uses,
             language, receive_notifications, already_notified
         ]
         """
         return User(
             user_id=int(row.get('user_id')),
             username=row.get('username'),
-            initial_start=datetime.strptime(row.get('initial_start'), "%Y:%m:%d %H:%M:%S"),
-            last_start=datetime.strptime(row.get('last_start'), "%Y:%m:%d %H:%M:%S"),
-            uses=int(row.get('uses')),
+            created_at=datetime.strptime(row.get('created_at'), "%Y:%m:%d %H:%M:%S"),
             language=row.get('language'),
             receive_notifications=row.get('receive_notifications'),
             already_notified=self.safe_str_to_list(row.get('already_notified'))

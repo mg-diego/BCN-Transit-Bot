@@ -6,9 +6,7 @@ from typing import List
 class User:
     user_id: int
     username: str
-    initial_start: datetime
-    last_start: datetime
-    uses: int
+    created_at: datetime
     language: str
     receive_notifications: bool
     already_notified: List[int] = field(default_factory=list)

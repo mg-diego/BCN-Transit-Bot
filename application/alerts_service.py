@@ -1,6 +1,5 @@
 import asyncio
 from datetime import datetime
-import json
 
 from telegram import Bot
 
