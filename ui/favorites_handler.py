@@ -62,11 +62,11 @@ class FavoritesHandler:
             
             new_fav_item = {
                 "STATION_CODE": item_id,
-                "STATION_NAME": item.NOM_ESTACIO,
+                "STATION_NAME": item.name,
                 "STATION_GROUP_CODE": item.CODI_GRUP_ESTACIO,
-                "LINE_NAME": item.EMOJI_NOM_LINIA,
+                "LINE_NAME": item.line_name_with_emoji,
                 "LINE_CODE": line_id,
-                "coordinates": item.coordinates
+                "coordinates": [item.latitude, item.longitude]
             }
         elif item_type == TransportType.BUS.value:
             item = await self.bus_service.get_stop_by_id(item_id)

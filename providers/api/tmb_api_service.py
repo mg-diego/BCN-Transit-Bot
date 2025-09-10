@@ -112,7 +112,7 @@ class TmbApiService:
 
         stations = []
         stations.extend(create_metro_station(feature) for feature in features)
-        stations.sort(key=lambda x: x.ORDRE_ESTACIO)
+        stations.sort(key=lambda x: x.order)
         return stations
     
     async def get_bus_stops(self) -> List[BusStop]:
@@ -132,7 +132,7 @@ class TmbApiService:
 
         stations = []
         stations.extend(create_metro_station(feature) for feature in features)
-        stations.sort(key=lambda x: x.ORDRE_ESTACIO)
+        stations.sort(key=lambda x: x.order)
         return stations
 
     async def get_next_metro_at_station(self, station_id) -> List[LineRoute]:

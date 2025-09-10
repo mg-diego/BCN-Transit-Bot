@@ -45,16 +45,16 @@ class DistanceHelper:
             distance_km = None
             if user_location:
                 distance_km = DistanceHelper.haversine_distance(
-                    m.coordinates[1], m.coordinates[0],
+                    m.latitude, m.longitude,
                     user_location.latitude, user_location.longitude
                 )
             stops.append({
                 "type": "metro",
-                "line_name": m.EMOJI_NOM_LINIA,
-                "line_code": m.CODI_LINIA,                
-                "station_name": m.NOM_ESTACIO,
-                "station_code": m.CODI_ESTACIO,
-                "coordinates": m.coordinates,
+                "line_name": m.line_name_with_emoji,
+                "line_code": m.line_code,        
+                "station_name": m.name,
+                "station_code": m.code,
+                "coordinates": Tuple[m.latitude, m.longitude],
                 "distance_km": distance_km
             })
 

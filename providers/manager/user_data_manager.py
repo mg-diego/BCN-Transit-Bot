@@ -318,7 +318,7 @@ class UserDataManager:
                     user_id, type.lower(),
                     item.get('STATION_CODE'), item.get('STATION_NAME'),
                     item.get('STATION_GROUP_CODE'), item.get('LINE_NAME'),
-                    item.get('LINE_CODE'), coordinates[1], coordinates[0]
+                    item.get('LINE_CODE'), coordinates[0], coordinates[1]
                 ])
             elif type.lower() == TransportType.BUS.value:
                 self.favorites_ws.append_row([

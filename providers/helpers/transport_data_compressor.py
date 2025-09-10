@@ -113,10 +113,10 @@ class TransportDataCompressor:
 
         stops_base = [
             {
-                "lat": station.coordinates[1],
-                "lon": station.coordinates[0],
-                "name": f"{station.CODI_ESTACIO} - {self._normalize_name(station.NOM_ESTACIO)}",
-                "color": station.COLOR_LINIA,
+                "lat": station.latitude,
+                "lon": station.longitude,
+                "name": f"{station.code} - {self._normalize_name(station.name)}",
+                "color": station.line_color,
                 "alert": '⚠️' if station.has_alerts else '',
                 "connections": "".join(connection.NOM_LINIA for connection in station.connections)
             }

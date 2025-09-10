@@ -142,7 +142,7 @@ class KeyboardFactory:
 
     def metro_stations_menu(self, metro_stations: List[MetroStation], line_id):
         buttons = [
-            InlineKeyboardButton(f"{metro_station.ORDRE_ESTACIO}. {metro_station.NOM_ESTACIO} {'⚠️' if metro_station.has_alerts else ''}  ", callback_data=Callbacks.METRO_STATION.format(line_code=line_id, station_code=metro_station.CODI_ESTACIO))
+            InlineKeyboardButton(f"{metro_station.order}. {metro_station.name} {'⚠️' if metro_station.has_alerts else ''}  ", callback_data=Callbacks.METRO_STATION.format(line_code=line_id, station_code=metro_station.code))
             for metro_station in metro_stations
         ]
         rows = self._chunk_buttons(buttons, 2)

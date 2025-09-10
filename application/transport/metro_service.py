@@ -80,7 +80,7 @@ class MetroService(ServiceBase):
             alerts_by_station = await self._build_and_cache_station_alerts()
 
         for station in static_stations:
-            station_alerts = alerts_by_station.get(station.CODI_ESTACIO, [])
+            station_alerts = alerts_by_station.get(station.code, [])
             station.has_alerts = any(station_alerts)
             station.alerts = station_alerts if any(station_alerts) else []
 
@@ -96,7 +96,7 @@ class MetroService(ServiceBase):
         line_stations = []
         api_stations = await self.tmb_api_service.get_stations_by_metro_line(line_id)
         for api_station in api_stations:
-            connections = await self.tmb_api_service.get_station_connections(api_station.CODI_ESTACIO)
+            connections = await self.tmb_api_service.get_station_connections(api_station.code)
             station = update_metro_station_with_line_info(api_station, line)
             station = update_metro_station_with_connections(station, connections)
             line_stations.append(station)
@@ -126,14 +126,14 @@ class MetroService(ServiceBase):
         return self.fuzzy_search(
             query=station_name,
             items=stations,
-            key=lambda stop: stop.NOM_ESTACIO
+            key=lambda station: station.name
         )
 
     async def get_station_by_id(self, station_id) -> MetroStation:        
         stations = await self.get_all_stations()
         filtered_stations = [
             station for station in stations
-            if int(station_id) == int(station.CODI_ESTACIO)
+            if int(station_id) == int(station.code)
         ]
 
         station = filtered_stations[0] if any(filtered_stations) else None
@@ -152,14 +152,14 @@ class MetroService(ServiceBase):
         logger.debug(f"[{self.__class__.__name__}] get_line_by_name({line_name}) -> {line}")
         return line
     
-    async def _build_and_cache_static_stations(self):
+    async def _build_and_cache_static_stations(self) -> List[MetroStation]:
         lines = await self.get_all_lines()
         stations = []
 
         for line in lines:
             line_stations = await self.tmb_api_service.get_stations_by_metro_line(line.CODI_LINIA)
             for api_station in line_stations:
-                connections = await self.tmb_api_service.get_station_connections(api_station.CODI_ESTACIO)
+                connections = await self.tmb_api_service.get_station_connections(api_station.code)
                 station = update_metro_station_with_line_info(api_station, line)
                 station = update_metro_station_with_connections(station, connections)
                 stations.append(station)
@@ -177,7 +177,7 @@ class MetroService(ServiceBase):
 
             stations = await self.get_stations_by_line(line.CODI_LINIA)
             for station in stations:
-                station_alerts[station.CODI_ESTACIO].extend(station.alerts)
+                station_alerts[station.code].extend(station.alerts)
 
         alerts_dict = dict(station_alerts)
         await self.cache_service.set("metro_stations_alerts", alerts_dict, ttl=3600)
