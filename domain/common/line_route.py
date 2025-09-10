@@ -136,7 +136,7 @@ class LineRoute:
             number_emoji = number_emojis[i] if i < len(number_emojis) else f"{i + 1}."
 
             # Vía y número de tren si existen
-            via_text = f" | Vía {trip.platform} | 🚆 {trip.id}" if trip.platform else ""
+            via_text = f" | Vía {trip.platform}" if trip.platform else ""
 
             # Horas programada y estimada
             scheduled_time = trip.scheduled_arrival()

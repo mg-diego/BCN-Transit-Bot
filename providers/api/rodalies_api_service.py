@@ -5,7 +5,7 @@ from typing import Any, List
 
 from domain.transport_type import TransportType
 from providers.helpers import logger
-from domain.rodalies import RodaliesLine, RodaliesStation, create_rodalies_line, create_rodalies_station
+from domain.rodalies import RodaliesLine, RodaliesStation, create_rodalies_line
 from domain import NextTrip, LineRoute, normalize_to_seconds
 
 
@@ -48,7 +48,7 @@ class RodaliesApiService:
             for line_data in data["included"]:
                 stations = []
                 stations.extend(
-                    create_rodalies_station(station_data)
+                    RodaliesStation.create_rodalies_station(station_data)
                     for station_data in line_data["stations"]
                 )
                 lines.append(create_rodalies_line(line_data, stations))
@@ -60,7 +60,7 @@ class RodaliesApiService:
         line_data = await self._request("GET", f"/lines/{line_id}")
         stations = []
         for station_data in line_data["stations"]:
-            stations.append(create_rodalies_station(station_data))
+            stations.append(RodaliesStation.create_rodalies_station(station_data))
         return create_rodalies_line(line_data, stations)
 
     async def get_global_alerts(self):
