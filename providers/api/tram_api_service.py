@@ -4,7 +4,7 @@ import inspect
 from datetime import datetime
 from typing import Any, Dict, List
 
-from domain.tram import TramLine, TramNetwork, TramStop, TramConnection, TramStopConnection
+from domain.tram import TramLine, TramNetwork, TramStation, TramConnection, TramStationConnection, create_tram_station
 from domain import NextTrip, LineRoute, normalize_to_seconds
 
 from domain.transport_type import TransportType
@@ -145,7 +145,7 @@ class TramApiService:
         page: int = 1,
         page_size: int = 100,
         sort: str = ""
-    ) -> List[TramStop]:
+    ) -> List[TramStation]:
         params = {
             "name": name,
             "description": description,
@@ -161,9 +161,11 @@ class TramApiService:
         }
         params = {k: v for k, v in params.items() if v is not None}
 
-        stops = await self._request("GET", f"/lines/{line_id}/stops", params=params)
+        api_stops = await self._request("GET", f"/lines/{line_id}/stops", params=params)
 
-        return [TramStop(**stop) for stop in stops]
+        stops = []
+        stops.extend(create_tram_station(stop) for stop in api_stops)
+        return stops
 
     async def get_stops(
         self,
@@ -178,7 +180,7 @@ class TramApiService:
         page: int = 1,
         page_size: int = 100,
         sort: str = ""
-    ) -> List[TramStop]:
+    ) -> List[TramStation]:
         params = {
             "name": name,
             "description": description,
@@ -193,8 +195,10 @@ class TramApiService:
             "sort": sort
         }
         params = {k: v for k, v in params.items() if v is not None}
-        stops = await self._request("GET", "/stops", params=params)
-        return [TramStop(**stop) for stop in stops]
+        api_stops = await self._request("GET", "/stops", params=params)
+        stops = []
+        stops.extend(create_tram_station(stop) for stop in api_stops)
+        return stops
 
     async def get_connections_at_stop(
         self,
@@ -228,7 +232,7 @@ class TramApiService:
                 longitude=connection['longitude'],
                 order=connection['order'],
                 image=connection['image'],
-                stopConnections=[TramStopConnection(**sc) for sc in connection['stopConnections']]
+                stopConnections=[TramStationConnection(**sc) for sc in connection['stopConnections']]
             )
             for connection in connections
         ]

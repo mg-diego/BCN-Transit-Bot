@@ -1,6 +1,6 @@
-from .tram_connection import TramConnection, TramStopConnection
+from .tram_connection import TramConnection, TramStationConnection
 from .tram_line import TramLine
 from .tram_network import TramNetwork
-from .tram_stop import TramStop
+from .tram_station import TramStation, create_tram_station
 
-__all__ = ["TramConnection", "TramLine", "TramStop", "TramNetwork", "TramStopConnection"]
+__all__ = ["TramConnection", "TramLine", "TramStation", "TramNetwork", "TramStationConnection", "create_tram_station"]

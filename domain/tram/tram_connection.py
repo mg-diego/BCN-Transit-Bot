@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import List
 
 @dataclass
-class TramStopConnection:
+class TramStationConnection:
     stopId: int
     connectionId: int
     order: int
@@ -15,7 +15,7 @@ class TramConnection:
     longitude: float
     order: int
     image: str
-    stopConnections: List[TramStopConnection]
+    stopConnections: List[TramStationConnection]
 
     def __str__(self):
         emojis = {

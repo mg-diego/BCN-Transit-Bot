@@ -111,7 +111,7 @@ graph TD
         end
         subgraph Tram["Tram Domain"]
             TL["🚋 TramLine"]
-            TSN["🛑 TramStop"]
+            TSN["🛑 TramStation"]
             NT["⏱️ NextTram"]
         end
     end

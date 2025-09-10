@@ -4,7 +4,7 @@ from typing import List
 
 from domain.metro import MetroLine, MetroStation, MetroAccess
 from domain.bus import BusLine, BusStop
-from domain.tram import TramLine, TramStop
+from domain.tram import TramLine, TramStation
 from domain.rodalies import RodaliesLine
 from domain.transport_type import TransportType
 from domain.fgc import FgcLine, FgcStation
@@ -148,7 +148,7 @@ class KeyboardFactory:
         rows = self._chunk_buttons(buttons, 2)
         return InlineKeyboardMarkup(rows)
     
-    def tram_stops_menu(self, tram_stops: List[TramStop], line_id):
+    def tram_stops_menu(self, tram_stops: List[TramStation], line_id):
         buttons = [
             InlineKeyboardButton(f"{tram_stop.order}. {tram_stop.name}  ", callback_data=Callbacks.TRAM_STATION.format(line_code=line_id, station_code=tram_stop.id))
             for tram_stop in tram_stops

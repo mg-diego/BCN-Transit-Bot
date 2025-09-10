@@ -1,6 +1,5 @@
-from collections import defaultdict
-from dataclasses import dataclass, field
-from typing import List, Optional
+from dataclasses import dataclass
+from typing import List
 
 from domain.metro import MetroLine, MetroConnection
 from providers.helpers.html_helper import HtmlHelper
@@ -11,6 +10,7 @@ class MetroStation(Station):
     CODI_GRUP_ESTACIO: int
     ORIGEN_SERVEI: str
     DESTI_SERVEI: str
+    connections: List[MetroConnection] = None
 
 def create_metro_station(feature: dict) -> MetroStation:
     props = feature['properties']

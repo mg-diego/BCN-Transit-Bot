@@ -8,7 +8,7 @@ from typing import List, Dict, Any
 from domain.bus import BusStop
 from domain.metro import MetroStation
 from domain.rodalies import RodaliesLine, RodaliesStation
-from domain.tram import TramStop
+from domain.tram import TramStation
 from domain.bicing import BicingStation
 from domain.fgc import FgcStation, FgcLine
 from domain.transport_type import TransportType
@@ -164,7 +164,7 @@ class TransportDataCompressor:
         self._log_mapping_end(TransportType.BUS.value, line_id)
         return compressed
 
-    def map_tram_stops(self, stops: List[TramStop], line_id: str, line_name: str) -> str:
+    def map_tram_stops(self, stops: List[TramStation], line_id: str, line_name: str) -> str:
         self._log_mapping_start(TransportType.TRAM.value, len(stops), line_id, line_name)
 
         origin = stops[0].name

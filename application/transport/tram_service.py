@@ -4,7 +4,7 @@ from providers.api import TramApiService
 from providers.manager import LanguageManager
 from providers.helpers import logger
 
-from domain.tram import TramLine, TramStop, TramConnection
+from domain.tram import TramLine, TramStation, TramConnection
 
 from application.cache_service import CacheService
 from .service_base import ServiceBase
@@ -28,14 +28,14 @@ class TramService(ServiceBase):
             cache_ttl=3600*24
         )
     
-    async def get_all_stops(self) -> List[TramStop]:
+    async def get_all_stops(self) -> List[TramStation]:
         lines = await self.get_all_lines()
         stops = []
         for line in lines:
             line_stops = await self.get_stops_by_line(line.id)
             for s in line_stops:
-                s.lineId = line.id
-                s.lineName = line.name
+                s.line_id = line.id
+                s.line_name = line.name
             stops += line_stops
 
         return await self._get_from_cache_or_data(
@@ -44,7 +44,7 @@ class TramService(ServiceBase):
             cache_ttl=3600*24
         )
 
-    async def get_stops_by_line(self, line_id: str) -> List[TramStop]:
+    async def get_stops_by_line(self, line_id: str) -> List[TramStation]:
         return await self._get_from_cache_or_api(
             f"tram_line_{line_id}_stops",
             lambda: self.tram_api_service.get_stops_on_line(line_id),
@@ -84,7 +84,7 @@ class TramService(ServiceBase):
         logger.debug(f"[{self.__class__.__name__}] get_line_by_id({line_id}) -> {line}")
         return line
 
-    async def get_stop_by_id(self, stop_id, line_id) -> TramStop:
+    async def get_stop_by_id(self, stop_id, line_id) -> TramStation:
         stops = await self.get_stops_by_line(line_id)
         stop = next((s for s in stops if str(s.id) == str(stop_id)), None)
         logger.debug(f"[{self.__class__.__name__}] get_stop_by_id({stop_id}, line {line_id}) -> {stop}")

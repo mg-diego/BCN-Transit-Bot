@@ -3,7 +3,7 @@ from typing import List, Optional, Tuple, Dict
 
 from domain.bus import BusStop
 from domain.metro import MetroStation
-from domain.tram import TramStop
+from domain.tram import TramStation
 from domain.rodalies import RodaliesStation
 from domain.bicing import BicingStation
 from domain.fgc import FgcStation
@@ -19,7 +19,7 @@ class DistanceHelper:
     def build_stops_list(
         metro_stations: List[MetroStation],
         bus_stops: List[BusStop],
-        tram_stops: List[TramStop],
+        tram_stops: List[TramStation],
         rodalies_stations: List[RodaliesStation],
         bicing_stations: List[BicingStation],
         fgc_stations: List[FgcStation],
@@ -31,7 +31,7 @@ class DistanceHelper:
         Args:
             metro_stations (List): List of MetroStation objects.
             bus_stops (List): List of BusStop objects.
-            tram_stops (List): List of TramStop objects.
+            tram_stops (List): List of TramStation objects.
             user_location (Optional[object]): Object with latitude and longitude attributes.
 
         Returns:
@@ -69,8 +69,8 @@ class DistanceHelper:
 
             stops.append({
                 "type": "tram",
-                "line_name": t.lineName,
-                "line_code": t.lineId,
+                "line_name": t.line_name,
+                "line_code": t.line_id,
                 "station_name": t.name,
                 "station_code": t.id,
                 "coordinates": (t.latitude, t.longitude),
