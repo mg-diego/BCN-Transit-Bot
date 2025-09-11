@@ -14,3 +14,11 @@ class RodaliesStation(Station):
             latitude=station_data["latitude"],
             longitude=station_data["longitude"]
         )
+    
+    @staticmethod
+    def update_line_info(rodalies_station: Station, line):
+        rodalies_station.line_name_with_emoji = line.emoji_name
+        rodalies_station.line_color = line.color
+        rodalies_station.line_id = line.id
+        rodalies_station.line_name = line.name
+        rodalies_station.line_code = line.id

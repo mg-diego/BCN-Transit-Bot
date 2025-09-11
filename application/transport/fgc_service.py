@@ -33,9 +33,7 @@ class FgcService(ServiceBase):
         )
     
     async def get_all_stations(self) -> List[FgcStation]:
-        #TODO: Complete integration
         fgc_stations_key = "fgc_stations"
-
         cached_stations = await self._get_from_cache_or_data(fgc_stations_key, None, cache_ttl=3600*24)
 
         if cached_stations is not None:
@@ -46,7 +44,8 @@ class FgcService(ServiceBase):
         for line in lines:
             line_stations = await self.fgc_api_service.get_stations_by_line(line.id)
             
-            for line_station in line_stations:
+            for line_station in line_stations:                
+                line_station = FgcStation.update_line_info(line_station, line)
                 moute_station = await self.fgc_api_service.get_near_stations(line_station.latitude, line_station.longitude)
                 if any(moute_station):
                     line_station.moute_id = moute_station[0].get('id')

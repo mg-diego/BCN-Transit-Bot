@@ -176,7 +176,7 @@ class TransportDataCompressor:
                 "lon": stop.longitude,
                 "name": f"{stop.id} - {self._normalize_name(stop.name)}",
                 "alert": '',
-                "color": "008E78",
+                "color": stop.line_color,
             }
             for stop in stops
         ]

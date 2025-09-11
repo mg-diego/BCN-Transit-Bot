@@ -67,14 +67,10 @@ class FgcApiService:
                     return await resp.json()
     
     async def get_all_lines(self) -> List[FgcLine]: 
-        data = await self._request("GET", f"/lineas-red-fgc/records?limit=100", params=None)
+        data = await self._request("GET", "/lineas-red-fgc/records?limit=100", params=None)
         lines = [create_fgc_line(l) for l in data['results']]
         lines.sort(key= lambda x: x.id)
         return lines
-    
-    async def get_all_stations(self):
-        data = await self._request("GET", f"{self.MOUTE_BASE_URL}/nearbyotp?radius=5000000&coordX=2.1528975837826656&coordY=41.40267994115967&language=ca_ES", params=None, use_FGC_BASE_URL=False)
-        return data['transports']
     
     async def get_near_stations(self, lat, lon, radius = 250):
         data = await self._request("GET", f"{self.MOUTE_BASE_URL}/nearbyotp?radius={radius}&coordX={lon}&coordY={lat}&language=ca_ES", params=None, use_FGC_BASE_URL=False)
@@ -238,7 +234,7 @@ class FgcApiService:
                 # Última parada para nombre de dirección
                 last_stop_id = stop_time_updates[-1].stop_id
                 last_stop_row = self._stops[self._stops["stop_id"] == last_stop_id]
-                direction_name = last_stop_row.iloc[0]["stop_name"] if not last_stop_row.empty else f"dir_{direction_id}"
+                direction_name = f"dir_{direction_id}" if last_stop_row.empty else last_stop_row.iloc[0]["stop_name"]
 
                 for stu in stop_time_updates:
                     if stu.stop_id != stop_id:

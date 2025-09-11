@@ -34,8 +34,7 @@ class TramService(ServiceBase):
         for line in lines:
             line_stops = await self.get_stops_by_line(line.id)
             for s in line_stops:
-                s.line_id = line.id
-                s.line_name = line.name
+                s = TramStation.update_line_info(s, line)
             stops += line_stops
 
         return await self._get_from_cache_or_data(

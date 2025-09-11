@@ -69,8 +69,7 @@ class RodaliesService(ServiceBase):
         for line in lines:
             line_stations = await self.get_stations_by_line(line.id)
             for s in line_stations:
-                s.line_id = line.id
-                s.line_name = line.emoji_name
+                s = RodaliesStation.update_line_info(s, line)
             stations += line_stations
 
         return await self._get_from_cache_or_data(

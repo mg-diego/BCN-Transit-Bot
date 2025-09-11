@@ -11,6 +11,7 @@ class TramLine:
     network: TramNetwork
     code: int
     image: str
+    color: str = "008E78"
     original_name: Optional[str] = None
 
     def __post_init__(self):

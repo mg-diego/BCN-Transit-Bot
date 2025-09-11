@@ -37,6 +37,7 @@ def _set_emoji_at_name(name):
         "R50": "🟦",
         "R6": "⬛",
         "R60": "⬛",
+        "R63": "⬛",
 
         #Lleida – La Pobla de Segur
         "RL1": "🟩",

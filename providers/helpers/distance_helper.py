@@ -69,7 +69,7 @@ class DistanceHelper:
 
             stops.append({
                 "type": "tram",
-                "line_name": t.line_name,
+                "line_name": t.line_name_with_emoji,
                 "line_code": t.line_id,
                 "station_name": t.name,
                 "station_code": t.id,
@@ -88,7 +88,7 @@ class DistanceHelper:
 
             stops.append({
                 "type": "rodalies",
-                "line_name": t.line_name,
+                "line_name": t.line_name_with_emoji,
                 "line_code": t.line_id,
                 "station_name": t.name,
                 "station_code": t.id,
@@ -130,7 +130,7 @@ class DistanceHelper:
 
             stops.append({
                 "type": "fgc",
-                "line_name": t.line_id,
+                "line_name": t.line_name_with_emoji,
                 "line_code": t.line_id,
                 "station_name": t.name,
                 "station_code": t.id,

@@ -1,5 +1,6 @@
+from domain.metro.metro_station import MetroStation
 from domain.transport_type import TransportType
-from domain.metro import get_alert_by_language, format_metro_connections
+from domain.metro import format_metro_connections
 from telegram import Update
 from telegram.ext import ContextTypes
 
@@ -79,7 +80,7 @@ class MetroHandler(HandlerBase):
         message = await self.show_stop_intro(update, context, TransportType.METRO.value, line_id, metro_station_id, station.name)
 
         await self.metro_service.get_station_routes(metro_station_id)
-        station_alerts = get_alert_by_language(station, self.user_data_manager.get_user_language(user_id))
+        station_alerts = MetroStation.get_alert_by_language(station, self.user_data_manager.get_user_language(user_id))
         alerts_message = f"{self.language_manager.t("common.alerts")}\n{station_alerts}\n\n" if any(station_alerts) else ""
 
         await self.update_manager.stop_loading(update, context)
@@ -113,7 +114,7 @@ class MetroHandler(HandlerBase):
         _, line_id, station_id = self.message_service.get_callback_data(update)
         station = await self.metro_service.get_station_by_id(station_id)        
         station_accesses = await self.metro_service.get_station_accesses(station.CODI_GRUP_ESTACIO)
-        station_alerts = get_alert_by_language(station, self.user_data_manager.get_user_language(user_id))
+        station_alerts = MetroStation.get_alert_by_language(station, self.user_data_manager.get_user_language(user_id))
         alerts_message = f"{self.language_manager.t("common.alerts")}\n{station_alerts}\n\n" if any(station_alerts) else ""
         logger.info(f"[MetroHandler] Showing accesses for station ID: {station_id}")
 
@@ -150,7 +151,7 @@ class MetroHandler(HandlerBase):
         _, line_id, station_id = self.message_service.get_callback_data(update)
         station = await self.metro_service.get_station_by_id(station_id)        
         station_connections = format_metro_connections(station.connections)
-        station_alerts = get_alert_by_language(station, self.user_data_manager.get_user_language(user_id))
+        station_alerts = MetroStation.get_alert_by_language(station, self.user_data_manager.get_user_language(user_id))
         alerts_message = f"{self.language_manager.t("common.alerts")}\n{station_alerts}\n\n" if any(station_alerts) else ""
         logger.info(f"[MetroHandler] Showing connections for station ID: {station_id}")
 

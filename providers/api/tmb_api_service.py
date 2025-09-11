@@ -4,7 +4,7 @@ import re
 import inspect
 
 from domain import NextTrip, LineRoute, normalize_to_seconds
-from domain.metro import MetroLine, MetroConnection, MetroStation, create_metro_station, create_metro_access
+from domain.metro import MetroLine, MetroConnection, MetroStation, create_metro_access
 from domain.bus import BusStop, BusLine, create_bus_stop
 
 from domain.transport_type import TransportType
@@ -111,7 +111,7 @@ class TmbApiService:
         features = data['features']
 
         stations = []
-        stations.extend(create_metro_station(feature) for feature in features)
+        stations.extend(MetroStation.create_metro_station(feature) for feature in features)
         stations.sort(key=lambda x: x.order)
         return stations
     
@@ -131,7 +131,7 @@ class TmbApiService:
         features = data['features']
 
         stations = []
-        stations.extend(create_metro_station(feature) for feature in features)
+        stations.extend(MetroStation.create_metro_station(feature) for feature in features)
         stations.sort(key=lambda x: x.order)
         return stations
 
