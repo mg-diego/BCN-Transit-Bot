@@ -5,7 +5,7 @@ import inspect
 
 from domain import NextTrip, LineRoute, normalize_to_seconds
 from domain.metro import MetroLine, MetroConnection, MetroStation, create_metro_access
-from domain.bus import BusStop, BusLine, create_bus_stop
+from domain.bus import BusStop, BusLine
 
 from domain.transport_type import TransportType
 from providers.helpers import logger
@@ -85,16 +85,16 @@ class TmbApiService:
             url,
             BusStop,
             filter_fn=lambda props: props['ID_SENTIT'] == 1,
-            sort_key=lambda x: x.ORDRE,
-            factory_fn=create_bus_stop
+            sort_key=lambda x: x.order,
+            factory_fn=BusStop.create_bus_stop
         )
 
         from_destination, _ = await self.fetch_transit_items(
             url,
             BusStop,
             filter_fn=lambda props: props['ID_SENTIT'] == 2,
-            sort_key=lambda x: x.ORDRE,
-            factory_fn=create_bus_stop
+            sort_key=lambda x: x.order,
+            factory_fn=BusStop.create_bus_stop
         )
 
         return from_origin + from_destination
@@ -121,7 +121,7 @@ class TmbApiService:
         features = data['features']
 
         stations = []
-        stations.extend(create_bus_stop(feature) for feature in features)
+        stations.extend(BusStop.create_bus_stop(feature) for feature in features)
         stations.sort(key=lambda x: x.ORDRE_LINIA)
         return stations
 

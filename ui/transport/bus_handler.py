@@ -1,7 +1,7 @@
 from telegram import Update
 from telegram.ext import ContextTypes
 
-from domain.bus.bus_stop import get_alert_by_language
+from domain.bus.bus_stop import BusStop
 from domain.callbacks import Callbacks
 from providers.helpers.google_maps_helper import GoogleMapsHelper
 from ui.keyboard_factory import KeyboardFactory
@@ -77,10 +77,10 @@ class BusHandler(HandlerBase):
         default_callback = Callbacks.BUS_STATION.format(line_code=line_id, station_code=bus_stop_id)
 
         bus_stop = await self.bus_service.get_stop_by_id(bus_stop_id)
-        station_alerts = get_alert_by_language(bus_stop, self.user_data_manager.get_user_language(user_id))
+        station_alerts = BusStop.get_alert_by_language(bus_stop, self.user_data_manager.get_user_language(user_id))
         alerts_message = f"{self.language_manager.t("common.alerts")}\n{station_alerts}\n\n" if any(station_alerts) else ""
         
-        message = await self.show_stop_intro(update, context, TransportType.BUS.value, line_id, bus_stop_id, bus_stop.NOM_PARADA)
+        message = await self.show_stop_intro(update, context, TransportType.BUS.value, line_id, bus_stop_id, bus_stop.name)
         
         await self.bus_service.get_stop_routes(bus_stop_id)
         await self.update_manager.stop_loading(update, context)
@@ -89,9 +89,9 @@ class BusHandler(HandlerBase):
             next_buses = await self.bus_service.get_stop_routes(bus_stop_id)
             is_fav = self.user_data_manager.has_favorite(user_id, TransportType.BUS.value, bus_stop_id)
             text = (
-                f"{self.language_manager.t(f'{TransportType.BUS.value}.stop.name', name=bus_stop.NOM_PARADA.upper())}\n\n"
+                f"{self.language_manager.t(f'{TransportType.BUS.value}.stop.name', name=bus_stop.name.upper())}\n\n"
                 f"{alerts_message}"
-                f"<a href='{GoogleMapsHelper.build_directions_url(latitude=bus_stop.coordinates[1], longitude=bus_stop.coordinates[0])}'>{self.language_manager.t('common.map.view.location')}</a>\n\n"
+                f"<a href='{GoogleMapsHelper.build_directions_url(latitude=bus_stop.latitude, longitude=bus_stop.longitude)}'>{self.language_manager.t('common.map.view.location')}</a>\n\n"
                 f"{self.language_manager.t(f'{TransportType.BUS.value}.stop.next')}\n{next_buses.replace('🔜', self.language_manager.t('common.arriving'))}\n\n"
                 f"{self.language_manager.t('common.updates.every_x_seconds', seconds=self.UPDATE_INTERVAL)}"
             )

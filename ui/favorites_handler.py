@@ -73,9 +73,9 @@ class FavoritesHandler:
 
             new_fav_item = {
                 "STOP_CODE": item_id,
-                "STOP_NAME": item.NOM_PARADA,
+                "STOP_NAME": item.name,
                 "LINE_CODE": line_id,
-                "coordinates": item.coordinates
+                "coordinates": [item.latitude, item.longitude]
             }
         elif item_type == TransportType.TRAM.value:
             item = await self.tram_service.get_stop_by_id(item_id, line_id)

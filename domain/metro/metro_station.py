@@ -53,16 +53,6 @@ class MetroStation(Station):
     def update_metro_station_with_connections(metro_station: Station, connections: List[MetroConnection]) -> Station:
         metro_station.connections = sorted(connections, key=lambda c: HtmlHelper.custom_sort_key(c.NOM_LINIA))
         return metro_station
-    
-    @staticmethod
-    def get_alert_by_language(metro_station: Station, language: str):
-        raw_alerts = []
-        if metro_station.has_alerts:
-            raw_alerts.extend(
-                getattr(alert, f'text{language.capitalize()}')
-                for alert in metro_station.alerts
-            )
-        return "\n".join(f"<pre>{alert}</pre>" for alert in set(raw_alerts))
 
 def _set_emoji_at_name(name):
     emojis = {

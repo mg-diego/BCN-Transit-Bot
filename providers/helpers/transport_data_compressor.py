@@ -149,10 +149,10 @@ class TransportDataCompressor:
             "line_name": html.escape(line_name),
             "stops": [
                 {
-                    "lat": stop.coordinates[1],
-                    "lon": stop.coordinates[0],
-                    "name": f"{stop.CODI_PARADA} - {self._normalize_name(stop.NOM_PARADA)}",
-                    "color": stop.COLOR_REC,
+                    "lat": stop.latitude,
+                    "lon": stop.longitude,
+                    "name": f"{stop.code} - {self._normalize_name(stop.name)}",
+                    "color": stop.line_color,
                     "alert": '⚠️' if stop.has_alerts else '',
                     "direction": stop.DESTI_SENTIT
                 }

@@ -2,7 +2,6 @@ from collections import defaultdict
 from typing import List
 
 from domain import LineRoute
-from domain.bus.bus_stop import update_bus_stop_with_line_info
 from domain.common.alert import Alert
 from domain.transport_type import TransportType
 from providers.api.tmb_api_service import TmbApiService
@@ -24,7 +23,7 @@ class BusService(ServiceBase):
         self.tmb_api_service = tmb_api_service
         self.user_data_manager = user_data_manager
         logger.info(f"[{self.__class__.__name__}] BusService initialized")
-
+    
     # === CACHE CALLS ===
     async def get_all_lines(self) -> List[BusLine]:
         static_key = "bus_lines_static"
@@ -78,7 +77,7 @@ class BusService(ServiceBase):
             alerts_by_stop = await self._build_and_cache_stop_alerts()
 
         for stop in static_stops:
-            stop_alerts = alerts_by_stop.get(stop.CODI_PARADA, [])
+            stop_alerts = alerts_by_stop.get(stop.code, [])
             stop.has_alerts = any(stop_alerts)
             stop.alerts = stop_alerts if any(stop_alerts) else []
 
@@ -94,7 +93,7 @@ class BusService(ServiceBase):
         line = await self.get_line_by_id(line_id)
         api_stops = await self.tmb_api_service.get_bus_line_stops(line_id)
 
-        line_stops = [update_bus_stop_with_line_info(s, line) for s in api_stops]
+        line_stops = [BusStop.update_bus_stop_with_line_info(s, line) for s in api_stops]
         return await self._get_from_cache_or_data(cache_key, line_stops, cache_ttl=3600*24)
     
     async def get_stop_routes(self, stop_id: str) -> str:
@@ -114,7 +113,7 @@ class BusService(ServiceBase):
         return self.fuzzy_search(
             query=stop_name,
             items=stops,
-            key=lambda stop: stop.NOM_PARADA
+            key=lambda stop: stop.name
         )
 
     async def get_line_by_id(self, line_id) -> BusLine:
@@ -145,7 +144,7 @@ class BusService(ServiceBase):
         stops = await self.get_all_stops()
         filtered_stops = [
             stop for stop in stops
-            if int(stop_id) == int(stop.CODI_PARADA)
+            if int(stop_id) == int(stop.code)
         ]
 
         return next((bs for bs in filtered_stops if bs.has_alerts), filtered_stops[0] if filtered_stops else None)    
@@ -157,7 +156,7 @@ class BusService(ServiceBase):
         for line in lines:
             api_stops = await self.tmb_api_service.get_bus_line_stops(line.CODI_LINIA)
             for api_stop in api_stops:
-                stop = update_bus_stop_with_line_info(api_stop, line)
+                stop = BusStop.update_bus_stop_with_line_info(api_stop, line)
                 stops.append(stop)
 
         await self.cache_service.set("bus_stops_static", stops, ttl=3600 * 24)
@@ -173,7 +172,7 @@ class BusService(ServiceBase):
 
             stops = await self.get_stops_by_line(line.CODI_LINIA)
             for stop in stops:
-                alerts_by_stop[stop.CODI_PARADA].extend(stop.alerts)
+                alerts_by_stop[stop.code].extend(stop.alerts)
 
         alerts_dict = dict(alerts_by_stop)
         await self.cache_service.set("bus_stops_alerts", alerts_dict, ttl=3600)

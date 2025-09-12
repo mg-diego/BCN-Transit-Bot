@@ -1,6 +1,7 @@
-from collections import defaultdict
 from dataclasses import dataclass, field
-from typing import Optional
+from typing import List, Optional
+
+from domain.common.alert import Alert
 
 @dataclass(kw_only=True)
 class Station:
@@ -18,4 +19,14 @@ class Station:
     line_name: Optional[str] = None
     line_name_with_emoji: Optional[str] = None
     has_alerts: Optional[bool] = False
-    alerts: Optional[list] = field(default_factory=lambda: defaultdict(list))
+    alerts: Optional[List[Alert]] = field(default_factory=list)
+
+    @staticmethod
+    def get_alert_by_language(station, language: str):
+        raw_alerts = []
+        if station.has_alerts:
+            raw_alerts.extend(
+                getattr(alert, f'text{language.capitalize()}')
+                for alert in station.alerts
+            )
+        return "\n".join(f"<pre>{alert}</pre>" for alert in set(raw_alerts))

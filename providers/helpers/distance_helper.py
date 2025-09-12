@@ -143,19 +143,19 @@ class DistanceHelper:
             distance_km = None
             if user_location:
                 distance_km = DistanceHelper.haversine_distance(
-                    b.coordinates[1], b.coordinates[0],
+                    b.latitude, b.longitude,
                     user_location.latitude, user_location.longitude
                 )
 
             new_stop = {
                 "type": "bus",
-                "line_code": b.CODI_LINIA,
-                "station_name": b.NOM_PARADA,
-                "station_code": b.CODI_PARADA,
-                "coordinates": b.coordinates,
+                "line_code": b.line_code,
+                "station_name": b.name,
+                "station_code": b.code,
+                "coordinates": (b.latitude, b.longitude),
                 "distance_km": distance_km
             }
-            if not any(stop.get("station_code") == new_stop["station_name"] and stop.get("type") == new_stop["type"] for stop in stops):
+            if not any(stop.get("station_code") == new_stop["station_code"] and stop.get("type") == new_stop["type"] for stop in stops):
                 stops.append(new_stop)
 
         stops.sort(key=lambda x: (x["distance_km"] is None, x["distance_km"]))
