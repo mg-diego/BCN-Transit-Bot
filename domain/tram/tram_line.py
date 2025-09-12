@@ -1,5 +1,7 @@
-from dataclasses import dataclass
+from collections import defaultdict
+from dataclasses import dataclass, field
 from typing import Dict
+from domain.common.alert import Alert
 from domain.tram.tram_network import TramNetwork
 from typing import Optional
 
@@ -13,6 +15,8 @@ class TramLine:
     image: str
     color: str = "008E78"
     original_name: Optional[str] = None
+    has_alerts: Optional[bool] = False
+    alerts: Optional[list[Alert]] = field(default_factory=lambda: defaultdict(list))
 
     def __post_init__(self):
         self.original_name = self.name

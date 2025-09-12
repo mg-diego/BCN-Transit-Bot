@@ -113,7 +113,7 @@ class BotApp:
         # Domain services
         self.metro_service = MetroService(self.tmb_api_service, self.language_manager, self.cache_service, self.user_data_manager)
         self.bus_service = BusService(self.tmb_api_service, self.cache_service, self.user_data_manager)
-        self.tram_service = TramService(self.tram_api_service, self.language_manager, self.cache_service)
+        self.tram_service = TramService(self.tram_api_service, self.language_manager, self.cache_service, self.user_data_manager)
         self.rodalies_service = RodaliesService(self.rodalies_api_service, self.language_manager, self.cache_service, self.user_data_manager)
         self.bicing_service = BicingService(self.bicing_api_service, self.cache_service)
         self.fgc_service = FgcService(self.fgc_api_service, self.language_manager, self.cache_service, self.user_data_manager)

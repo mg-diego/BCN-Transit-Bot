@@ -1,7 +1,10 @@
+from collections import defaultdict
 from typing import List
 
+from domain.common.alert import Alert
+from domain.transport_type import TransportType
 from providers.api import TramApiService
-from providers.manager import LanguageManager
+from providers.manager import LanguageManager, UserDataManager
 from providers.helpers import logger
 
 from domain.tram import TramLine, TramStation, TramConnection
@@ -14,19 +17,55 @@ class TramService(ServiceBase):
     Service to interact with Tram data via TramApiService, with optional caching.
     """
 
-    def __init__(self, tram_api_service: TramApiService, language_manager: LanguageManager, cache_service: CacheService = None):
+    def __init__(self, tram_api_service: TramApiService, language_manager: LanguageManager, cache_service: CacheService = None, user_data_manager: UserDataManager = None):
         super().__init__(cache_service)        
         self.tram_api_service = tram_api_service
-        self.language_manager = language_manager        
+        self.language_manager = language_manager
+        self.user_data_manager = user_data_manager
         logger.info(f"[{self.__class__.__name__}] TramService initialized")
 
     # === CACHE CALLS ===
     async def get_all_lines(self) -> List[TramLine]:
-        return await self._get_from_cache_or_api(
-            "tram_lines",
-            self.tram_api_service.get_lines,
-            cache_ttl=3600*24
-        )
+        static_key = "tram_lines_static"
+        alerts_key = "tram_lines_alerts"
+
+        cached_lines = await self._get_from_cache_or_data(static_key, None, cache_ttl=3600*24)
+        cached_alerts = await self._get_from_cache_or_data(alerts_key, None, cache_ttl=3600)
+
+        # Lines cache already exist, update only alerts
+        if cached_lines is not None and cached_lines:
+            if cached_alerts:
+                for line in cached_lines:
+                    line_alerts = cached_alerts.get(line.original_name, [])
+                    line.has_alerts = any(line_alerts)
+                    line.alerts = line_alerts
+            return cached_lines
+        
+        # No lines and no alerts in cache
+        lines = await self.tram_api_service.get_lines()
+        api_alerts = await self.tram_api_service.get_global_alerts()
+        alerts = [Alert.map_from_tram_alert(alert) for alert in api_alerts]
+
+        result = defaultdict(list)
+        for alert in alerts:
+            self.user_data_manager.register_alert(TransportType.TRAM, alert)
+            seen_lines = set()
+            for entity in alert.affected_entities:
+                if entity.line_name and entity.line_name not in seen_lines:
+                    result[entity.line_name].append(alert)
+                    seen_lines.add(entity.line_name)
+
+        alerts_dict = dict(result)
+
+        for line in lines:
+            line_alerts = alerts_dict.get(line.original_name, [])
+            line.has_alerts = any(line_alerts)
+            line.alerts = line_alerts
+
+        await self._get_from_cache_or_data(static_key, lines, cache_ttl=3600*24)
+        await self._get_from_cache_or_data(alerts_key, alerts_dict, cache_ttl=3600)
+
+        return lines
     
     async def get_all_stops(self) -> List[TramStation]:
         lines = await self.get_all_lines()

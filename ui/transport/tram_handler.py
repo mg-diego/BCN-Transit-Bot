@@ -44,7 +44,9 @@ class TramHandler(HandlerBase):
         )
 
     async def ask_search_method(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        await super().ask_search_method(update, context, transport_type=TransportType.TRAM)
+        _, line_id, line_name = self.message_service.get_callback_data(update)
+        line = await self.tram_service.get_line_by_id(line_id)
+        await super().ask_search_method(update, context, transport_type=TransportType.TRAM, alerts=line.alerts)
 
     async def show_list(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         await self.show_line_stations_list(

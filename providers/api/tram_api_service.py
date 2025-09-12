@@ -268,3 +268,12 @@ class TramApiService:
                 routes_dict[key].next_trips.append(next_tram)
 
         return list(routes_dict.values())
+
+    async def get_global_alerts(self):
+        url = "https://t-mobilitat.atm.cat/opendata/alerts/json/user/token/open"
+        data = await self._request("GET", url, use_base_url=False)
+        alerts = data.get('entity', [])
+        today_alerts = [alert for alert in alerts if datetime.fromtimestamp(alert['alert']['active_period'][0]['start']).date() == datetime.now().date()]
+        tram_alerts = [alert for alert in today_alerts if "TB" in alert['alert']['informed_entity'][0]['route_id']]
+
+        return tram_alerts
