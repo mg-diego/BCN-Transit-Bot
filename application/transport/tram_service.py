@@ -1,3 +1,4 @@
+import asyncio
 from collections import defaultdict
 from typing import List
 
@@ -12,13 +13,20 @@ from domain.tram import TramLine, TramStation, TramConnection
 from application.cache_service import CacheService
 from .service_base import ServiceBase
 
+
 class TramService(ServiceBase):
     """
     Service to interact with Tram data via TramApiService, with optional caching.
     """
 
-    def __init__(self, tram_api_service: TramApiService, language_manager: LanguageManager, cache_service: CacheService = None, user_data_manager: UserDataManager = None):
-        super().__init__(cache_service)        
+    def __init__(
+        self,
+        tram_api_service: TramApiService,
+        language_manager: LanguageManager,
+        cache_service: CacheService = None,
+        user_data_manager: UserDataManager = None
+    ):
+        super().__init__(cache_service)
         self.tram_api_service = tram_api_service
         self.language_manager = language_manager
         self.user_data_manager = user_data_manager
@@ -32,21 +40,23 @@ class TramService(ServiceBase):
         cached_lines = await self._get_from_cache_or_data(static_key, None, cache_ttl=3600*24)
         cached_alerts = await self._get_from_cache_or_data(alerts_key, None, cache_ttl=3600)
 
-        # Lines cache already exist, update only alerts
-        if cached_lines is not None and cached_lines:
+        if cached_lines:
             if cached_alerts:
                 for line in cached_lines:
                     line_alerts = cached_alerts.get(line.original_name, [])
-                    line.has_alerts = any(line_alerts)
+                    line.has_alerts = bool(line_alerts)
                     line.alerts = line_alerts
             return cached_lines
-        
-        # No lines and no alerts in cache
-        lines = await self.tram_api_service.get_lines()
-        api_alerts = await self.tram_api_service.get_global_alerts()
-        alerts = [Alert.map_from_tram_alert(alert) for alert in api_alerts]
 
+        # No hay caché, pedimos a la API
+        lines, api_alerts = await asyncio.gather(
+            self.tram_api_service.get_lines(),
+            self.tram_api_service.get_global_alerts()
+        )
+
+        alerts = [Alert.map_from_tram_alert(a) for a in api_alerts]
         result = defaultdict(list)
+
         for alert in alerts:
             self.user_data_manager.register_alert(TransportType.TRAM, alert)
             seen_lines = set()
@@ -59,29 +69,40 @@ class TramService(ServiceBase):
 
         for line in lines:
             line_alerts = alerts_dict.get(line.original_name, [])
-            line.has_alerts = any(line_alerts)
+            line.has_alerts = bool(line_alerts)
             line.alerts = line_alerts
 
-        await self._get_from_cache_or_data(static_key, lines, cache_ttl=3600*24)
-        await self._get_from_cache_or_data(alerts_key, alerts_dict, cache_ttl=3600)
+        await asyncio.gather(
+            self._get_from_cache_or_data(static_key, lines, cache_ttl=3600*24),
+            self._get_from_cache_or_data(alerts_key, alerts_dict, cache_ttl=3600)
+        )
 
         return lines
-    
+
     async def get_all_stops(self) -> List[TramStation]:
-        stops = await self.cache_service.get("tram_stops")
+        """
+        Obtiene todas las paradas de todas las líneas de forma paralela
+        y las guarda en caché.
+        """
+        cached_stops = await self.cache_service.get("tram_stops")
+        if cached_stops:
+            return cached_stops
 
-        if not stops:
-            lines = await self.get_all_lines()
-            stops = []
-            for line in lines:
-                line_stops = await self.get_stops_by_line(line.id)
-                for s in line_stops:
-                    s = TramStation.update_line_info(s, line)
-                stops += line_stops
+        lines = await self.get_all_lines()
 
-            await self.cache_service.set("tram_stops", stops, ttl=3600*24)
+        # Lanzamos las peticiones de paradas por línea en paralelo
+        stops_lists = await asyncio.gather(
+            *[self.get_stops_by_line(line.id) for line in lines]
+        )
 
-        return stops
+        # Aplanar y actualizar info de línea
+        all_stops: List[TramStation] = []
+        for line, line_stops in zip(lines, stops_lists):
+            for s in line_stops:
+                all_stops.append(TramStation.update_line_info(s, line))
+
+        await self.cache_service.set("tram_stops", all_stops, ttl=3600*24)
+        return all_stops
 
     async def get_stops_by_line(self, line_id: str) -> List[TramStation]:
         return await self._get_from_cache_or_api(
@@ -89,13 +110,11 @@ class TramService(ServiceBase):
             lambda: self.tram_api_service.get_stops_on_line(line_id),
             cache_ttl=3600*24
         )
-    
+
     async def get_stop_routes(self, outbound_code: int, return_code: int) -> str:
         return await self._get_from_cache_or_api(
             f"tram_routes_{outbound_code}_{return_code}",
-            lambda: self.tram_api_service.get_next_trams_at_stop(
-                outbound_code, return_code
-            ),
+            lambda: self.tram_api_service.get_next_trams_at_stop(outbound_code, return_code),
             cache_ttl=30,
         )
 
@@ -105,26 +124,17 @@ class TramService(ServiceBase):
             lambda: self.tram_api_service.get_connections_at_stop(stop_id),
             cache_ttl=3600*24
         )
-
         return "\n".join(str(c) for c in connections)
-    
+
     # === OTHER CALLS ===
     async def get_stops_by_name(self, stop_name):
         stops = await self.get_all_stops()
-        return self.fuzzy_search(
-            query=stop_name,
-            items=stops,
-            key=lambda stop: stop.name
-        )
+        return self.fuzzy_search(query=stop_name, items=stops, key=lambda s: s.name)
 
     async def get_line_by_id(self, line_id) -> TramLine:
         lines = await self.get_all_lines()
-        line = next((l for l in lines if str(l.code) == str(line_id)), None)
-        logger.debug(f"[{self.__class__.__name__}] get_line_by_id({line_id}) -> {line}")
-        return line
+        return next((l for l in lines if str(l.code) == str(line_id)), None)
 
     async def get_stop_by_id(self, stop_id, line_id) -> TramStation:
         stops = await self.get_stops_by_line(line_id)
-        stop = next((s for s in stops if str(s.id) == str(stop_id)), None)
-        logger.debug(f"[{self.__class__.__name__}] get_stop_by_id({stop_id}, line {line_id}) -> {stop}")
-        return stop
+        return next((s for s in stops if str(s.id) == str(stop_id)), None)

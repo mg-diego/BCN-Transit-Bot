@@ -31,8 +31,10 @@ class BusService(ServiceBase):
         static_key = "bus_lines_static"
         alerts_key = "bus_lines_alerts"
 
-        cached_lines = await self._get_from_cache_or_data(static_key, None, cache_ttl=3600*24)
-        cached_alerts = await self._get_from_cache_or_data(alerts_key, None, cache_ttl=3600)
+        cached_lines, cached_alerts = await asyncio.gather(
+            self._get_from_cache_or_data(static_key, None, cache_ttl=3600*24),
+            self._get_from_cache_or_data(alerts_key, None, cache_ttl=3600)
+        )
 
         # Lines cache already exist, update only alerts
         if cached_lines is not None and cached_lines:
@@ -44,8 +46,10 @@ class BusService(ServiceBase):
             return cached_lines
 
         # No lines and no alerts in cache
-        lines = await self.tmb_api_service.get_bus_lines()
-        api_alerts = await self.tmb_api_service.get_global_alerts(TransportType.BUS)        
+        lines, api_alerts = await asyncio.gather(
+            self.tmb_api_service.get_bus_lines(),
+            self.tmb_api_service.get_global_alerts(TransportType.BUS)
+        )    
         alerts = [Alert.map_from_bus_alert(alert) for alert in api_alerts]
         
         result = defaultdict(list)
@@ -72,10 +76,14 @@ class BusService(ServiceBase):
         static_stops = await self.cache_service.get("bus_stops_static")
         alerts_by_stop = await self.cache_service.get("bus_stops_alerts")
 
-        if not static_stops:
+        if not static_stops and not alerts_by_stop:
+            static_stops, alerts_by_stop = await asyncio.gather(
+                self._build_and_cache_static_stops(),
+                self._build_and_cache_stop_alerts()
+            )
+        elif not static_stops:
             static_stops = await self._build_and_cache_static_stops()
-
-        if not alerts_by_stop:
+        elif not alerts_by_stop:
             alerts_by_stop = await self._build_and_cache_stop_alerts()
 
         for stop in static_stops:
@@ -178,13 +186,24 @@ class BusService(ServiceBase):
         alerts_by_stop = defaultdict(list)
         lines = await self.get_all_lines()
 
-        for line in lines:
-            if not line.has_alerts:
-                continue
+        # Solo líneas con alertas
+        alert_lines = [line for line in lines if line.has_alerts]
 
-            stops = await self.get_stops_by_line(line.CODI_LINIA)
-            for stop in stops:
-                alerts_by_stop[stop.code].extend(stop.alerts)
+        # Limita la concurrencia para las llamadas a get_stops_by_line
+        semaphore = asyncio.Semaphore(10)
+
+        async def process_line(line):
+            async with semaphore:
+                stops = await self.get_stops_by_line(line.CODI_LINIA)
+            return [(stop.code, stop.alerts) for stop in stops]
+
+        # Ejecuta todas las líneas con alertas en paralelo
+        results = await asyncio.gather(*[process_line(line) for line in alert_lines])
+
+        # Combina los resultados en el defaultdict
+        for stop_list in results:
+            for code, alerts in stop_list:
+                alerts_by_stop[code].extend(alerts)
 
         alerts_dict = dict(alerts_by_stop)
         await self.cache_service.set("bus_stops_alerts", alerts_dict, ttl=3600)

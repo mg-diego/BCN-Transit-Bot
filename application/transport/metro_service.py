@@ -33,8 +33,10 @@ class MetroService(ServiceBase):
         static_key = "metro_lines_static"
         alerts_key = "metro_lines_alerts"
 
-        cached_lines = await self._get_from_cache_or_data(static_key, None, cache_ttl=3600*24)
-        cached_alerts = await self._get_from_cache_or_data(alerts_key, None, cache_ttl=3600)
+        cached_lines, cached_alerts = await asyncio.gather(
+            self._get_from_cache_or_data(static_key, None, cache_ttl=3600*24),
+            self._get_from_cache_or_data(alerts_key, None, cache_ttl=3600)
+        )
 
         # Lines cache already exist, update only alerts
         if cached_lines is not None and cached_lines:
@@ -46,8 +48,10 @@ class MetroService(ServiceBase):
             return cached_lines
 
         # No lines and no alerts in cache
-        lines = await self.tmb_api_service.get_metro_lines()
-        api_alerts = await self.tmb_api_service.get_global_alerts(TransportType.METRO)
+        lines, api_alerts = await asyncio.gather(
+            self.tmb_api_service.get_metro_lines(),
+            self.tmb_api_service.get_global_alerts(TransportType.METRO)
+        )
         alerts = [Alert.map_from_metro_alert(alert) for alert in api_alerts]
 
         result = defaultdict(list)
@@ -75,9 +79,14 @@ class MetroService(ServiceBase):
         static_stations = await self.cache_service.get("metro_stations_static")
         alerts_by_station = await self.cache_service.get("metro_stations_alerts")
 
-        if not static_stations:
+        if not static_stations and not alerts_by_station:
+            static_stations, alerts_by_station = await asyncio.gather(
+                self._build_and_cache_static_stations(),
+                self._build_and_cache_station_alerts()
+            )
+        elif not static_stations:
             static_stations = await self._build_and_cache_static_stations()
-        if not alerts_by_station:
+        elif not alerts_by_station:
             alerts_by_station = await self._build_and_cache_station_alerts()
 
         for station in static_stations:
@@ -197,15 +206,21 @@ class MetroService(ServiceBase):
     
     async def _build_and_cache_station_alerts(self):
         station_alerts = defaultdict(list)
-
         lines = await self.get_all_lines()
-        for line in lines:
-            if not line.has_alerts:
-                continue
+        alert_lines = [line for line in lines if line.has_alerts]
 
-            stations = await self.get_stations_by_line(line.CODI_LINIA)
-            for station in stations:
-                station_alerts[station.code].extend(station.alerts)
+        semaphore = asyncio.Semaphore(10)
+
+        async def process_line(line):
+            async with semaphore:
+                stations = await self.get_stations_by_line(line.CODI_LINIA)
+            return [(st.code, st.alerts) for st in stations]
+
+        results = await asyncio.gather(*(process_line(line) for line in alert_lines))
+
+        for station_list in results:
+            for code, alerts in station_list:
+                station_alerts[code].extend(alerts)
 
         alerts_dict = dict(station_alerts)
         await self.cache_service.set("metro_stations_alerts", alerts_dict, ttl=3600)

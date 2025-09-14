@@ -463,7 +463,7 @@
             JSON.stringify({
               type: type === "near" ? stop.type : type,
               stop_id: stop.id,
-              line_id: type === "near"? stop.line : line_id,
+              line_id: type === "near"? `${stop.line}` : `${line_id}`,
               lat: stop.lat,
               lon: stop.lon,
               stop_name: stop.name,
