@@ -50,9 +50,7 @@ class FgcService(ServiceBase):
         async def process_station(line_station, line):
             async with semaphore_near:
                 line_station = FgcStation.update_line_info(line_station, line)
-                moute_station = await self.fgc_api_service.get_near_stations(
-                    line_station.latitude, line_station.longitude
-                )
+                moute_station = await self.fgc_api_service.get_near_stations(line_station.latitude, line_station.longitude)
                 if moute_station:
                     line_station.moute_id = moute_station[0].get('id')
                 return line_station
@@ -62,9 +60,7 @@ class FgcService(ServiceBase):
                 line_stations = await self.fgc_api_service.get_stations_by_line(line.id)
 
             # Procesa todas las estaciones en paralelo
-            processed_stations = await asyncio.gather(
-                *[process_station(s, line) for s in line_stations]
-            )
+            processed_stations = await asyncio.gather(*[process_station(s, line) for s in line_stations])
             return processed_stations
 
         # Procesa todas las líneas en paralelo

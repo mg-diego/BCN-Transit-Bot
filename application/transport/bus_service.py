@@ -161,10 +161,8 @@ class BusService(ServiceBase):
         async def process_line(line):
             async with semaphore_lines:
                 api_stops = await self.tmb_api_service.get_bus_line_stops(line.CODI_LINIA)
-            processed_stops = [
-                BusStop.update_bus_stop_with_line_info(s, line) for s in api_stops
-            ]
-            return processed_stops
+                processed_stops = [BusStop.update_bus_stop_with_line_info(s, line) for s in api_stops]
+                return processed_stops
 
         # Procesa todas las líneas en paralelo
         results = await asyncio.gather(*[process_line(line) for line in lines])

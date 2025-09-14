@@ -64,19 +64,20 @@ class RodaliesService(ServiceBase):
         return lines
     
     async def get_all_stations(self) -> List[RodaliesStation]:
-        lines = await self.get_all_lines()
-        stations = []
-        for line in lines:
-            line_stations = await self.get_stations_by_line(line.id)
-            for s in line_stations:
-                s = RodaliesStation.update_line_info(s, line)
-            stations += line_stations
+        stations = await self.cache_service.get("rodalies_stations")
 
-        return await self._get_from_cache_or_data(
-            "rodalies_stations",
-            stations,
-            cache_ttl=3600*24
-        )   
+        if not stations:
+            lines = await self.get_all_lines()
+            stations = []
+            for line in lines:
+                line_stations = await self.get_stations_by_line(line.id)
+                for s in line_stations:
+                    s = RodaliesStation.update_line_info(s, line)
+                stations += line_stations
+
+            await self.cache_service.set("rodalies_stations", stations, ttl=3600*24)
+
+        return stations
     
     async def get_station_routes(self, station_id, line_id):
         routes = await self._get_from_cache_or_api(
