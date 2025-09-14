@@ -4,7 +4,7 @@ from typing import Any, Optional
 from providers.helpers import logger
 
 class CacheService:
-    """In-memory cache service with optional expiration and logging."""
+    """In-memory cache service with optional expiration and logging + timing."""
 
     def __init__(self):
         # Dictionary: key -> (value, expiration_timestamp)
@@ -13,51 +13,44 @@ class CacheService:
         logger.info("[CacheService] Initialized")
 
     async def set(self, key: str, value: Any, ttl: Optional[int] = None):
-        """
-        Store a value in the cache.
-
-        :param key: Cache key.
-        :param value: Value to store.
-        :param ttl: Optional time-to-live in seconds.
-        """
+        start = time.perf_counter()
         expire_at = time.time() + ttl if ttl else None
         async with self._lock:
             self._cache[key] = (value, expire_at)
-        logger.info(f"[CacheService] Set key '{key}' with ttl={ttl}")
+        duration = time.perf_counter() - start
+        logger.info(f"[CacheService] Set key '{key}' with ttl={ttl} in {duration:.4f}s")
 
     async def get(self, key: str) -> Optional[Any]:
-        """
-        Retrieve a value from cache if not expired.
-        """
+        start = time.perf_counter()
         async with self._lock:
             if key in self._cache:
                 value, expire_at = self._cache[key]
                 if expire_at is None or expire_at > time.time():
-                    logger.info(f"[CacheService] Cache hit for key '{key}'")
+                    duration = time.perf_counter() - start
+                    logger.info(f"[CacheService] Cache hit for key '{key}' in {duration:.4f}s")
                     return value
                 else:
-                    # Expired: remove
                     del self._cache[key]
-                    logger.info(f"[CacheService] Cache expired for key '{key}'")
+                    duration = time.perf_counter() - start
+                    logger.info(f"[CacheService] Cache expired for key '{key}' in {duration:.4f}s")
             else:
-                logger.info(f"[CacheService] Cache miss for key '{key}'")
+                duration = time.perf_counter() - start
+                logger.info(f"[CacheService] Cache miss for key '{key}' in {duration:.4f}s")
         return None
 
     async def delete(self, key: str):
-        """
-        Delete a key from the cache.
-        """
+        start = time.perf_counter()
         async with self._lock:
             existed = self._cache.pop(key, None)
+        duration = time.perf_counter() - start
         if existed:
-            logger.info(f"[CacheService] Deleted key '{key}' from cache")
+            logger.info(f"[CacheService] Deleted key '{key}' from cache in {duration:.4f}s")
         else:
-            logger.info(f"[CacheService] Key '{key}' not found in cache for deletion")
+            logger.info(f"[CacheService] Key '{key}' not found for deletion in {duration:.4f}s")
 
     async def clear(self):
-        """
-        Clear the entire cache.
-        """
+        start = time.perf_counter()
         async with self._lock:
             self._cache.clear()
-        logger.info("[CacheService] Cleared entire cache")
+        duration = time.perf_counter() - start
+        logger.info(f"[CacheService] Cleared entire cache in {duration:.4f}s")
