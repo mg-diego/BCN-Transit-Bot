@@ -86,5 +86,7 @@
   "results.location.ask": "📍 Puedes enviar tu ubicación para mejorar los resultados de la búsqueda",
   "results.location.btn": "📍 Compartir mi ubicación",
   "results.location.received": "🎯 Ubicación recibida correctamente. Se mostrarán los resultados más cercanos.",
-  "results.minimum.letters": "⚠️ Escribe al menos 3 letras para realizar una búsqueda."
+  "results.minimum.letters": "⚠️ Escribe al menos 3 letras para realizar una búsqueda.",
+  
+  "no.departures.found": "      - No hay próximas salidas programadas"
 }

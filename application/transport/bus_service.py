@@ -106,7 +106,7 @@ class BusService(ServiceBase):
             lambda: self.tmb_api_service.get_next_bus_at_stop(stop_id),
             cache_ttl=10
         )
-        return "\n\n".join(LineRoute.simple_list(route, arriving_threshold=60) for route in routes)
+        return "\n\n".join(LineRoute.simple_list(route, arriving_threshold=60, default_msg=self.language_manager.t('no.departures.found')) for route in routes)
     
     # === OTHER CALLS ===
     async def get_stops_by_name(self, stop_name) -> List[BusLine]:
@@ -161,8 +161,8 @@ class BusService(ServiceBase):
         async def process_line(line):
             async with semaphore_lines:
                 api_stops = await self.tmb_api_service.get_bus_line_stops(line.CODI_LINIA)
-                processed_stops = [BusStop.update_bus_stop_with_line_info(s, line) for s in api_stops]
-                return processed_stops
+            processed_stops = [BusStop.update_bus_stop_with_line_info(s, line) for s in api_stops]
+            return processed_stops
 
         # Procesa todas las líneas en paralelo
         results = await asyncio.gather(*[process_line(line) for line in lines])

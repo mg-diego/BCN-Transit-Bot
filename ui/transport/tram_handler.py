@@ -82,7 +82,7 @@ class TramHandler(HandlerBase):
 
         async def update_text():
             routes = await self.tram_service.get_stop_routes(stop.outboundCode, stop.returnCode)
-            grouped_routes = LineRoute.grouped_list(routes)
+            grouped_routes = LineRoute.grouped_list(routes, self.language_manager.t('no.departures.found'))
             text = (
                 f"{self.language_manager.t(f'{TransportType.TRAM.value}.stop.name', name=stop.name.upper())}\n\n"
                 f"<a href='{GoogleMapsHelper.build_directions_url(latitude=stop.latitude, longitude=stop.longitude)}'>{self.language_manager.t('common.map.view.location')}</a>\n\n"

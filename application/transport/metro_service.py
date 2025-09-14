@@ -125,7 +125,7 @@ class MetroService(ServiceBase):
             lambda: self.tmb_api_service.get_next_metro_at_station(metro_station_id),
             cache_ttl=10
         )
-        return "\n\n".join(LineRoute.simple_list(route) for route in routes)
+        return "\n\n".join(LineRoute.simple_list(route, default_msg=self.language_manager.t('no.departures.found')) for route in routes)
     
     # ===== OTHER CALLS ====
     async def get_stations_by_name(self, station_name) -> List[MetroStation]:

@@ -76,6 +76,7 @@ class RodaliesHandler(HandlerBase):
         
         async def update_text():
             next_rodalies = await self.rodalies_service.get_station_routes(rodalies_station_id, line_id)
+            next_rodalies = next_rodalies if next_rodalies != '' else self.language_manager.t('no.departures.found')
             is_fav = self.user_data_manager.has_favorite(user_id, TransportType.RODALIES.value, rodalies_station_id)
             text = (
                 f"{self.language_manager.t(f'{TransportType.RODALIES.value}.station.name', name=rodalies_station.name.upper())}\n\n"

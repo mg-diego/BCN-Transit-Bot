@@ -44,7 +44,8 @@ class LineRoute:
                 "D": "🟪",
                 "V": "🟩",
                 "M": "🔴",
-                "X": "🟨"
+                "X": "🟨",
+                "N": "🟦"
             }
             for letter in self.line_name:
                 if letter in emojis:
@@ -92,7 +93,7 @@ class LineRoute:
         self.name_with_emoji = f"{emoji} {self.line_name}"
 
     @staticmethod
-    def simple_list(route, arriving_threshold=40) -> str:
+    def simple_list(route, arriving_threshold=40, default_msg: str = '') -> str:
         header = f"     <b>{route.name_with_emoji} → {html.escape(route.destination)}</b>"
 
         number_emojis = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣"]
@@ -101,10 +102,12 @@ class LineRoute:
             f"           <i>{number_emojis[i] if i < len(number_emojis) else f'{i+1}.'} {trip.remaining_time(arriving_threshold)}</i>"
             for i, trip in enumerate(route.next_trips[:5])
         )
+        if tren_info == "":
+            tren_info = default_msg
         
         return f"{header}\n{tren_info}"
     @staticmethod
-    def grouped_list(routes) -> str:
+    def grouped_list(routes, default_msg: str = '') -> str:
         """Genera un string agrupado por line_name para varias rutas."""
         number_emojis = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣"]
 
@@ -120,6 +123,8 @@ class LineRoute:
                     f"           <i>{number_emojis[i] if i < len(number_emojis) else f'{i+1}.'} {tram.remaining_time()}</i>"
                     for i, tram in enumerate(route.next_trips[:5])
                 )
+                if tram_info == "":
+                    tram_info = default_msg
                 lines.append(f"{header}\n{tram_info}")
             lines.append("\n")
 
@@ -127,7 +132,7 @@ class LineRoute:
     
     
     @staticmethod
-    def scheduled_list(route, with_arrival_date=True) -> str:
+    def scheduled_list(route, with_arrival_date=True, default_msg: str = '') -> str:
         header = f"     <b>{route.name_with_emoji} → {html.escape(route.destination)}</b>"
         number_emojis = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣"]
 

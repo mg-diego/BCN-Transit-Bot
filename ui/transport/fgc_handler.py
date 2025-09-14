@@ -82,6 +82,7 @@ class FgcHandler(HandlerBase):
         
         async def update_text():
             next_fgc = await self.fgc_service.get_station_routes(fgc_station.name, fgc_station.moute_id, line_id)
+            next_fgc = next_fgc if next_fgc != '' else self.language_manager.t('no.departures.found')
             is_fav = self.user_data_manager.has_favorite(user_id, TransportType.FGC.value, fgc_station_id)
             text = (
                 f"{self.language_manager.t(f'{TransportType.FGC.value}.station.name', name=fgc_station.name.upper())}\n\n"
