@@ -68,19 +68,20 @@ class TramService(ServiceBase):
         return lines
     
     async def get_all_stops(self) -> List[TramStation]:
-        lines = await self.get_all_lines()
-        stops = []
-        for line in lines:
-            line_stops = await self.get_stops_by_line(line.id)
-            for s in line_stops:
-                s = TramStation.update_line_info(s, line)
-            stops += line_stops
+        stops = await self.cache_service.get("tram_stops")
 
-        return await self._get_from_cache_or_data(
-            "tram_stops",
-            stops,
-            cache_ttl=3600*24
-        )
+        if not stops:
+            lines = await self.get_all_lines()
+            stops = []
+            for line in lines:
+                line_stops = await self.get_stops_by_line(line.id)
+                for s in line_stops:
+                    s = TramStation.update_line_info(s, line)
+                stops += line_stops
+
+            await self.cache_service.set("tram_stops", stops, ttl=3600*24)
+
+        return await stops
 
     async def get_stops_by_line(self, line_id: str) -> List[TramStation]:
         return await self._get_from_cache_or_api(
