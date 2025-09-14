@@ -93,16 +93,13 @@ class ReplyHandler:
             self.previous_search = None
             self.current_search = None
         else:
-            try:
-                metro_stations, bus_stops, tram_stops, rodalies_stations, bicing_stations, fgc_stations = await self._search_stations('', only_bicing=False)
-                stops_with_distance = DistanceHelper.build_stops_list(metro_stations, bus_stops, tram_stops, rodalies_stations, bicing_stations, fgc_stations, user_location, results_to_return=999999)
-                
-                near_stops = [s for s in stops_with_distance if s["distance_km"] is not None and s["distance_km"] <= 0.5]
-                encoded = self.mapper.map_near_stations(near_stops, user_location.latitude, user_location.longitude)
-                print(encoded)
-                await message_service.send_new_message(update, language_manager.t('results.location.received'), keyboard_factory.map_reply_menu(encoded))
-            except Exception as e:
-                pass
+            metro_stations, bus_stops, tram_stops, rodalies_stations, bicing_stations, fgc_stations = await self._search_stations('', only_bicing=False)
+            stops_with_distance = DistanceHelper.build_stops_list(metro_stations, bus_stops, tram_stops, rodalies_stations, bicing_stations, fgc_stations, user_location, results_to_return=999999)
+            near_stops = [s for s in stops_with_distance if s["distance_km"] is not None and s["distance_km"] <= 0.5]
+            encoded = self.mapper.map_near_stations(near_stops, user_location.latitude, user_location.longitude)
+            
+            await message_service.send_new_message(update, language_manager.t('results.location.received'), keyboard_factory.map_reply_menu(encoded))
+
 
     @audit_action(action_type="REPLY", command_or_button="reply_router", params_args=["user_location", "only_bicing"])
     async def handle_reply_from_user(self, update: Update, context: ContextTypes.DEFAULT_TYPE, user_location = None, only_bicing = False):        

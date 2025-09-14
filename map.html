@@ -251,8 +251,7 @@
           user_location = jsonData.user_location       
           user_location.lat = user_location.latitude,
           user_location.lon = user_location.longitude,
-          console.log(jsonData.near)
-          coordsList = jsonData.near.map((stop) => ({
+          coordsList = jsonData.stops.map((stop) => ({
             id: stop.name.split(" - ")[0],
             lat: stop.lat,
             lon: stop.lon,
