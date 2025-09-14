@@ -146,25 +146,39 @@ class BotApp:
 
         service_times = []
 
-        try:
-            preload_tasks = [
-                ("Metro", self.metro_service, ["get_all_lines", "get_all_stations"]),
-                ("Bus", self.bus_service, ["get_all_lines", "get_all_stops"]),
-                ("Tram", self.tram_service, ["get_all_lines", "get_all_stops"]),
-                ("Rodalies", self.rodalies_service, ["get_all_lines", "get_all_stations"]),
-                ("FGC", self.fgc_service, ["get_all_lines", "get_all_stations"])
-            ]
+        preload_tasks = [
+            ("Metro", self.metro_service, ["get_all_lines", "get_all_stations"]),
+            ("Bus", self.bus_service, ["get_all_lines", "get_all_stops"]),
+            ("Tram", self.tram_service, ["get_all_lines", "get_all_stops"]),
+            ("Rodalies", self.rodalies_service, ["get_all_lines", "get_all_stations"]),
+            ("FGC", self.fgc_service, ["get_all_lines", "get_all_stations"])
+        ]
 
-            for name, service, methods in preload_tasks:
+        try:
+            # Ejecutamos cada servicio en paralelo
+            async def run_service(name, service, methods):
                 start = datetime.now()
+                tasks = []
                 for method_name in methods:
                     method = getattr(service, method_name)
+                    tasks.append(asyncio.create_task(method()))
+                
+                # Ejecutamos todos los métodos de este servicio concurrentemente
+                for task in asyncio.as_completed(tasks):
                     try:
-                        await method()
+                        await task
                     except Exception as e:
-                        logger.error(f"There was an error running the '{name}' seeder: \n {e}")
+                        logger.error(f"There was an error running the '{name}' seeder: \n{e}")
+                
                 elapsed = int((datetime.now() - start).total_seconds())
-                service_times.append((name, elapsed))
+                return name, elapsed
+
+            # Creamos tareas para todos los servicios
+            all_tasks = [run_service(name, service, methods) for name, service, methods in preload_tasks]
+            results = await asyncio.gather(*all_tasks)
+
+            # Guardamos los tiempos
+            service_times.extend(results)
 
             # Total elapsed
             total_elapsed = int((datetime.now() - total_start).total_seconds())

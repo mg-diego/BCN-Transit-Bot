@@ -1,3 +1,4 @@
+import asyncio
 from domain.bicing import BicingStation
 from domain.transport_type import TransportType
 from providers.helpers.distance_helper import DistanceHelper
@@ -204,13 +205,29 @@ class ReplyHandler:
             if stop is not None:
                 bus_stops.append(stop)
 
-        else: # METRO STATIONS | BUS STOPS | TRAM STOPS | RODALIES STATIONS
-            tram_stops = await tram_service.get_stops_by_name(value_to_search)
-            metro_stations = await metro_service.get_stations_by_name(value_to_search)
-            bus_stops = await bus_service.get_stops_by_name(value_to_search)
-            rodalies_stations = await rodalies_service.get_stations_by_name(value_to_search)
-            bicing_stations = await bicing_service.get_stations_by_name(value_to_search)
-            fgc_stations = await fgc_service.get_stations_by_name(value_to_search)
+        else: # METRO STATIONS | BUS STOPS | TRAM STOPS | RODALIES STATIONS | BICING STATIONS | FGC STATIONS
+            metro_task = metro_service.get_stations_by_name(value_to_search)
+            bus_task = bus_service.get_stops_by_name(value_to_search)
+            tram_task = tram_service.get_stops_by_name(value_to_search)
+            rodalies_task = rodalies_service.get_stations_by_name(value_to_search)
+            bicing_task = bicing_service.get_stations_by_name(value_to_search)
+            fgc_task = fgc_service.get_stations_by_name(value_to_search)
+
+            (
+                metro_stations,
+                bus_stops,
+                tram_stops,
+                rodalies_stations,
+                bicing_stations,
+                fgc_stations,
+            ) = await asyncio.gather(
+                metro_task,
+                bus_task,
+                tram_task,
+                rodalies_task,
+                bicing_task,
+                fgc_task
+            )
 
         return metro_stations, bus_stops, tram_stops, rodalies_stations, bicing_stations, fgc_stations
 
