@@ -1,3 +1,4 @@
+import asyncio
 from typing import List
 import json
 
@@ -41,16 +42,36 @@ class FgcService(ServiceBase):
 
         lines = await self.get_all_lines()
         stations = []
-        for line in lines:
-            line_stations = await self.fgc_api_service.get_stations_by_line(line.id)
-            
-            for line_station in line_stations:                
+
+        # Limita concurrencia: ajusta según capacidad de la API
+        semaphore_lines = asyncio.Semaphore(5)     # Para get_stations_by_line
+        semaphore_near = asyncio.Semaphore(10)     # Para get_near_stations
+
+        async def process_station(line_station, line):
+            async with semaphore_near:
                 line_station = FgcStation.update_line_info(line_station, line)
-                moute_station = await self.fgc_api_service.get_near_stations(line_station.latitude, line_station.longitude)
-                if any(moute_station):
+                moute_station = await self.fgc_api_service.get_near_stations(
+                    line_station.latitude, line_station.longitude
+                )
+                if moute_station:
                     line_station.moute_id = moute_station[0].get('id')
-            
-            stations += line_stations
+                return line_station
+
+        async def process_line(line):
+            async with semaphore_lines:
+                line_stations = await self.fgc_api_service.get_stations_by_line(line.id)
+
+            # Procesa todas las estaciones en paralelo
+            processed_stations = await asyncio.gather(
+                *[process_station(s, line) for s in line_stations]
+            )
+            return processed_stations
+
+        # Procesa todas las líneas en paralelo
+        results = await asyncio.gather(*[process_line(line) for line in lines])
+
+        for line_stations in results:
+            stations.extend(line_stations)
 
         logger.warning(f"The following FGC stations where not found:\n {[s for s in stations if s.moute_id is None]}")
         return await self._get_from_cache_or_data(fgc_stations_key, stations, cache_ttl=3600*24)

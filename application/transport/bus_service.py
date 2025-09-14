@@ -1,3 +1,4 @@
+import asyncio
 from collections import defaultdict
 from typing import List
 
@@ -149,15 +150,27 @@ class BusService(ServiceBase):
 
         return next((bs for bs in filtered_stops if bs.has_alerts), filtered_stops[0] if filtered_stops else None)    
 
+
     async def _build_and_cache_static_stops(self) -> List[BusStop]:
         stops = []
         lines = await self.get_all_lines()
 
-        for line in lines:
-            api_stops = await self.tmb_api_service.get_bus_line_stops(line.CODI_LINIA)
-            for api_stop in api_stops:
-                stop = BusStop.update_bus_stop_with_line_info(api_stop, line)
-                stops.append(stop)
+        # Limita concurrencia para llamadas a get_bus_line_stops
+        semaphore_lines = asyncio.Semaphore(5)
+
+        async def process_line(line):
+            async with semaphore_lines:
+                api_stops = await self.tmb_api_service.get_bus_line_stops(line.CODI_LINIA)
+            processed_stops = [
+                BusStop.update_bus_stop_with_line_info(s, line) for s in api_stops
+            ]
+            return processed_stops
+
+        # Procesa todas las líneas en paralelo
+        results = await asyncio.gather(*[process_line(line) for line in lines])
+
+        for line_stops in results:
+            stops.extend(line_stops)
 
         await self.cache_service.set("bus_stops_static", stops, ttl=3600 * 24)
         return stops

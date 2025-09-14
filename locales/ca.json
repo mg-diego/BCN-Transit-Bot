@@ -85,6 +85,6 @@
   "results.searching": "Cercant resultats",
   "results.location.ask": "📍 Prem el botó inferior per enviar la ubicació i obtenir resultats més precisos.",
   "results.location.btn": "📍 Compartir la meva ubicació",
-  "results.location.received": "🎯 Ubicació rebuda correctament. Es mostraran els 10 resultats més propers.",
+  "results.location.received": "🎯 Ubicació rebuda correctament. Es mostraran els resultats més propers.",
   "results.minimum.letters": "⚠️ Introdueix almenys 3 lletres per fer la cerca."
 }

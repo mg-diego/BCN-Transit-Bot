@@ -189,12 +189,24 @@
           tram: "https://tmb-barcelona.github.io/TMB-Icons/png/originalSize/TRAM.png",
           rodalies: "https://tmb-barcelona.github.io/TMB-Icons/png/originalSize/RODALIES.png",
         };
+        const SIZES = {
+          metro: [36, 36],
+          bicing: [28, 28],
+          bus: [20, 20],
+          fgc: [40, 40],
+          tram: [24, 24],
+          rodalies: [30, 30],
+        };
         const DEFAULT_ICON = "https://tmb-barcelona.github.io/TMB-Icons/png/originalSize/AMB_TMB.png";
+        const DEFAULT_SIZE = [28, 28];
           return new L.Icon({
           iconUrl: ICONS[stop.type] || DEFAULT_ICON,
-          iconSize: [28, 28], // tamaño del iconos
+          iconSize: SIZES[stop.type] || DEFAULT_SIZE, // tamaño del iconos
           iconAnchor: [16, 32], // punto de anclaje
           popupAnchor: [0, -32], // desplazamiento del popup
+          shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png', // tu PNG de sombra
+          shadowSize: [41, 41],      // ajusta al tamaño del icono
+          shadowAnchor: [13, 41],    // ancla de la sombra
         });
       }
 
@@ -257,7 +269,8 @@
             lon: stop.lon,
             name: stop.name.split(" - ").slice(1).join(" - "),
             type: stop.type,
-            line: stop.line
+            line: stop.line,
+            line_name: stop.line_name.split(" ").slice(1).join(" ") || '',
           }));
         }
         else if (type === "bicing") {
@@ -409,11 +422,23 @@
               </div>
           `;
       } else {
-        popupContent.innerHTML = `
+        let popupHTML = `
+            <p style="margin:0 0 8px 0; font-weight:600; font-size:16px;">
+                📍(${stop.id}) - ${stop.name || "Parada"} ${stop.alertIcon || ''}
+            </p>
+        `;
+
+        // Solo añadimos el segundo <p> si es metro
+        if (stop.type === 'metro') {
+            popupHTML += `
                 <p style="margin:0 0 8px 0; font-weight:600; font-size:16px;">
-                    📍(${stop.id}) - ${stop.name || "Parada"} ${stop.alertIcon || ''}
+                    <img src="https://tmb-barcelona.github.io/TMB-Icons/svg/${stop.line_name}.svg" 
+                        alt="${stop.line_name}" width="36" height="36">
                 </p>
             `;
+        }
+
+        popupContent.innerHTML = popupHTML;
       }
 
       const btn = document.createElement("button");

@@ -86,6 +86,6 @@
   "results.searching": "Searching results",
   "results.location.ask": "📍 Tap the button below to send your location and get more accurate results.",
   "results.location.btn": "📍 Share my location",
-  "results.location.received": "🎯 Location received successfully. The 10 closest results will be shown.",
+  "results.location.received": "🎯 Location received successfully. The closest results will be shown.",
   "results.minimum.letters": "⚠️ Please enter at least 3 letters to search."
 }

@@ -1,3 +1,4 @@
+import asyncio
 from collections import defaultdict
 from typing import List
 import json
@@ -84,8 +85,8 @@ class MetroService(ServiceBase):
             station.has_alerts = any(station_alerts)
             station.alerts = station_alerts if any(station_alerts) else []
 
-        return static_stations
-            
+        return static_stations            
+
     async def get_stations_by_line(self, line_id) -> List[MetroStation]:
         cache_key = f"metro_line_{line_id}_stations"
         cached_stations = await self._get_from_cache_or_data(cache_key, None, cache_ttl=3600*24)
@@ -93,13 +94,20 @@ class MetroService(ServiceBase):
             return cached_stations
 
         line = await self.get_line_by_id(line_id)
-        line_stations = []
         api_stations = await self.tmb_api_service.get_stations_by_metro_line(line_id)
-        for api_station in api_stations:
-            connections = await self.tmb_api_service.get_station_connections(api_station.code)
-            station = MetroStation.update_metro_station_with_line_info(api_station, line)
-            station = MetroStation.update_metro_station_with_connections(station, connections)
-            line_stations.append(station)
+
+        # Limita concurrencia para llamadas a get_station_connections
+        semaphore_connections = asyncio.Semaphore(10)
+
+        async def process_station(api_station):
+            async with semaphore_connections:
+                connections = await self.tmb_api_service.get_station_connections(api_station.code)
+                station = MetroStation.update_metro_station_with_line_info(api_station, line)
+                station = MetroStation.update_metro_station_with_connections(station, connections)
+                return station
+
+        # Procesa todas las estaciones en paralelo
+        line_stations = await asyncio.gather(*[process_station(s) for s in api_stations])
 
         return await self._get_from_cache_or_data(cache_key, line_stations, cache_ttl=3600*24)
 
@@ -152,17 +160,37 @@ class MetroService(ServiceBase):
         logger.debug(f"[{self.__class__.__name__}] get_line_by_name({line_name}) -> {line}")
         return line
     
+
     async def _build_and_cache_static_stations(self) -> List[MetroStation]:
         lines = await self.get_all_lines()
         stations = []
 
-        for line in lines:
-            line_stations = await self.tmb_api_service.get_stations_by_metro_line(line.CODI_LINIA)
-            for api_station in line_stations:
+        # Limita concurrencia: ajusta según capacidad de la API
+        semaphore_lines = asyncio.Semaphore(5)       # Para get_stations_by_metro_line
+        semaphore_connections = asyncio.Semaphore(10)  # Para get_station_connections
+
+        async def process_station(api_station, line):
+            async with semaphore_connections:
                 connections = await self.tmb_api_service.get_station_connections(api_station.code)
                 station = MetroStation.update_metro_station_with_line_info(api_station, line)
                 station = MetroStation.update_metro_station_with_connections(station, connections)
-                stations.append(station)
+                return station
+
+        async def process_line(line):
+            async with semaphore_lines:
+                line_stations = await self.tmb_api_service.get_stations_by_metro_line(line.CODI_LINIA)
+
+            # Procesa todas las estaciones de la línea en paralelo
+            processed_stations = await asyncio.gather(
+                *[process_station(s, line) for s in line_stations]
+            )
+            return processed_stations
+
+        # Procesa todas las líneas en paralelo
+        results = await asyncio.gather(*[process_line(line) for line in lines])
+
+        for line_stations in results:
+            stations.extend(line_stations)
 
         await self.cache_service.set("metro_stations_static", stations, ttl=3600*24)
         return stations

@@ -81,7 +81,7 @@ class TramService(ServiceBase):
 
             await self.cache_service.set("tram_stops", stops, ttl=3600*24)
 
-        return await stops
+        return stops
 
     async def get_stops_by_line(self, line_id: str) -> List[TramStation]:
         return await self._get_from_cache_or_api(
