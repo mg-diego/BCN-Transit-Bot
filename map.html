@@ -603,7 +603,7 @@
     L.control.zoom({ position: "topright" }).addTo(map);
 
     const button = document.getElementById("sidebarToggle");
-    if (type === "bicing") {
+    if (type === "bicing" || type === "near") {
       button.style.display = "none";
     } else {
       button.style.display = "block";
