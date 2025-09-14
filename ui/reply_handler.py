@@ -74,24 +74,42 @@ class ReplyHandler:
             await self.notifications_handler.show_current_configuration(update, context)
         elif '🔍' in self.current_search:
             await self.menu_handler.back_to_menu(update, context)
+        elif '📍' in self.current_search:
+            await self.handle_nearby(update, context)
         else:
             await self.handle_reply_from_user(update, context)
         
         self.previous_search = self.current_search
 
+    async def handle_nearby(self, update: Update, context: ContextTypes.DEFAULT_TYPE, user_location = None):
+        message_service = self.menu_handler.message_service
+        language_manager = self.menu_handler.language_manager
+        keyboard_factory = self.menu_handler.keyboard_factory
+
+        message_service.set_bot_instance(context.bot)
+
+        if user_location is None:
+            await message_service.send_new_message(update, language_manager.t('results.location.ask'), keyboard_factory.location_keyboard())
+            self.previous_search = None
+            self.current_search = None
+        else:
+            try:
+                metro_stations, bus_stops, tram_stops, rodalies_stations, bicing_stations, fgc_stations = await self._search_stations('', only_bicing=False)
+                stops_with_distance = DistanceHelper.build_stops_list(metro_stations, bus_stops, tram_stops, rodalies_stations, bicing_stations, fgc_stations, user_location, results_to_return=999999)
+                
+                near_stops = [s for s in stops_with_distance if s["distance_km"] is not None and s["distance_km"] <= 0.5]
+                encoded = self.mapper.map_near_stations(near_stops, user_location.latitude, user_location.longitude)
+                print(encoded)
+                await message_service.send_new_message(update, language_manager.t('results.location.received'), keyboard_factory.map_reply_menu(encoded))
+            except Exception as e:
+                pass
+
     @audit_action(action_type="REPLY", command_or_button="reply_router", params_args=["user_location", "only_bicing"])
-    async def handle_reply_from_user(self, update: Update, context: ContextTypes.DEFAULT_TYPE, user_location = None, only_bicing = False):
+    async def handle_reply_from_user(self, update: Update, context: ContextTypes.DEFAULT_TYPE, user_location = None, only_bicing = False):        
         message_service = self.menu_handler.message_service
         update_manager = self.menu_handler.update_manager
         language_manager = self.menu_handler.language_manager
         keyboard_factory = self.menu_handler.keyboard_factory
-
-        metro_service = self.metro_handler.metro_service
-        bus_service = self.bus_handler.bus_service
-        tram_service = self.tram_handler.tram_service
-        rodalies_service = self.rodalies_handler.rodalies_service
-        bicing_service = self.bicing_handler.bicing_service
-        fgc_service = self.fgc_handler.fgc_service
 
         if user_location is None:
             await message_service.send_new_message(update, language_manager.t('results.location.ask'), keyboard_factory.location_keyboard())
@@ -104,36 +122,9 @@ class ReplyHandler:
 
         message = await update_manager.start_loading(update, context, language_manager.t('results.searching'))
         chat_id = message_service.get_chat_id(update)
-
-        metro_stations = []
-        bus_stops = []
-        tram_stops = []
-        rodalies_stations = []
-        bicing_stations = []
-        fgc_stations = []
-
-        if only_bicing: 
-            bicing_stations = await bicing_service.get_all_stations()
-
-        elif self.current_search.isdigit(): # ONLY FOR BUS STOPS AND BICING
-            bicing = await bicing_service.get_station_by_id(self.current_search)
-            if bicing is not None:
-                bicing_stations.append(bicing)
-
-            stop = await bus_service.get_stop_by_id(self.current_search)
-            if stop is not None:
-                bus_stops.append(stop)
-
-        else: # METRO STATIONS | BUS STOPS | TRAM STOPS | RODALIES STATIONS
-            tram_stops = await tram_service.get_stops_by_name(self.current_search)
-            metro_stations = await metro_service.get_stations_by_name(self.current_search)
-            bus_stops = await bus_service.get_stops_by_name(self.current_search)
-            rodalies_stations = await rodalies_service.get_stations_by_name(self.current_search)
-            bicing_stations = await bicing_service.get_stations_by_name(self.current_search)
-            fgc_stations = await fgc_service.get_stations_by_name(self.current_search)
-
         await update_manager.stop_loading(update, context)
 
+        metro_stations, bus_stops, tram_stops, rodalies_stations, bicing_stations, fgc_stations = await self._search_stations(self.current_search, only_bicing)
         stops_with_distance = DistanceHelper.build_stops_list(metro_stations, bus_stops, tram_stops, rodalies_stations, bicing_stations, fgc_stations, user_location)
         if not only_bicing:
             metro_count = len([s for s in stops_with_distance if s["type"] == TransportType.METRO.value])
@@ -189,10 +180,49 @@ class ReplyHandler:
             keyboard_factory.reply_keyboard_stations_menu(stops_with_distance)
         )
 
+    async def _search_stations(self, value_to_search: str, only_bicing: bool = False):     
+        metro_service = self.metro_handler.metro_service
+        bus_service = self.bus_handler.bus_service
+        tram_service = self.tram_handler.tram_service
+        rodalies_service = self.rodalies_handler.rodalies_service
+        bicing_service = self.bicing_handler.bicing_service
+        fgc_service = self.fgc_handler.fgc_service
+
+        metro_stations = []
+        bus_stops = []
+        tram_stops = []
+        rodalies_stations = []
+        bicing_stations = []
+        fgc_stations = []
+
+        if only_bicing: 
+            bicing_stations = await bicing_service.get_all_stations()
+
+        elif value_to_search.isdigit(): # ONLY FOR BUS STOPS AND BICING
+            bicing = await bicing_service.get_station_by_id(value_to_search)
+            if bicing is not None:
+                bicing_stations.append(bicing)
+
+            stop = await bus_service.get_stop_by_id(value_to_search)
+            if stop is not None:
+                bus_stops.append(stop)
+
+        else: # METRO STATIONS | BUS STOPS | TRAM STOPS | RODALIES STATIONS
+            tram_stops = await tram_service.get_stops_by_name(value_to_search)
+            metro_stations = await metro_service.get_stations_by_name(value_to_search)
+            bus_stops = await bus_service.get_stops_by_name(value_to_search)
+            rodalies_stations = await rodalies_service.get_stations_by_name(value_to_search)
+            bicing_stations = await bicing_service.get_stations_by_name(value_to_search)
+            fgc_stations = await fgc_service.get_stations_by_name(value_to_search)
+
+        return metro_stations, bus_stops, tram_stops, rodalies_stations, bicing_stations, fgc_stations
+
     @audit_action(action_type="REPLY", command_or_button="location_handler")
     async def location_handler(self, update, context):
         if self.previous_search == "🚴 Bicing":
             await self.handle_reply_from_user(update, context, update.message.location, only_bicing=True)
         elif self.previous_search is not None:
             await self.handle_reply_from_user(update, context, update.message.location)
+        else:
+            await self.handle_nearby(update, context, update.message.location)
                 

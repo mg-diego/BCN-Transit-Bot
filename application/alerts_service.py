@@ -42,6 +42,7 @@ class AlertsService:
                     for entity in alert.affected_entities:
                         if (
                             entity.station_code is not None
+                            and entity.station_code != "ALL"
                             and int(entity.station_code) in user_favorites_station_codes
                             and entity.station_name in user_favorites_station_names
                         ):

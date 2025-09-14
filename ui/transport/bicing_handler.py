@@ -33,18 +33,6 @@ class BicingHandler(HandlerBase):
 
         await self.message_service.send_new_message(update, self.language_manager.t('bicing.search.instructions'), reply_markup=self.keyboard_factory.location_keyboard())
 
-        #TODO: PENDING TO FIX MAP VIEW
-        '''
-        stations = await self.bicing_service.get_all_stations()
-        encoded = self.mapper.map_bicing_stations(stations)
-
-        await self.message_service.send_new_message_from_callback(
-            update,
-            text=self.language_manager.t('common.line.only.map', line=''),
-            reply_markup=self.keyboard_factory.map_reply_menu(encoded)
-        )
-        '''
-
     async def show_station(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_id, chat_id, line_id, bicing_station_id = self.message_service.extract_context(update, context)
         logger.info(f"Showing bicing station info for user {user_id}, station {bicing_station_id}")

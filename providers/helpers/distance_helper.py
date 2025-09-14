@@ -23,7 +23,8 @@ class DistanceHelper:
         rodalies_stations: List[RodaliesStation],
         bicing_stations: List[BicingStation],
         fgc_stations: List[FgcStation],
-        user_location: Optional[object] = None
+        user_location: Optional[object] = None,
+        results_to_return: int = 50
     ) -> List[Dict]:
         """
         Generates a unified list of stops (metro, bus, tram) with distances to user_location.
@@ -38,7 +39,8 @@ class DistanceHelper:
             List[Dict]: List of dictionaries containing stop info and distance.
         """
         stops = []
-        results_to_return = 10 if user_location is not None else 50
+        if user_location is not None and results_to_return == 50:
+            results_to_return = 10
 
         # --- Metro ---
         for m in metro_stations:
@@ -54,7 +56,7 @@ class DistanceHelper:
                 "line_code": m.line_code,        
                 "station_name": m.name,
                 "station_code": m.code,
-                "coordinates": Tuple[m.latitude, m.longitude],
+                "coordinates": (m.latitude, m.longitude),
                 "distance_km": distance_km
             })
 

@@ -52,6 +52,7 @@ class KeyboardFactory:
             KeyboardButton(f"{TransportType.FGC.emoji} {self.language_manager.t('main.menu.fgc')}")],
             
             [KeyboardButton(self.language_manager.t('main.menu.favorites')),
+            KeyboardButton(self.language_manager.t('main.menu.near')),
             KeyboardButton(self.language_manager.t('main.menu.settings'))]
         ]
 

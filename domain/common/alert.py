@@ -124,8 +124,8 @@ class Alert:
         return Alert(
             id=metro_alert.get('id'),
             transport_type=TransportType.METRO,
-            begin_date=datetime.fromtimestamp(metro_alert.get('disruption_dates')[0].get('begin_date', None) / 1000),
-            end_date=datetime.fromtimestamp(metro_alert.get('disruption_dates')[0].get('end_date', None) / 1000),
+            begin_date=datetime.fromtimestamp(metro_alert.get('disruption_dates')[0].get('begin_date', None) / 1000) if metro_alert.get('disruption_dates')[0].get('begin_date', None) else None,
+            end_date=datetime.fromtimestamp(metro_alert.get('disruption_dates')[0].get('end_date', None) / 1000) if metro_alert.get('disruption_dates')[0].get('end_date', None) else None,
             publications=publications,
             affected_entities=affected_entities,
             status=metro_alert.get('effect').get('status'),

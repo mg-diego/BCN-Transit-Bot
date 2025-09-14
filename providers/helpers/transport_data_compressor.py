@@ -286,3 +286,30 @@ class TransportDataCompressor:
         compressed = self._compress_data(data)
         self._log_mapping_end(TransportType.FGC.value, line.id)
         return compressed
+    
+    def map_near_stations(self, near_stations, latitude, longitude):
+        self._log_mapping_start("NEAR_STATIONS", len(near_stations), '', '')
+
+        stops = [
+            {
+                "lat": station.get('coordinates')[0],
+                "lon": station.get('coordinates')[1],
+                "name": f"{station.get('station_code')} - {self._normalize_name(station.get('station_name'))}",
+                "line": station.get('line_code') or (station.get('line_name') or ''),
+                "type": station.get('type'),
+            }
+            for station in near_stations
+        ]
+        
+        data = {
+            "type": "near",
+            "user_location": {
+                "latitude": latitude,
+                "longitude": longitude
+            },
+            "stops": stops
+        }
+
+        compressed = self._compress_data(data)
+        self._log_mapping_end("NEAR_STATIONS", '')
+        return compressed

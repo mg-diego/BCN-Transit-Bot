@@ -180,6 +180,23 @@
           popupAnchor: [0, -32], // desplazamiento del popup
         });
       }
+      else {
+        const ICONS = {
+          metro: "https://tmb-barcelona.github.io/TMB-Icons/png/originalSize/METRO_ACCES.png",
+          bicing: "https://tmb-barcelona.github.io/TMB-Icons/png/originalSize/BICING_ESTACIO.png",
+          bus: "https://tmb-barcelona.github.io/TMB-Icons/png/originalSize/bus.png",
+          fgc: "https://tmb-barcelona.github.io/TMB-Icons/png/originalSize/FGC.png",
+          tram: "https://tmb-barcelona.github.io/TMB-Icons/png/originalSize/TRAM.png",
+          rodalies: "https://tmb-barcelona.github.io/TMB-Icons/png/originalSize/RODALIES.png",
+        };
+        const DEFAULT_ICON = "https://tmb-barcelona.github.io/TMB-Icons/png/originalSize/AMB_TMB.png";
+          return new L.Icon({
+          iconUrl: ICONS[stop.type] || DEFAULT_ICON,
+          iconSize: [32, 32], // tamaño del iconos
+          iconAnchor: [16, 32], // punto de anclaje
+          popupAnchor: [0, -32], // desplazamiento del popup
+        });
+      }
 
       const id = type === "bus" ? stop.id : stop.name
       const estimatedCharWidth = 6.5; // ancho promedio por carácter
@@ -228,9 +245,23 @@
       const decompressed = LZString.decompressFromEncodedURIComponent(compressed);
       console.log(`decompressed: ${decompressed}`)
       const jsonData = JSON.parse(decompressed);
-      if (jsonData && jsonData.stops) {
+      if (jsonData) {
         type = jsonData.type;
-        if (type === "bicing") {
+        if (type === "near") {
+          user_location = jsonData.user_location       
+          user_location.lat = user_location.latitude,
+          user_location.lon = user_location.longitude,
+          console.log(jsonData.near)
+          coordsList = jsonData.near.map((stop) => ({
+            id: stop.name.split(" - ")[0],
+            lat: stop.lat,
+            lon: stop.lon,
+            name: stop.name.split(" - ").slice(1).join(" - "),
+            type: stop.type,
+            line: stop.line
+          }));
+        }
+        else if (type === "bicing") {
           user_location = jsonData.user_location
           line_id = 'bicing',
             line_name = 'bicing',
@@ -292,7 +323,7 @@
     const markers = [];
 
     // Add user location:
-    if (type === "bicing") {
+    if (type === "bicing" || type === "near") {
       console.log(`user marker: ${user_location.lat} | ${user_location.lon}`)
       // Crear un grupo para manejar el marcador y el círculo juntos
       const userLocationGroup = L.layerGroup().addTo(map);
