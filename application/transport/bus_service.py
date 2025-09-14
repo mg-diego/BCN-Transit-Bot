@@ -9,7 +9,7 @@ from providers.api.tmb_api_service import TmbApiService
 
 from domain.bus import BusLine, BusStop
 from providers.helpers import logger
-from providers.manager.user_data_manager import UserDataManager
+from providers.manager import UserDataManager, LanguageManager
 
 from .service_base import ServiceBase
 from application.cache_service import CacheService
@@ -19,10 +19,11 @@ class BusService(ServiceBase):
     Service to interact with Bus data via TmbApiService, with optional caching.
     """
 
-    def __init__(self, tmb_api_service: TmbApiService, cache_service: CacheService = None, user_data_manager: UserDataManager = None):
+    def __init__(self, tmb_api_service: TmbApiService, cache_service: CacheService = None, user_data_manager: UserDataManager = None, language_manager: LanguageManager = None):
         super().__init__(cache_service)
         self.tmb_api_service = tmb_api_service
         self.user_data_manager = user_data_manager
+        self.language_manager = language_manager
         logger.info(f"[{self.__class__.__name__}] BusService initialized")
     
     # === CACHE CALLS ===
