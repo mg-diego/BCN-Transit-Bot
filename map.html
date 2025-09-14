@@ -436,7 +436,7 @@
         if (window.Telegram?.WebApp) {
           window.Telegram.WebApp.sendData(
             JSON.stringify({
-              type: type,
+              type: type === "near" ? stop.type : type,
               stop_id: stop.id,
               line_id: line_id,
               lat: stop.lat,
