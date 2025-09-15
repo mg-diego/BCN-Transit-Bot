@@ -161,11 +161,15 @@ class MetroService(ServiceBase):
     async def get_stations_by_name(self, station_name) -> List[MetroStation]:
         start = time.perf_counter()
         stations = await self.get_all_stations()
-        result = self.fuzzy_search(
-            query=station_name,
-            items=stations,
-            key=lambda station: station.name
-        )
+
+        if station_name != '':
+            result = self.fuzzy_search(
+                query=station_name,
+                items=stations,
+                key=lambda station: station.name
+            )
+        else:
+            result = stations
         elapsed = time.perf_counter() - start
         logger.info(f"[{self.__class__.__name__}] get_stations_by_name({station_name}) -> {len(result)} matches ({elapsed:.4f} s)")
         return result

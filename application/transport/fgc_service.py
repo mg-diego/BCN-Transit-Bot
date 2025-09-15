@@ -79,6 +79,8 @@ class FgcService(ServiceBase):
     
     async def get_stations_by_name(self, station_name) -> List[FgcStation]:
         stations = await self.get_all_stations()
+        if station_name == '':
+            return stations
         return self.fuzzy_search(
             query=station_name,
             items=stations,

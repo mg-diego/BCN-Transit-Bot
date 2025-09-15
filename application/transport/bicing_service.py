@@ -26,6 +26,8 @@ class BicingService(ServiceBase):
     async def get_stations_by_name(self, station_name) -> List[BicingStation]:
         stations = await self.get_all_stations()
         logger.debug(f"[{self.__class__.__name__}] get_stations_by_name({station_name})")
+        if station_name == '':
+            return stations
         return self.fuzzy_search(
             query=station_name,
             items=stations,

@@ -148,6 +148,8 @@ class TramService(ServiceBase):
     async def get_stops_by_name(self, stop_name):
         start = time.perf_counter()
         stops = await self.get_all_stops()
+        if stop_name == '':
+            result = stops
         result = self.fuzzy_search(query=stop_name, items=stops, key=lambda s: s.name)
         elapsed = (time.perf_counter() - start)
         logger.info(f"[{self.__class__.__name__}] get_stops_by_name({stop_name}) -> {len(result)} stops (tiempo: {elapsed:.4f} s)")

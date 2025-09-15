@@ -143,11 +143,16 @@ class BusService(ServiceBase):
     async def get_stops_by_name(self, stop_name) -> List[BusLine]:
         start = time.perf_counter()
         stops = await self.get_all_stops()
-        result = self.fuzzy_search(
-            query=stop_name,
-            items=stops,
-            key=lambda stop: stop.name
-        )
+
+        if stop_name != '':
+            result = self.fuzzy_search(
+                query=stop_name,
+                items=stops,
+                key=lambda stop: stop.name
+            )
+        else:
+            result = stops
+            
         elapsed = time.perf_counter() - start
         logger.info(f"[{self.__class__.__name__}] get_stops_by_name({stop_name}) -> {len(result)} matches ({elapsed:.4f} s)")
         return result

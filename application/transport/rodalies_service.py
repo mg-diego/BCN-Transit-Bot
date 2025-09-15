@@ -103,6 +103,8 @@ class RodaliesService(ServiceBase):
     
     async def get_stations_by_name(self, station_name) -> List[RodaliesStation]:
         stations = await self.get_all_stations()
+        if station_name == '':
+            return stations
         return self.fuzzy_search(
             query=station_name,
             items=stations,

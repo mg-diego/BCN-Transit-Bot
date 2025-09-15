@@ -274,6 +274,13 @@ class TramApiService:
         data = await self._request("GET", url, use_base_url=False)
         alerts = data.get('entity', [])
         today_alerts = [alert for alert in alerts if datetime.fromtimestamp(alert['alert']['active_period'][0]['start']).date() == datetime.now().date()]
-        tram_alerts = [alert for alert in today_alerts if "TB" in alert['alert']['informed_entity'][0]['route_id']]
+        tram_alerts = [
+                alert
+                for alert in today_alerts
+                if any(
+                    "route_id" in entity and "TB" in entity["route_id"]
+                    for entity in alert.get("alert", {}).get("informed_entity", [])
+                )
+            ]
 
         return tram_alerts
