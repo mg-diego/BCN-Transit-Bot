@@ -13,7 +13,7 @@ from providers.helpers import logger
 from providers.manager import UserDataManager, LanguageManager
 
 from .service_base import ServiceBase
-from application.cache_service import CacheService
+from application.services.cache_service import CacheService
 
 
 class BusService(ServiceBase):

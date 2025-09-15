@@ -1,7 +1,7 @@
 from typing import Callable, Any, List
 from rapidfuzz import process, fuzz
 from providers.helpers import logger, HtmlHelper
-from application.cache_service import CacheService
+from application.services.cache_service import CacheService
 import time
 
 class ServiceBase:

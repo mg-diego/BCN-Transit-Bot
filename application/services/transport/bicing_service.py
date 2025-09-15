@@ -1,5 +1,5 @@
 from typing import List
-from application.cache_service import CacheService
+from application.services.cache_service import CacheService
 from domain.bicing.bicing_station import BicingStation
 from .service_base import ServiceBase
 from providers.api import BicingApiService

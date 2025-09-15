@@ -1,5 +1,5 @@
 import asyncio
-from application.message_service import MessageService
+from application.services.message_service import MessageService
 from telegram import Update
 from telegram.ext import ContextTypes
 from providers.helpers import logger

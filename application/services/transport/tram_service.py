@@ -10,7 +10,7 @@ from providers.manager import LanguageManager, UserDataManager
 from providers.helpers import logger
 
 from domain.tram import TramLine, TramStation, TramConnection
-from application.cache_service import CacheService
+from application.services.cache_service import CacheService
 from .service_base import ServiceBase
 
 

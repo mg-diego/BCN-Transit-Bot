@@ -9,7 +9,7 @@ from providers.api import FgcApiService
 from providers.manager import LanguageManager
 from providers.helpers import logger
 
-from application.cache_service import CacheService
+from application.services.cache_service import CacheService
 from providers.manager.user_data_manager import UserDataManager
 from domain.transport_type import TransportType
 from .service_base import ServiceBase
