@@ -38,7 +38,7 @@ class RodaliesService(ServiceBase):
                     line.has_alerts = any(line_alerts)
                     line.alerts = line_alerts
             elapsed = (time.perf_counter() - start)
-            logger.debug(f"[{self.__class__.__name__}] get_all_lines (cache hit) ejecutado en {elapsed:.4f} s")
+            logger.info(f"[{self.__class__.__name__}] get_all_lines (cache hit) ejecutado en {elapsed:.4f} s")
             return cached_lines
 
         # No lines and no alerts in cache
@@ -66,7 +66,7 @@ class RodaliesService(ServiceBase):
         await self._get_from_cache_or_data(alerts_key, alerts_dict, cache_ttl=3600)
 
         elapsed = (time.perf_counter() - start)
-        logger.debug(f"[{self.__class__.__name__}] get_all_lines ejecutado en {elapsed:.4f} s")
+        logger.info(f"[{self.__class__.__name__}] get_all_lines ejecutado en {elapsed:.4f} s")
         return lines
 
     async def get_all_stations(self) -> List[RodaliesStation]:
@@ -85,7 +85,7 @@ class RodaliesService(ServiceBase):
             await self.cache_service.set("rodalies_stations", stations, ttl=3600*24)
 
         elapsed = (time.perf_counter() - start)
-        logger.debug(f"[{self.__class__.__name__}] get_all_stations ejecutado en {elapsed:.4f} s")
+        logger.info(f"[{self.__class__.__name__}] get_all_stations ejecutado en {elapsed:.4f} s")
         return stations
 
     async def get_station_routes(self, station_id, line_id):
@@ -97,7 +97,7 @@ class RodaliesService(ServiceBase):
         )
         result = "\n\n".join(LineRoute.scheduled_list(route, with_arrival_date=False) for route in routes)
         elapsed = (time.perf_counter() - start)
-        logger.debug(f"[{self.__class__.__name__}] get_station_routes({station_id}) ejecutado en {elapsed:.4f} s")
+        logger.info(f"[{self.__class__.__name__}] get_station_routes({station_id}) ejecutado en {elapsed:.4f} s")
         return result
 
     async def get_line_by_id(self, line_id: str) -> RodaliesLine:
@@ -105,7 +105,7 @@ class RodaliesService(ServiceBase):
         lines = await self.get_all_lines()
         line = next((l for l in lines if str(l.id) == str(line_id)), None)
         elapsed = (time.perf_counter() - start)
-        logger.debug(f"[{self.__class__.__name__}] get_line_by_id({line_id}) -> {line} ejecutado en {elapsed:.4f} s")
+        logger.info(f"[{self.__class__.__name__}] get_line_by_id({line_id}) -> {line} ejecutado en {elapsed:.4f} s")
         return line
 
     # === OTHER CALLS ===
@@ -114,7 +114,7 @@ class RodaliesService(ServiceBase):
         line = await self.get_line_by_id(line_id)      
         result = line.stations
         elapsed = (time.perf_counter() - start)
-        logger.debug(f"[{self.__class__.__name__}] get_stations_by_line({line_id}) ejecutado en {elapsed:.4f} s")
+        logger.info(f"[{self.__class__.__name__}] get_stations_by_line({line_id}) ejecutado en {elapsed:.4f} s")
         return result
 
     async def get_stations_by_name(self, station_name) -> List[RodaliesStation]:
@@ -122,7 +122,7 @@ class RodaliesService(ServiceBase):
         stations = await self.get_all_stations()
         if station_name == '':
             elapsed = (time.perf_counter() - start)
-            logger.debug(f"[{self.__class__.__name__}] get_stations_by_name(empty) ejecutado en {elapsed:.4f} s")
+            logger.info(f"[{self.__class__.__name__}] get_stations_by_name(empty) ejecutado en {elapsed:.4f} s")
             return stations
         result = self.fuzzy_search(
             query=station_name,
@@ -130,7 +130,7 @@ class RodaliesService(ServiceBase):
             key=lambda station: station.name
         )
         elapsed = (time.perf_counter() - start)
-        logger.debug(f"[{self.__class__.__name__}] get_stations_by_name({station_name}) ejecutado en {elapsed:.4f} s")
+        logger.info(f"[{self.__class__.__name__}] get_stations_by_name({station_name}) ejecutado en {elapsed:.4f} s")
         return result
 
     async def get_station_by_id(self, station_id, line_id) -> RodaliesStation:
@@ -138,5 +138,5 @@ class RodaliesService(ServiceBase):
         stops = await self.get_stations_by_line(line_id)
         stop = next((s for s in stops if str(s.id) == str(station_id)), None)
         elapsed = (time.perf_counter() - start)
-        logger.debug(f"[{self.__class__.__name__}] get_station_by_id({station_id}, line {line_id}) -> {stop} ejecutado en {elapsed:.4f} s")
+        logger.info(f"[{self.__class__.__name__}] get_station_by_id({station_id}, line {line_id}) -> {stop} ejecutado en {elapsed:.4f} s")
         return stop
