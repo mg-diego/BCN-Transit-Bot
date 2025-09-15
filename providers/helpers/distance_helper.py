@@ -1,5 +1,6 @@
 import math
 from typing import List, Optional, Tuple, Dict
+import time
 
 from domain.bus import BusStop
 from domain.metro import MetroStation
@@ -7,6 +8,8 @@ from domain.tram import TramStation
 from domain.rodalies import RodaliesStation
 from domain.bicing import BicingStation
 from domain.fgc import FgcStation
+
+from helpers import logger
 
 class DistanceHelper:
     """
@@ -16,6 +19,7 @@ class DistanceHelper:
 
     EARTH_RADIUS_KM = 6371.0  # Average Earth radius in kilometers
 
+    @staticmethod
     def build_stops_list(
         metro_stations: List[MetroStation],
         bus_stops: List[BusStop],
@@ -26,18 +30,8 @@ class DistanceHelper:
         user_location: Optional[object] = None,
         results_to_return: int = 50
     ) -> List[Dict]:
-        """
-        Generates a unified list of stops (metro, bus, tram) with distances to user_location.
+        start = time.perf_counter()  # START LOG TIMER
 
-        Args:
-            metro_stations (List): List of MetroStation objects.
-            bus_stops (List): List of BusStop objects.
-            tram_stops (List): List of TramStation objects.
-            user_location (Optional[object]): Object with latitude and longitude attributes.
-
-        Returns:
-            List[Dict]: List of dictionaries containing stop info and distance.
-        """
         stops = []
         if user_location is not None and results_to_return == 50:
             results_to_return = 10
@@ -68,7 +62,6 @@ class DistanceHelper:
                     t.latitude, t.longitude,
                     user_location.latitude, user_location.longitude
                 )
-
             stops.append({
                 "type": "tram",
                 "line_name": t.line_name_with_emoji,
@@ -87,7 +80,6 @@ class DistanceHelper:
                     t.latitude, t.longitude,
                     user_location.latitude, user_location.longitude
                 )
-
             stops.append({
                 "type": "rodalies",
                 "line_name": t.line_name_with_emoji,
@@ -106,7 +98,6 @@ class DistanceHelper:
                     b.latitude, b.longitude,
                     user_location.latitude, user_location.longitude
                 )
-
             stops.append({
                 "type": "bicing",
                 "line_name": '',
@@ -129,7 +120,6 @@ class DistanceHelper:
                     t.latitude, t.longitude,
                     user_location.latitude, user_location.longitude
                 )
-
             stops.append({
                 "type": "fgc",
                 "line_name": t.line_name_with_emoji,
@@ -140,7 +130,7 @@ class DistanceHelper:
                 "distance_km": distance_km
             }) 
 
-        # --- Bus --- (Adding bus stops as last option to avoid consuming the 50 slots just by bus stops in case of generic searches)
+        # --- Bus ---
         for b in bus_stops:
             distance_km = None
             if user_location:
@@ -148,7 +138,6 @@ class DistanceHelper:
                     b.latitude, b.longitude,
                     user_location.latitude, user_location.longitude
                 )
-
             new_stop = {
                 "type": "bus",
                 "line_code": b.line_code,
@@ -161,51 +150,25 @@ class DistanceHelper:
                 stops.append(new_stop)
 
         stops.sort(key=lambda x: (x["distance_km"] is None, x["distance_km"]))
-        return stops[:results_to_return]
+        result = stops[:results_to_return]
+
+        elapsed = time.perf_counter() - start
+        logger.info(f"[DistanceHelper] build_stops_list executed in {elapsed:.4f} s")
+
+        return result
 
     @staticmethod
     def haversine_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
-        """
-        Calculates the great-circle distance between two points on Earth.
-
-        Args:
-            lat1 (float): Latitude of the first point.
-            lon1 (float): Longitude of the first point.
-            lat2 (float): Latitude of the second point.
-            lon2 (float): Longitude of the second point.
-
-        Returns:
-            float: Distance between the two points in kilometers.
-        """
-        # Convert degrees to radians
         phi1 = math.radians(lat1)
         phi2 = math.radians(lat2)
         delta_phi = math.radians(lat2 - lat1)
         delta_lambda = math.radians(lon2 - lon1)
 
-        # Haversine formula
         a = (math.sin(delta_phi / 2) ** 2 +
              math.cos(phi1) * math.cos(phi2) * math.sin(delta_lambda / 2) ** 2)
         c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
 
         return DistanceHelper.EARTH_RADIUS_KM * c
-    
-    @staticmethod
-    def format_distance(distance_km: float) -> str:
-        """
-        Converts a distance in kilometers to a human-readable string.
-        If distance < 1 km, shows in meters; otherwise, shows in km with 1 decimal.
-
-        Args:
-            distance_km (float): Distance in kilometers.
-
-        Returns:
-            str: Formatted distance string.
-        """
-        if distance_km < 1:
-            return f"{int(distance_km * 1000)}m"
-        else:
-            return f"{distance_km:.1f}km"
 
     @staticmethod
     def get_closest_locations(
@@ -214,21 +177,9 @@ class DistanceHelper:
         locations: List[Dict],
         top_n: int = 5
     ) -> List[Tuple[Dict, float]]:
-        """
-        Returns the N closest locations to the user's coordinates.
-
-        Args:
-            user_lat (float): User's latitude.
-            user_lon (float): User's longitude.
-            locations (List[Dict]): List of locations, each containing 'lat' and 'lon' keys.
-            top_n (int): Number of closest locations to return.
-
-        Returns:
-            List[Tuple[Dict, float]]: A sorted list of tuples (location, distance_km).
-        """
+        start = time.perf_counter()
         distances = []
 
-        # Calculate the distance for each location
         for location in locations:
             distance = DistanceHelper.haversine_distance(
                 user_lat, user_lon,
@@ -236,7 +187,10 @@ class DistanceHelper:
             )
             distances.append((location, distance))
 
-        # Sort locations by distance in ascending order
         distances.sort(key=lambda x: x[1])
+        result = distances[:top_n]
 
-        return distances[:top_n]
+        elapsed = time.perf_counter() - start
+        logger.info(f"[DistanceHelper] get_closest_locations executed in {elapsed:.4f} s")
+
+        return result
