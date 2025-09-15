@@ -1,5 +1,6 @@
 from collections import defaultdict
 from typing import List
+import time
 from domain.common.alert import Alert
 from domain.rodalies import RodaliesLine, RodaliesStation
 from domain import LineRoute
@@ -11,8 +12,9 @@ from providers.helpers import logger
 from application.cache_service import CacheService
 from .service_base import ServiceBase
 
+
 class RodaliesService(ServiceBase):
-        
+
     def __init__(self, rodalies_api_service: RodaliesApiService, language_manager: LanguageManager, cache_service: CacheService = None, user_data_manager: UserDataManager = None):
         super().__init__(cache_service)
         self.rodalies_api_service = rodalies_api_service
@@ -22,21 +24,23 @@ class RodaliesService(ServiceBase):
 
     # === CACHE CALLS ===
     async def get_all_lines(self) -> List[RodaliesLine]:
+        start = time.perf_counter()
         static_key = "rodalies_lines_static"
         alerts_key = "rodalies_lines_alerts"
 
         cached_lines = await self._get_from_cache_or_data(static_key, None, cache_ttl=3600*24)
         cached_alerts = await self._get_from_cache_or_data(alerts_key, None, cache_ttl=3600)
 
-        # Lines cache already exist, update only alerts
         if cached_lines is not None and cached_lines:
             if cached_alerts:
                 for line in cached_lines:
                     line_alerts = cached_alerts.get(line.name, [])
                     line.has_alerts = any(line_alerts)
                     line.alerts = line_alerts
+            elapsed = (time.perf_counter() - start)
+            logger.debug(f"[{self.__class__.__name__}] get_all_lines (cache hit) ejecutado en {elapsed:.4f} s")
             return cached_lines
-        
+
         # No lines and no alerts in cache
         lines = await self.rodalies_api_service.get_lines()
         api_alerts = await self.rodalies_api_service.get_global_alerts()
@@ -61,9 +65,12 @@ class RodaliesService(ServiceBase):
         await self._get_from_cache_or_data(static_key, lines, cache_ttl=3600*24)
         await self._get_from_cache_or_data(alerts_key, alerts_dict, cache_ttl=3600)
 
+        elapsed = (time.perf_counter() - start)
+        logger.debug(f"[{self.__class__.__name__}] get_all_lines ejecutado en {elapsed:.4f} s")
         return lines
-    
+
     async def get_all_stations(self) -> List[RodaliesStation]:
+        start = time.perf_counter()
         stations = await self.cache_service.get("rodalies_stations")
 
         if not stations:
@@ -77,45 +84,59 @@ class RodaliesService(ServiceBase):
 
             await self.cache_service.set("rodalies_stations", stations, ttl=3600*24)
 
+        elapsed = (time.perf_counter() - start)
+        logger.debug(f"[{self.__class__.__name__}] get_all_stations ejecutado en {elapsed:.4f} s")
         return stations
-    
+
     async def get_station_routes(self, station_id, line_id):
+        start = time.perf_counter()
         routes = await self._get_from_cache_or_api(
             f"rodalies_station_{station_id}_routes",
             lambda: self.rodalies_api_service.get_next_trains_at_station(station_id, line_id),
             cache_ttl=10
         )
-        return "\n\n".join(LineRoute.scheduled_list(route, with_arrival_date=False) for route in routes)
-    
+        result = "\n\n".join(LineRoute.scheduled_list(route, with_arrival_date=False) for route in routes)
+        elapsed = (time.perf_counter() - start)
+        logger.debug(f"[{self.__class__.__name__}] get_station_routes({station_id}) ejecutado en {elapsed:.4f} s")
+        return result
+
     async def get_line_by_id(self, line_id: str) -> RodaliesLine:
+        start = time.perf_counter()
         lines = await self.get_all_lines()
         line = next((l for l in lines if str(l.id) == str(line_id)), None)
-        logger.debug(f"[{self.__class__.__name__}] get_line_by_id({line_id}) -> {line}")
+        elapsed = (time.perf_counter() - start)
+        logger.debug(f"[{self.__class__.__name__}] get_line_by_id({line_id}) -> {line} ejecutado en {elapsed:.4f} s")
         return line
-    
+
     # === OTHER CALLS ===
     async def get_stations_by_line(self, line_id) -> List[RodaliesStation]:
-        """
-        Retrieve stations for a specific rodalies line.
-        """
+        start = time.perf_counter()
         line = await self.get_line_by_id(line_id)      
-        return line.stations
-    
+        result = line.stations
+        elapsed = (time.perf_counter() - start)
+        logger.debug(f"[{self.__class__.__name__}] get_stations_by_line({line_id}) ejecutado en {elapsed:.4f} s")
+        return result
+
     async def get_stations_by_name(self, station_name) -> List[RodaliesStation]:
+        start = time.perf_counter()
         stations = await self.get_all_stations()
         if station_name == '':
+            elapsed = (time.perf_counter() - start)
+            logger.debug(f"[{self.__class__.__name__}] get_stations_by_name(empty) ejecutado en {elapsed:.4f} s")
             return stations
-        return self.fuzzy_search(
+        result = self.fuzzy_search(
             query=station_name,
             items=stations,
             key=lambda station: station.name
         )
-    
+        elapsed = (time.perf_counter() - start)
+        logger.debug(f"[{self.__class__.__name__}] get_stations_by_name({station_name}) ejecutado en {elapsed:.4f} s")
+        return result
+
     async def get_station_by_id(self, station_id, line_id) -> RodaliesStation:
-        """
-        Retrieve a station by its code.
-        """
+        start = time.perf_counter()
         stops = await self.get_stations_by_line(line_id)
         stop = next((s for s in stops if str(s.id) == str(station_id)), None)
-        logger.debug(f"[{self.__class__.__name__}] get_station_by_id({station_id}, line {line_id}) -> {stop}")
+        elapsed = (time.perf_counter() - start)
+        logger.debug(f"[{self.__class__.__name__}] get_station_by_id({station_id}, line {line_id}) -> {stop} ejecutado en {elapsed:.4f} s")
         return stop

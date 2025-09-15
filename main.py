@@ -136,7 +136,7 @@ class BotApp:
         self.web_app_handler = WebAppHandler(self.metro_handler, self.bus_handler, self.tram_handler, self.rodalies_handler, self.bicing_handler, self.fgc_handler)
         self.settings_handler = SettingsHandler(self.message_service, self.keyboard_factory, self.language_manager, self.user_data_manager)
         self.notifications_handler = NotificationsHandler(self.message_service, self.keyboard_factory, self.language_manager, self.user_data_manager)
-        self.reply_handler = ReplyHandler(self.menu_handler, self.metro_handler, self.bus_handler, self.tram_handler, self.rodalies_handler,self.favorites_handler, self.language_handler, self.help_handler, self.settings_handler, self.bicing_handler, self.fgc_handler, self.notifications_handler)
+        self.reply_handler = ReplyHandler(self.menu_handler, self.metro_handler, self.bus_handler, self.tram_handler, self.rodalies_handler, self.favorites_handler, self.language_handler, self.help_handler, self.settings_handler, self.bicing_handler, self.fgc_handler, self.notifications_handler)
 
         logger.info("Handlers initialized")
 
