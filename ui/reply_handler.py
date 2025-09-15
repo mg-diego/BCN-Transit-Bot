@@ -96,8 +96,7 @@ class ReplyHandler:
         else:
             await message_service.send_new_message(update, language_manager.t('results.location.received'))
             metro_stations, bus_stops, tram_stops, rodalies_stations, bicing_stations, fgc_stations = await self._search_stations('', only_bicing=False)
-            stops_with_distance = DistanceHelper.build_stops_list(metro_stations, bus_stops, tram_stops, rodalies_stations, bicing_stations, fgc_stations, user_location, results_to_return=999999)
-            near_stops = [s for s in stops_with_distance if s["distance_km"] is not None and s["distance_km"] <= 0.5]
+            near_stops = DistanceHelper.build_stops_list(metro_stations, bus_stops, tram_stops, rodalies_stations, bicing_stations, fgc_stations, user_location, results_to_return=999999, max_distance_km=0.5)
             encoded = self.mapper.map_near_stations(near_stops, user_location.latitude, user_location.longitude)
             
             await message_service.send_new_message(update, language_manager.t('common.map.open'), keyboard_factory.map_reply_menu(encoded))
