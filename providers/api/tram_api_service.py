@@ -25,7 +25,7 @@ class TramApiService:
 
     async def _fetch_access_token(self):
         current_method = inspect.currentframe().f_code.co_name
-        self.logger.info(f"[{current_method}] Fetching new access token")
+        self.logger.debug(f"[{current_method}] Fetching new access token")
 
         url = f"{self.BASE_URL}/connect/token"
         data = {
@@ -42,7 +42,7 @@ class TramApiService:
                     self.ACCESS_TOKEN = token_data.get("access_token")
                     expires_in = token_data.get("expires_in", 3600)
                     self.TOKEN_EXPIRES_AT = time.time() + expires_in - 60
-                    self.logger.info(f"[{current_method}] Access token successfully retrieved")
+                    self.logger.debug(f"[{current_method}] Access token successfully retrieved")
                 else:
                     text = await response.text()
                     self.logger.error(f"[{current_method}] Failed to fetch token: {response.status} - {text}")
@@ -51,7 +51,7 @@ class TramApiService:
     async def _get_valid_token(self) -> str:
         current_method = inspect.currentframe().f_code.co_name
         if not self.ACCESS_TOKEN or time.time() >= self.TOKEN_EXPIRES_AT:
-            self.logger.info(f"[{current_method}] Token expired or missing → fetching new one")
+            self.logger.debug(f"[{current_method}] Token expired or missing → fetching new one")
             await self._fetch_access_token()
         return self.ACCESS_TOKEN
 
@@ -66,7 +66,7 @@ class TramApiService:
 
         endpoint = f"{self.BASE_URL}{self.API_VERSION}{endpoint}" if use_base_url else endpoint
 
-        self.logger.info(f"[{current_method}] {method.upper()} → {endpoint} | Params: {kwargs.get('params', {})}")
+        self.logger.debug(f"[{current_method}] {method.upper()} → {endpoint} | Params: {kwargs.get('params', {})}")
 
         async with aiohttp.ClientSession() as session:
             async with session.request(method, endpoint, headers=headers, **kwargs) as response:

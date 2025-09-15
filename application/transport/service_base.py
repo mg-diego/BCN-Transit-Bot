@@ -2,6 +2,7 @@ from typing import Callable, Any, List
 from rapidfuzz import process, fuzz
 from providers.helpers import logger, HtmlHelper
 from application.cache_service import CacheService
+import time
 
 class ServiceBase:
     """
@@ -10,6 +11,16 @@ class ServiceBase:
 
     def __init__(self, cache_service: CacheService = None):
         self.cache_service = cache_service
+
+    def log_exec_time(func):
+        async def wrapper(*args, **kwargs):
+            start = time.perf_counter()
+            result = await func(*args, **kwargs)
+            elapsed = (time.perf_counter() - start) * 1000
+            cls = args[0].__class__.__name__ if args else "Unknown"
+            logger.debug(f"[{cls}] {func.__name__} ejecutado en {elapsed:.2f} ms")
+            return result
+        return wrapper
 
     def fuzzy_search(
         self,
@@ -79,15 +90,15 @@ class ServiceBase:
         if self.cache_service:
             cached_data = await self.cache_service.get(cache_key)
             if cached_data:
-                logger.info(f"[{class_name}] Cache hit: {cache_key}")
+                logger.debug(f"[{class_name}] Cache hit: {cache_key}")
                 return cached_data
             else:
-                logger.info(f"[{class_name}] Cache miss: {cache_key}")
+                logger.debug(f"[{class_name}] Cache miss: {cache_key}")
 
         # Store provided data in cache
         if self.cache_service and data is not None:
             await self.cache_service.set(cache_key, data, ttl=cache_ttl)
-            logger.info(f"[{class_name}] Cached data for key: {cache_key} (TTL={cache_ttl}s)")
+            logger.debug(f"[{class_name}] Cached data for key: {cache_key} (TTL={cache_ttl}s)")
 
         return data
 
@@ -115,15 +126,15 @@ class ServiceBase:
         if self.cache_service:
             cached_data = await self.cache_service.get(cache_key)
             if cached_data:
-                logger.info(f"[{class_name}] Cache hit: {cache_key}")
+                logger.debug(f"[{class_name}] Cache hit: {cache_key}")
                 return cached_data
             else:
-                logger.info(f"[{class_name}] Cache miss: {cache_key}")
+                logger.debug(f"[{class_name}] Cache miss: {cache_key}")
 
         # Fetch data from API
         try:
             data = await api_call()
-            logger.info(f"[{class_name}] Fetched data from API for key: {cache_key}")
+            logger.debug(f"[{class_name}] Fetched data from API for key: {cache_key}")
         except Exception as e:
             logger.error(f"[{class_name}] Error fetching data for key {cache_key}: {e}")
             data = []

@@ -9,7 +9,7 @@ if not os.path.exists(log_dir):
 
 # Configuración global del logger
 logger = logging.getLogger("BCN-Transit-Bot")
-logger.setLevel(logging.DEBUG)  # Nivel global: DEBUG, INFO, WARNING, ERROR, CRITICAL
+logger.setLevel(logging.INFO)  # Nivel global: DEBUG, INFO, WARNING, ERROR, CRITICAL
 
 # Formato de salida
 formatter = logging.Formatter(
@@ -29,7 +29,7 @@ file_handler = TimedRotatingFileHandler(
     backupCount=30,  # Mantener logs de los últimos 30 días
     encoding="utf-8"
 )
-file_handler.setLevel(logging.DEBUG)
+file_handler.setLevel(logging.INFO)
 file_handler.setFormatter(formatter)
 
 logger.addHandler(file_handler)

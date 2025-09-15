@@ -48,7 +48,7 @@ class TmbApiService:
             merged_params.update(params)
 
         current_method = inspect.currentframe().f_code.co_name
-        self.logger.info(f"[{current_method}] GET → {endpoint}")
+        self.logger.debug(f"[{current_method}] GET → {endpoint}")
 
         async with aiohttp.ClientSession() as session:
             async with session.get(endpoint, params=merged_params) as resp:

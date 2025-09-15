@@ -24,7 +24,7 @@ class RodaliesApiService:
         headers["Accept"] = "application/json"
 
         url = f"{self.BASE_URL}{endpoint}" if use_base_url else endpoint
-        self.logger.info(f"[{current_method}] {method.upper()} → {url} | Params: {kwargs.get('params', {})}")
+        self.logger.debug(f"[{current_method}] {method.upper()} → {url} | Params: {kwargs.get('params', {})}")
 
         async with aiohttp.ClientSession() as session:
             async with session.request(method, url, headers=headers, **kwargs) as resp:

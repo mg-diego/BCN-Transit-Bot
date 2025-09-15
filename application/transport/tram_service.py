@@ -1,4 +1,5 @@
 import asyncio
+import time
 from collections import defaultdict
 from typing import List
 
@@ -9,7 +10,6 @@ from providers.manager import LanguageManager, UserDataManager
 from providers.helpers import logger
 
 from domain.tram import TramLine, TramStation, TramConnection
-
 from application.cache_service import CacheService
 from .service_base import ServiceBase
 
@@ -26,14 +26,18 @@ class TramService(ServiceBase):
         cache_service: CacheService = None,
         user_data_manager: UserDataManager = None
     ):
+        start = time.perf_counter()
         super().__init__(cache_service)
         self.tram_api_service = tram_api_service
         self.language_manager = language_manager
         self.user_data_manager = user_data_manager
-        logger.info(f"[{self.__class__.__name__}] TramService initialized")
+        elapsed = (time.perf_counter() - start)
+        logger.info(f"[{self.__class__.__name__}] TramService initialized (tiempo: {elapsed:.4f} s)")
 
     # === CACHE CALLS ===
     async def get_all_lines(self) -> List[TramLine]:
+        start = time.perf_counter()
+
         static_key = "tram_lines_static"
         alerts_key = "tram_lines_alerts"
 
@@ -46,6 +50,8 @@ class TramService(ServiceBase):
                     line_alerts = cached_alerts.get(line.original_name, [])
                     line.has_alerts = bool(line_alerts)
                     line.alerts = line_alerts
+            elapsed = (time.perf_counter() - start)
+            logger.info(f"[{self.__class__.__name__}] get_all_lines() from cache -> {len(cached_lines)} lines (tiempo: {elapsed:.4f} s)")
             return cached_lines
 
         # No hay caché, pedimos a la API
@@ -77,64 +83,88 @@ class TramService(ServiceBase):
             self._get_from_cache_or_data(alerts_key, alerts_dict, cache_ttl=3600)
         )
 
+        elapsed = (time.perf_counter() - start)
+        logger.info(f"[{self.__class__.__name__}] get_all_lines() -> {len(lines)} lines (tiempo: {elapsed:.4f} s)")
         return lines
 
     async def get_all_stops(self) -> List[TramStation]:
-        """
-        Obtiene todas las paradas de todas las líneas de forma paralela
-        y las guarda en caché.
-        """
+        start = time.perf_counter()
+
         cached_stops = await self.cache_service.get("tram_stops")
         if cached_stops:
+            elapsed = (time.perf_counter() - start)
+            logger.info(f"[{self.__class__.__name__}] get_all_stops() from cache -> {len(cached_stops)} stops (tiempo: {elapsed:.4f} s)")
             return cached_stops
 
         lines = await self.get_all_lines()
 
-        # Lanzamos las peticiones de paradas por línea en paralelo
         stops_lists = await asyncio.gather(
             *[self.get_stops_by_line(line.id) for line in lines]
         )
 
-        # Aplanar y actualizar info de línea
         all_stops: List[TramStation] = []
         for line, line_stops in zip(lines, stops_lists):
-            for s in line_stops:
-                all_stops.append(TramStation.update_line_info(s, line))
-
+            all_stops.extend(TramStation.update_line_info(s, line) for s in line_stops)
         await self.cache_service.set("tram_stops", all_stops, ttl=3600*24)
+
+        elapsed = (time.perf_counter() - start)
+        logger.info(f"[{self.__class__.__name__}] get_all_stops() -> {len(all_stops)} stops (tiempo: {elapsed:.4f} s)")
         return all_stops
 
     async def get_stops_by_line(self, line_id: str) -> List[TramStation]:
-        return await self._get_from_cache_or_api(
+        start = time.perf_counter()
+        stops = await self._get_from_cache_or_api(
             f"tram_line_{line_id}_stops",
             lambda: self.tram_api_service.get_stops_on_line(line_id),
             cache_ttl=3600*24
         )
+        elapsed = (time.perf_counter() - start)
+        logger.info(f"[{self.__class__.__name__}] get_stops_by_line({line_id}) -> {len(stops)} stops (tiempo: {elapsed:.4f} s)")
+        return stops
 
     async def get_stop_routes(self, outbound_code: int, return_code: int) -> str:
-        return await self._get_from_cache_or_api(
+        start = time.perf_counter()
+        routes = await self._get_from_cache_or_api(
             f"tram_routes_{outbound_code}_{return_code}",
             lambda: self.tram_api_service.get_next_trams_at_stop(outbound_code, return_code),
             cache_ttl=30,
         )
+        elapsed = (time.perf_counter() - start)
+        logger.info(f"[{self.__class__.__name__}] get_stop_routes({outbound_code},{return_code}) -> {len(routes)} routes (tiempo: {elapsed:.4f} s)")
+        return routes
 
     async def get_tram_stop_connections(self, stop_id) -> List[TramConnection]:
+        start = time.perf_counter()
         connections = await self._get_from_cache_or_api(
             f"tram_stop_connections_{stop_id}",
             lambda: self.tram_api_service.get_connections_at_stop(stop_id),
             cache_ttl=3600*24
         )
+        elapsed = (time.perf_counter() - start)
+        logger.info(f"[{self.__class__.__name__}] get_tram_stop_connections({stop_id}) -> {len(connections)} connections (tiempo: {elapsed:.4f} s)")
         return "\n".join(str(c) for c in connections)
 
     # === OTHER CALLS ===
     async def get_stops_by_name(self, stop_name):
+        start = time.perf_counter()
         stops = await self.get_all_stops()
-        return self.fuzzy_search(query=stop_name, items=stops, key=lambda s: s.name)
+        result = self.fuzzy_search(query=stop_name, items=stops, key=lambda s: s.name)
+        elapsed = (time.perf_counter() - start)
+        logger.info(f"[{self.__class__.__name__}] get_stops_by_name({stop_name}) -> {len(result)} stops (tiempo: {elapsed:.4f} s)")
+        return result
 
     async def get_line_by_id(self, line_id) -> TramLine:
+        start = time.perf_counter()
         lines = await self.get_all_lines()
-        return next((l for l in lines if str(l.code) == str(line_id)), None)
+        line = next((l for l in lines if str(l.code) == str(line_id)), None)
+        elapsed = (time.perf_counter() - start)
+        logger.info(f"[{self.__class__.__name__}] get_line_by_id({line_id}) -> {line} (tiempo: {elapsed:.4f} s)")
+        return line
 
     async def get_stop_by_id(self, stop_id, line_id) -> TramStation:
+        start = time.perf_counter()
         stops = await self.get_stops_by_line(line_id)
-        return next((s for s in stops if str(s.id) == str(stop_id)), None)
+        stop = next((s for s in stops if str(s.id) == str(stop_id)), None)
+        elapsed = (time.perf_counter() - start)
+        logger.info(f"[{self.__class__.__name__}] get_stop_by_id({stop_id}, {line_id}) -> {stop} (tiempo: {elapsed:.4f} s)")
+        return stop

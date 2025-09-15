@@ -45,7 +45,7 @@ class FgcApiService:
         headers["Accept"] = "*/*" if raw or text else "application/json"
 
         url = f"{self.FGC_BASE_URL}{endpoint}" if use_FGC_BASE_URL else endpoint
-        self.logger.info(f"[{current_method}] {method.upper()} → {url} | Params: {kwargs.get('params', {})}")
+        self.logger.debug(f"[{current_method}] {method.upper()} → {url} | Params: {kwargs.get('params', {})}")
 
         ssl_context = ssl.create_default_context()
         ssl_context.check_hostname = False
