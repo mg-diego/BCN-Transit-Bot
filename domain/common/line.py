@@ -5,7 +5,7 @@ from typing import Optional
 from domain.common.alert import Alert
 from domain.transport_type import TransportType
 
-@dataclass
+@dataclass(kw_only=True)
 class Line:
     id: int
     code: int
@@ -68,7 +68,54 @@ class Line:
                 "RL1": "🟩",
                 "RL2": "🟩"
             }
+        if self.transport_type == TransportType.RODALIES:
+            emojis = {
+                "R1": "🟦",
+                "R2": "🟩",
+                "R2 Nord": "🟩",
+                "R2 Sud": "🟩",
+                "R3": "🟥",
+                "R4": "🟨",
+                "R7": "⬜",
+                "R8": "🟪",
+                "R11": "🟦",
+                "R13": "⬛",
+                "R14": "🟪",
+                "R15": "🟫",
+                "R16": "🟥",
+                "R17": "🟧",
+                "RG1": "🟦",
+                "RT1": "🟦",
+                "RT2": "⬜",
+                "RL3": "🟩",
+                "RL4": "🟨",
+            }
+
         emoji = emojis.get(self.name, "")
         self.name_with_emoji = f"{emoji} {self.name}"
+
+        if self.color is None:
+            COLORS = {
+                "R1": "73B0DF",
+                "R2": "009640",
+                "R2 Nord": "AACB2B",
+                "R2 Sud": "005F27",
+                "R3": "E63027",
+                "R4": "F6A22D",
+                "R7": "BC79B2",
+                "R8": "870064",
+                "R11": "0064A7",
+                "R13": "E8308A",
+                "R14": "5E4295",
+                "R15": "9A8B75",
+                "R16": "B20933",
+                "R17": "E87200",
+                "RG1": "0071CE",
+                "RT1": "00C4B3",
+                "RT2": "E577CB",
+                "RL3": "949300",
+                "RL4": "FFDD00",
+            }
+            self.color = COLORS.get(self.name, self.color or "808080")
 
 

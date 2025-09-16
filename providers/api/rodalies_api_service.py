@@ -5,7 +5,7 @@ from typing import Any, List
 
 from domain.transport_type import TransportType
 from providers.helpers import logger
-from domain.rodalies import RodaliesLine, RodaliesStation, create_rodalies_line
+from domain.rodalies import RodaliesLine, RodaliesStation
 from domain import NextTrip, LineRoute, normalize_to_seconds
 
 
@@ -51,7 +51,7 @@ class RodaliesApiService:
                     RodaliesStation.create_rodalies_station(station_data)
                     for station_data in line_data["stations"]
                 )
-                lines.append(create_rodalies_line(line_data, stations))
+                lines.append(RodaliesLine.create_rodalies_line(line_data, stations))
 
         return lines
 
@@ -59,9 +59,11 @@ class RodaliesApiService:
         """Fetch a single Rodalies line by ID."""
         line_data = await self._request("GET", f"/lines/{line_id}")
         stations = []
-        for station_data in line_data["stations"]:
-            stations.append(RodaliesStation.create_rodalies_station(station_data))
-        return create_rodalies_line(line_data, stations)
+        stations.extend(
+            RodaliesStation.create_rodalies_station(station_data)
+            for station_data in line_data["stations"]
+        )
+        return RodaliesLine.create_rodalies_line(line_data, stations)
 
     async def get_global_alerts(self):
         alerts = await self._request("GET", "/notices?limit=500&sort=date,desc&sort=time,desc")

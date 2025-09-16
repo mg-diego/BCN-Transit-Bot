@@ -126,7 +126,7 @@ class KeyboardFactory:
     
     def rodalies_lines_menu(self, rodalies_lines: List[RodaliesLine])-> InlineKeyboardMarkup:
         buttons = [
-            InlineKeyboardButton(f" {'⚠️ ' if line.has_alerts else ''}{line.emoji_name}  ", callback_data=Callbacks.RODALIES_LINE.format(line_code=line.id))
+            InlineKeyboardButton(f" {'⚠️ ' if line.has_alerts else ''}{line.name_with_emoji}  ", callback_data=Callbacks.RODALIES_LINE.format(line_code=line.id))
             for line in rodalies_lines
         ]
         rows = self._chunk_buttons(buttons, 3)

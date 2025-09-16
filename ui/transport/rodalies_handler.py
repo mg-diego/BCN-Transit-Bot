@@ -58,7 +58,7 @@ class RodaliesHandler(HandlerBase):
 
         await self.message_service.send_new_message_from_callback(
             update,
-            text=f"{self.language_manager.t('common.line.only.map', line=line.emoji_name)} {"\n\n" + line_alerts_html if line.alerts is not None and any(line.alerts) else ''}",
+            text=f"{self.language_manager.t('common.line.only.map', line=line.name_with_emoji)} {"\n\n" + line_alerts_html if line.alerts is not None and any(line.alerts) else ''}",
             reply_markup=self.keyboard_factory.map_reply_menu(encoded)
         )
 

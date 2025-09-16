@@ -214,8 +214,8 @@ class TransportDataCompressor:
 
         stops = self._map_stops_bidirectional(
             stops_base,
-            direction_forward=line.origin_station_name,
-            direction_reverse=line.destination_station_name
+            direction_forward=line.origin,
+            direction_reverse=line.destination
         )
 
         data = {
