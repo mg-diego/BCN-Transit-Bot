@@ -4,7 +4,7 @@ import inspect
 from datetime import datetime
 from typing import Any, Dict, List
 
-from domain.tram import TramLine, TramNetwork, TramStation, TramConnection, TramStationConnection
+from domain.tram import TramLine, TramStation, TramConnection, TramStationConnection
 from domain import NextTrip, LineRoute, normalize_to_seconds
 
 from domain.transport_type import TransportType
