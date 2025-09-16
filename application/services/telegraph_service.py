@@ -29,7 +29,7 @@ class TelegraphService:
         try:
             response = self.telegraph.create_page(
                 title=title,
-                html_content=self.generate_telegraph_html(alerts),
+                html_content=self.generate_telegraph_html(alerts)[:30000], # Telegraph has a limit of 64KB per page
                 author_name=self.author_name
             )
             page_url = "https://telegra.ph/" + response["path"]
@@ -37,8 +37,6 @@ class TelegraphService:
             return page_url
         except Exception as e:
             logger.error(f"Failed to create Telegraph page: {e}")
-            raise
-
 
 
     # lang: "es" | "en" | "ca"

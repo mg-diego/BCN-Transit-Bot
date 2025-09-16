@@ -114,17 +114,7 @@ class TramApiService:
 
         lines = await self._request("GET", "/lines", params=params)
 
-        tram_lines: List[TramLine] = [
-            TramLine(
-                name=line["name"],
-                description=line["description"],
-                network=TramNetwork(**line["network"]),
-                code=line["code"],
-                image=line["image"],
-                id=line["id"]
-            )
-            for line in lines
-        ]
+        tram_lines: List[TramLine] = [TramLine.create_tram_line(line) for line in lines]
 
         return tram_lines
 

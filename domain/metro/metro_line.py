@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from domain.common.line import Line
+from domain.transport_type import TransportType
 
 @dataclass
 class MetroLine(Line):
@@ -14,5 +15,6 @@ class MetroLine(Line):
             description=props.get('DESC_LINIA', ''),
             origin=props.get('ORIGEN_LINIA', ''),
             destination=props.get('DESTI_LINIA', ''),
-            color=props.get('COLOR_LINIA', '')
+            color=props.get('COLOR_LINIA', ''),
+            transport_type=TransportType.METRO
         )

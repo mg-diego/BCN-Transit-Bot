@@ -117,7 +117,7 @@ class KeyboardFactory:
     
     def tram_lines_menu(self, tram_lines: List[TramLine]) -> InlineKeyboardMarkup:
         buttons = [
-            InlineKeyboardButton(f"{line.name} {'⚠️' if line.has_alerts else ''}  ", callback_data=Callbacks.TRAM_LINE.format(line_code=line.id, line_name=line.original_name))
+            InlineKeyboardButton(f"{line.name_with_emoji} {'⚠️' if line.has_alerts else ''}  ", callback_data=Callbacks.TRAM_LINE.format(line_code=line.id, line_name=line.name))
             for line in tram_lines
         ]
         rows = self._chunk_buttons(buttons, 3)

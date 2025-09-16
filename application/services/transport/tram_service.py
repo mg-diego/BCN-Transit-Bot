@@ -47,7 +47,7 @@ class TramService(ServiceBase):
         if cached_lines:
             if cached_alerts:
                 for line in cached_lines:
-                    line_alerts = cached_alerts.get(line.original_name, [])
+                    line_alerts = cached_alerts.get(line.name, [])
                     line.has_alerts = bool(line_alerts)
                     line.alerts = line_alerts
             elapsed = (time.perf_counter() - start)
@@ -74,7 +74,7 @@ class TramService(ServiceBase):
         alerts_dict = dict(result)
 
         for line in lines:
-            line_alerts = alerts_dict.get(line.original_name, [])
+            line_alerts = alerts_dict.get(line.name, [])
             line.has_alerts = bool(line_alerts)
             line.alerts = line_alerts
 
