@@ -2,6 +2,8 @@ import asyncio
 from datetime import datetime
 from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, MessageHandler, filters
 from telegram import Bot
+from application.api.server import create_app
+import uvicorn
 
 from ui import (
     MenuHandler, MetroHandler, BusHandler, TramHandler, FavoritesHandler, HelpHandler, 
@@ -266,7 +268,7 @@ class BotApp:
     async def run(self):
         """Main async entrypoint for the bot."""
         # Initialize synchronous services
-        self.init_services()
+        #self.init_services()
         
         # Run the async seeder
         await self.run_seeder()
@@ -309,12 +311,30 @@ class BotApp:
             await self.application.stop()
             await self.application.shutdown()
 
+async def start_fastapi(app):
+    config = uvicorn.Config(app, host="0.0.0.0", port=8000, log_level="info")
+    server = uvicorn.Server(config)
+    await server.serve()
 
-async def main():
-    """Async main function to run the bot."""
+async def start_bot_and_api():
     bot = BotApp()
-    await bot.run()
+    bot.init_services()  # inicializa todos los services
 
+    # Crear FastAPI pasando los services ya inicializados
+    app = create_app(
+        metro_service=bot.metro_service,
+        bus_service=bot.bus_service,
+        tram_service=bot.tram_service,
+        rodalies_service=bot.rodalies_service,
+        bicing_service=bot.bicing_service,
+        fgc_service=bot.fgc_service
+    )
+
+    # Ejecutar ambos en paralelo
+    await asyncio.gather(
+        bot.run(),          # tu bot actual
+        start_fastapi(app)  # FastAPI
+    )
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    asyncio.run(start_bot_and_api())

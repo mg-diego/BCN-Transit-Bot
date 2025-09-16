@@ -5,3 +5,6 @@ gspread
 oauth2client
 rapidfuzz
 telegraph
+fastapi
+pydantic
+uvicorn
