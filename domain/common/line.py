@@ -42,6 +42,32 @@ class Line:
                 "T5": "🟩",
                 "T6": "🟩"
             }
+        if self.transport_type == TransportType.FGC:
+            emojis = {
+                #Barcelona – Vallés
+                "L1": "🟥",
+                "S1": "🟥",
+                "S2": "🟩",
+                "L6": "🟪",
+                "L7": "🟫",
+                "L12": "🟪",
+
+                #Llobregat – Anoia
+                "L8": "🟪",
+                "S3": "🟦",
+                "S4": "🟨",
+                "S8": "🟦",
+                "S9": "🟥",
+                "R5": "🟦",
+                "R50": "🟦",
+                "R6": "⬛",
+                "R60": "⬛",
+                "R63": "⬛",
+
+                #Lleida – La Pobla de Segur
+                "RL1": "🟩",
+                "RL2": "🟩"
+            }
         emoji = emojis.get(self.name, "")
         self.name_with_emoji = f"{emoji} {self.name}"
 

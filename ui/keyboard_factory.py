@@ -10,6 +10,7 @@ from domain.transport_type import TransportType
 from domain.fgc import FgcLine, FgcStation
 from domain.callbacks import Callbacks
 
+from providers.helpers.utils import Utils
 from providers.manager import LanguageManager
 from providers.helpers import DistanceHelper, GoogleMapsHelper
 
@@ -81,7 +82,7 @@ class KeyboardFactory:
     # === LINES ===
     
     def metro_lines_menu(self, metro_lines: List[MetroLine]) -> InlineKeyboardMarkup:
-        sorted_lines = sorted(metro_lines, key=self._custom_sort_key)
+        sorted_lines = sorted(metro_lines, key=Utils.sort_lines)
         buttons = [
             InlineKeyboardButton(f"{line.name_with_emoji} {'⚠️' if line.has_alerts else ''}  ", callback_data=Callbacks.METRO_LINE.format(line_code=line.code, line_name=line.name))
             for line in sorted_lines

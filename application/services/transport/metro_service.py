@@ -9,6 +9,7 @@ from domain.metro import MetroLine, MetroStation, MetroAccess
 from domain.common.alert import Alert
 from domain.transport_type import TransportType
 from providers.api import TmbApiService
+from providers.helpers.utils import Utils
 from providers.manager import LanguageManager
 from providers.helpers import logger
 
@@ -77,7 +78,7 @@ class MetroService(ServiceBase):
 
         elapsed = time.perf_counter() - start
         logger.info(f"[{self.__class__.__name__}] get_all_lines() -> {len(lines)} lines ({elapsed:.4f} s)")
-        return lines
+        return sorted(lines, key=Utils.sort_lines)
 
     async def get_all_stations(self) -> List[MetroStation]:
         start = time.perf_counter()

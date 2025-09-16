@@ -10,7 +10,7 @@ class TramLine(Line):
             id=props.get('id', ''),
             code=props.get('code', ''),
             name=props.get('name', ''),
-            description=props.get('description', '').get('es', ''),
+            description='TBD',
             origin=None,
             destination=None,
             color="008E78",
