@@ -6,6 +6,7 @@ from application.services.transport.fgc_service import FgcService
 from application.services.transport.metro_service import MetroService
 from application.services.transport.rodalies_service import RodaliesService
 from application.services.transport.tram_service import TramService
+from providers.helpers.utils import Utils
 
 def get_metro_router(
     metro_service: MetroService
@@ -14,7 +15,7 @@ def get_metro_router(
 
     @router.get("/lines")
     async def list_metro_lines():
-        return await metro_service.get_all_lines()
+        return sorted(await metro_service.get_all_lines(), key=Utils.sort_lines)
     
     @router.get("/stations")
     async def list_metro_stations():
@@ -44,7 +45,7 @@ def get_tram_router(
 
     @router.get("/lines")
     async def list_tram_lines():
-        return await tram_service.get_all_lines()
+        return sorted(await tram_service.get_all_lines(), key=Utils.sort_lines)
     
     @router.get("/stops")
     async def list_tram_stops():
@@ -59,7 +60,7 @@ def get_rodalies_router(
 
     @router.get("/lines")
     async def list_rodalies_lines():
-        return await rodalies_service.get_all_lines()
+        return sorted(await rodalies_service.get_all_lines(), key=Utils.sort_lines)
     
     @router.get("/stations")
     async def list_rodalies_stops():
@@ -85,10 +86,34 @@ def get_fgc_router(
 
     @router.get("/lines")
     async def list_fgc_lines():
-        return await fgc_service.get_all_lines()
+        return sorted(await fgc_service.get_all_lines(), key=Utils.sort_lines)
     
     @router.get("/stations")
     async def list_fgc_stations():
         return await fgc_service.get_all_stations()
+
+    return router
+
+def get_near_router(
+    metro_service: MetroService,
+    bus_service: BusService,
+    tram_service: TramService,
+    rodalies_service: RodaliesService,
+    bicing_service: BicingService,
+    fgc_service: FgcService
+) -> APIRouter:
+    router = APIRouter()
+
+    @router.get("/near")
+    async def list_near_stations(lat: float, lon: float, radius: int = 500):
+        results = {
+            "metro": await metro_service.get_stations_by_name(''),
+            "bus": await bus_service.get_stops_by_name(''),
+            "tram": await tram_service.get_stops_by_name(''),
+            "fgc": await fgc_service.get_stations_by_name(''),
+            "rodalies": await rodalies_service.get_stations_by_name(''),
+            "bicing": await bicing_service.get_stations_by_name('')
+        }
+        return results
 
     return router
