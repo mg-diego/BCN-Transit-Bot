@@ -7,8 +7,8 @@ class TramLine(Line):
     @staticmethod
     def create_tram_line(props: dict):
         return Line(
-            id=props.get('id', ''),
-            code=props.get('code', ''),
+            id=str(props.get('id', '')),
+            code=str(props.get('code', '')),
             name=props.get('name', ''),
             description='TBD',
             origin=None,

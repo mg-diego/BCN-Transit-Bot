@@ -8,8 +8,8 @@ class FgcLine(Line):
     @staticmethod
     def create_fgc_line(line: dict):
         return FgcLine(
-            id = line.get('route_id'),
-            code = line.get('route_id'),
+            id = str(line.get('route_id')),
+            code = str(line.get('route_id')),
             name = line.get('route_short_name'),
             description = line.get('route_long_name'),
             origin = line.get('route_long_name').split("-")[0].strip() if "-" in line.get('route_long_name') else '',

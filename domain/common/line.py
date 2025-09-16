@@ -7,8 +7,8 @@ from domain.transport_type import TransportType
 
 @dataclass(kw_only=True)
 class Line:
-    id: int
-    code: int
+    id: str
+    code: str
     name: str
     description: str
     origin: str

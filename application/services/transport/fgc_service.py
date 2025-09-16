@@ -206,4 +206,8 @@ class FgcService(ServiceBase):
         lines = await self.get_all_lines()
         line = next((l for l in lines if str(l.id) == str(line_id)), None)
         elapsed = (time.perf_counter() - start)
-        logger.de
+        logger.info(
+            f"[{self.__class__.__name__}] get_line_by_id({line_id}) "
+            f"-> {line} ejecutado en {elapsed:.4f} s"
+        )
+        return line

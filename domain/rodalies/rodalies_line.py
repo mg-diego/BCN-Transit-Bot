@@ -12,8 +12,8 @@ class RodaliesLine(Line):
     @staticmethod
     def create_rodalies_line(line, stations):
         return RodaliesLine(
-            id=line["id"],
-            code=line["id"],
+            id=str(line["id"]),
+            code=str(line["id"]),
             name=line["name"],
             description=line["journeyDescription"],
             transport_type=TransportType.RODALIES,
