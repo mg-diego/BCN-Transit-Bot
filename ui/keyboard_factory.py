@@ -29,7 +29,7 @@ class KeyboardFactory:
     
     def _custom_sort_key(self, line: str):
         # Buscar número y sufijo opcional
-        match = re.match(r"L(\d+)([A-Z]?)", line.ORIGINAL_NOM_LINIA)
+        match = re.match(r"L(\d+)([A-Z]?)", line.name)
         if not match:
             return (999, "")  # Los que no encajan van al final
 
@@ -83,7 +83,7 @@ class KeyboardFactory:
     def metro_lines_menu(self, metro_lines: List[MetroLine]) -> InlineKeyboardMarkup:
         sorted_lines = sorted(metro_lines, key=self._custom_sort_key)
         buttons = [
-            InlineKeyboardButton(f"{line.NOM_LINIA} {'⚠️' if line.has_alerts else ''}  ", callback_data=Callbacks.METRO_LINE.format(line_code=line.CODI_LINIA, line_name=line.ORIGINAL_NOM_LINIA))
+            InlineKeyboardButton(f"{line.name_with_emoji} {'⚠️' if line.has_alerts else ''}  ", callback_data=Callbacks.METRO_LINE.format(line_code=line.code, line_name=line.name))
             for line in sorted_lines
         ]
 

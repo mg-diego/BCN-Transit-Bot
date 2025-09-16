@@ -101,8 +101,13 @@ class TmbApiService:
 
     async def get_metro_lines(self) -> List[MetroLine]:
         url = f'{self.BASE_URL_TRANSIT}/linies/metro'
-        items, _ = await self.fetch_transit_items(url, MetroLine, sort_key=lambda x: x.NOM_LINIA)
-        return [item for item in items if "FM" not in item.ORIGINAL_NOM_LINIA]
+        data = await self._get(url)
+        features = data['features']
+
+        lines = []
+        lines.extend(MetroLine.create_metro_line(feature) for feature in features if feature['properties']['NOM_LINIA'] and "FM" not in feature['properties']['NOM_LINIA'])
+        lines.sort(key=lambda x: x.name)
+        return lines
     
     async def get_metro_stations(self) -> List[MetroStation]:
         url = f'{self.BASE_URL_TRANSIT}/estacions'

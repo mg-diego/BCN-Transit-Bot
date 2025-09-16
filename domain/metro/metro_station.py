@@ -36,9 +36,9 @@ class MetroStation(Station):
 
     @staticmethod
     def update_metro_station_with_line_info(metro_station: Station, metro_line: MetroLine) -> Station:
-        metro_station.line_id = metro_line.ID_LINIA
-        metro_station.line_code = metro_line.CODI_LINIA
-        metro_station.line_name = metro_line.ORIGINAL_NOM_LINIA
+        metro_station.line_id = metro_line.id
+        metro_station.line_code = metro_line.code
+        metro_station.line_name = metro_line.name
         metro_station.line_name_with_emoji = _set_emoji_at_name(metro_station.line_name)
         if metro_line.has_alerts:
             for alert in metro_line.alerts:

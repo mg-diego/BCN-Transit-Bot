@@ -43,7 +43,7 @@ class MetroService(ServiceBase):
         if cached_lines is not None and cached_lines:
             if cached_alerts:
                 for line in cached_lines:
-                    line_alerts = cached_alerts.get(line.ORIGINAL_NOM_LINIA, [])
+                    line_alerts = cached_alerts.get(line.name, [])
                     line.has_alerts = any(line_alerts)
                     line.alerts = line_alerts
             elapsed = time.perf_counter() - start
@@ -68,7 +68,7 @@ class MetroService(ServiceBase):
         alerts_dict = dict(result)
 
         for line in lines:
-            line_alerts = alerts_dict.get(line.ORIGINAL_NOM_LINIA, [])
+            line_alerts = alerts_dict.get(line.name, [])
             line.has_alerts = any(line_alerts)
             line.alerts = line_alerts
 
@@ -185,7 +185,7 @@ class MetroService(ServiceBase):
     async def get_line_by_id(self, line_id) -> MetroLine:
         start = time.perf_counter()
         lines = await self.get_all_lines()
-        line = next((l for l in lines if str(l.CODI_LINIA) == str(line_id)), None)
+        line = next((l for l in lines if str(l.code) == str(line_id)), None)
         elapsed = time.perf_counter() - start
         logger.info(f"[{self.__class__.__name__}] get_line_by_id({line_id}) -> {line} ({elapsed:.4f} s)")
         return line
@@ -193,7 +193,7 @@ class MetroService(ServiceBase):
     async def get_line_by_name(self, line_name):
         start = time.perf_counter()
         lines = await self.get_all_lines()
-        line = next((l for l in lines if str(l.ORIGINAL_NOM_LINIA) == str(line_name)), None)
+        line = next((l for l in lines if str(l.name) == str(line_name)), None)
         elapsed = time.perf_counter() - start
         logger.info(f"[{self.__class__.__name__}] get_line_by_name({line_name}) -> {line} ({elapsed:.4f} s)")
         return line
@@ -215,7 +215,7 @@ class MetroService(ServiceBase):
 
         async def process_line(line):
             async with semaphore_lines:
-                line_stations = await self.tmb_api_service.get_stations_by_metro_line(line.CODI_LINIA)
+                line_stations = await self.tmb_api_service.get_stations_by_metro_line(line.code)
             processed_stations = await asyncio.gather(*[process_station(s, line) for s in line_stations])
             return processed_stations
 
@@ -239,7 +239,7 @@ class MetroService(ServiceBase):
 
         async def process_line(line):
             async with semaphore:
-                stations = await self.get_stations_by_line(line.CODI_LINIA)
+                stations = await self.get_stations_by_line(line.code)
             return [(st.code, st.alerts) for st in stations]
 
         results = await asyncio.gather(*(process_line(line) for line in alert_lines))

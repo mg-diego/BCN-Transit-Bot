@@ -1,51 +1,18 @@
-from collections import defaultdict
-from dataclasses import dataclass, field
-from typing import Optional
-
-from domain.common.alert import Alert
+from dataclasses import dataclass
+from domain.common.line import Line
 
 @dataclass
-class MetroLine:
-    ID_LINIA: int
-    CODI_LINIA: int
-    NOM_LINIA: str
-    DESC_LINIA: str
-    ORIGEN_LINIA: str
-    DESTI_LINIA: str
-    NUM_PAQUETS: int
-    ID_OPERADOR: int
-    NOM_OPERADOR: str
-    NOM_TIPUS_TRANSPORT: str
-    CODI_FAMILIA: int
-    NOM_FAMILIA: str
-    ORDRE_FAMILIA: int
-    ORDRE_LINIA: int
-    CODI_TIPUS_CALENDARI: str
-    NOM_TIPUS_CALENDARI: str
-    DATA: str
-    COLOR_LINIA: str
-    COLOR_AUX_LINIA: str
-    COLOR_TEXT_LINIA: str
-    ORIGINAL_NOM_LINIA: Optional[str] = None
-    has_alerts: Optional[bool] = False
-    alerts: Optional[list[Alert]] = field(default_factory=lambda: defaultdict(list))
+class MetroLine(Line):
 
-    def __post_init__(self):
-        emojis = {
-            "L1": "🟥",
-            "L2": "🟪",
-            "L3": "🟩",
-            "L4": "🟨",
-            "L5": "🟦",
-            "L9N": "🟧",
-            "L9S": "🟧",
-            "L10N": "🟦",
-            "L10S": "🟦",
-            "L11": "🟩",
-        }
-        emoji = emojis.get(self.NOM_LINIA, "")
-        self.ORIGINAL_NOM_LINIA = self.NOM_LINIA
-        self.NOM_LINIA = f"{emoji} {self.NOM_LINIA}"
-
-    def __str__(self):
-        return f"{self.NOM_LINIA} - {self.DESC_LINIA} ({self.ORIGEN_LINIA} ↔ {self.DESTI_LINIA})"
+    @staticmethod
+    def create_metro_line(feature: dict):
+        props = feature['properties']
+        return Line(
+            id=props.get('ID_LINIA', ''),
+            code=props.get('CODI_LINIA', ''),
+            name=props.get('NOM_LINIA', ''),
+            description=props.get('DESC_LINIA', ''),
+            origin=props.get('ORIGEN_LINIA', ''),
+            destination=props.get('DESTI_LINIA', ''),
+            color=props.get('COLOR_LINIA', '')
+        )
