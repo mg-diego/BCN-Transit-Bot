@@ -21,7 +21,7 @@ def get_metro_router(
     async def list_metro_stations():
         return await metro_service.get_all_stations()
     
-    @router.get("/stations/{line_id}")
+    @router.get("/lines/{line_id}/stations")
     async def list_metro_stations_by_line(line_id: str):
         return await metro_service.get_stations_by_line(line_id)
 
@@ -40,7 +40,7 @@ def get_bus_router(
     async def list_bus_stops():
         return await bus_service.get_all_stops()
     
-    @router.get("/stops/{line_id}")
+    @router.get("/lines/{line_id}/stops")
     async def list_tram_stations_by_line(line_id: str):
         return await bus_service.get_stops_by_line(line_id)
 
@@ -59,7 +59,7 @@ def get_tram_router(
     async def list_tram_stops():
         return await tram_service.get_all_stops()
     
-    @router.get("/stops/{line_id}")
+    @router.get("/lines/{line_id}/stops")
     async def list_tram_stations_by_line(line_id: str):
         return await tram_service.get_stops_by_line(line_id)
 
@@ -78,7 +78,7 @@ def get_rodalies_router(
     async def list_rodalies_stops():
         return await rodalies_service.get_all_stations()
     
-    @router.get("/stations/{line_id}")
+    @router.get("/lines/{line_id}/stations")
     async def list_rodalies_stations_by_line(line_id: str):
         return await rodalies_service.get_stations_by_line(line_id)
 
@@ -108,7 +108,7 @@ def get_fgc_router(
     async def list_fgc_stations():
         return await fgc_service.get_all_stations()
     
-    @router.get("/stations/{line_id}")
+    @router.get("/lines/{line_id}/stations")
     async def list_fgc_stations_by_line(line_id: str):
         return await fgc_service.get_stations_by_line(line_id)
 
