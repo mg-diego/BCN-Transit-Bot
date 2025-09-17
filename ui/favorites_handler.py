@@ -78,7 +78,7 @@ class FavoritesHandler:
                 "coordinates": [item.latitude, item.longitude]
             }
         elif item_type == TransportType.TRAM.value:
-            item = await self.tram_service.get_stop_by_id(item_id, line_id)
+            item = await self.tram_service.get_stop_by_id(item_id)
             line = await self.tram_service.get_line_by_id(line_id)
 
             new_fav_item = {
@@ -89,7 +89,7 @@ class FavoritesHandler:
                 "coordinates": [item.latitude, item.longitude]
             }        
         elif item_type == TransportType.RODALIES.value:
-            item = await self.rodalies_service.get_station_by_id(item_id, line_id)
+            item = await self.rodalies_service.get_station_by_id(item_id)
             line = await self.rodalies_service.get_line_by_id(line_id)
 
             new_fav_item = {

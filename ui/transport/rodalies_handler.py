@@ -70,13 +70,13 @@ class RodaliesHandler(HandlerBase):
 
         default_callback = f"rodalies_station:{line_id}:{rodalies_station_id}"
 
-        rodalies_station = await self.rodalies_service.get_station_by_id(rodalies_station_id, line_id)
+        rodalies_station = await self.rodalies_service.get_station_by_id(rodalies_station_id)
         message = await self.show_stop_intro(update, context, TransportType.RODALIES.value, line_id, rodalies_station_id, rodalies_station.name)
-        await self.rodalies_service.get_station_routes(rodalies_station_id, line_id)
+        await self.rodalies_service.get_station_routes(rodalies_station_id)
         await self.update_manager.stop_loading(update, context)
         
         async def update_text():
-            next_rodalies = "\n\n".join(LineRoute.scheduled_list(route, with_arrival_date=False) for route in await self.rodalies_service.get_station_routes(rodalies_station_id, line_id))
+            next_rodalies = "\n\n".join(LineRoute.scheduled_list(route, with_arrival_date=False) for route in await self.rodalies_service.get_station_routes(rodalies_station_id))
             next_rodalies = next_rodalies if next_rodalies != '' else self.language_manager.t('no.departures.found')
             is_fav = self.user_data_manager.has_favorite(user_id, TransportType.RODALIES.value, rodalies_station_id)
             text = (
