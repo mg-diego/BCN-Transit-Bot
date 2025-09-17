@@ -69,18 +69,18 @@ class MetroHandler(HandlerBase):
         )
 
     async def show_station(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        user_id, chat_id, line_id, metro_station_id = self.message_service.extract_context(update, context)        
-        logger.info(f"Showing metro station info for user {user_id}, line {line_id}, station {metro_station_id}")
+        user_id, chat_id, line_id, station_code = self.message_service.extract_context(update, context)        
+        logger.info(f"Showing metro station info for user {user_id}, line {line_id}, station {station_code}")
         
-        default_callback = f"metro_station:{line_id}:{metro_station_id}"
+        default_callback = f"metro_station:{line_id}:{station_code}"
         callback = self.message_service.get_callback_query(update)
         callback = 'metro_station' if callback is None else callback
 
-        station = await self.metro_service.get_station_by_id(metro_station_id)
+        station = await self.metro_service.get_station_by_id(station_code)
 
-        message = await self.show_stop_intro(update, context, TransportType.METRO.value, line_id, metro_station_id, station.name)
+        message = await self.show_stop_intro(update, context, TransportType.METRO.value, line_id, station_code, station.name)
 
-        await self.metro_service.get_station_routes(metro_station_id)
+        await self.metro_service.get_station_routes(station_code)
         station_alerts = MetroStation.get_alert_by_language(station, self.user_data_manager.get_user_language(user_id))
         alerts_message = f"{self.language_manager.t("common.alerts")}\n{station_alerts}\n\n" if any(station_alerts) else ""
 
@@ -89,7 +89,7 @@ class MetroHandler(HandlerBase):
         async def update_text():
             routes = "\n\n".join(
                 LineRoute.simple_list(route, default_msg=self.language_manager.t('no.departures.found'))
-                for route in await self.metro_service.get_station_routes(metro_station_id)
+                for route in await self.metro_service.get_station_routes(station_code)
             )            
             text = (
                 f"{self.language_manager.t(f'{TransportType.METRO.value}.station.name', name=station.name.upper())}\n\n"
@@ -98,12 +98,12 @@ class MetroHandler(HandlerBase):
                 f"{self.language_manager.t(f'{TransportType.METRO.value}.station.next')}\n{routes.replace('🔜', self.language_manager.t('common.arriving'))}\n\n"
                 f"{self.language_manager.t('common.updates.every_x_seconds', seconds=self.UPDATE_INTERVAL)}"
             )
-            is_fav = self.user_data_manager.has_favorite(user_id, TransportType.METRO.value, metro_station_id)
-            keyboard = self.keyboard_factory.update_menu(is_fav, TransportType.METRO.value, metro_station_id, line_id, callback, has_connections=any(station.connections))
+            is_fav = self.user_data_manager.has_favorite(user_id, TransportType.METRO.value, station_code)
+            keyboard = self.keyboard_factory.update_menu(is_fav, TransportType.METRO.value, station_code, line_id, callback, has_connections=any(station.connections))
             return text, keyboard
 
         self.start_update_loop(user_id, chat_id, message.message_id, update_text, default_callback)
-        logger.info(f"Started update loop task for user {user_id}, station {metro_station_id}")
+        logger.info(f"Started update loop task for user {user_id}, station {station_code}")
 
     @audit_action(action_type="SEARCH", command_or_button="show_station_access")
     async def show_station_access(self, update: Update, context: ContextTypes.DEFAULT_TYPE):

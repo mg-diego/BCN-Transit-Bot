@@ -70,35 +70,34 @@ class RodaliesApiService:
         return alerts['included']
 
     # ==== Stations ====
-    async def get_next_trains_at_station(self, station_id: int, line_id: str) -> List[RodaliesStation]:
+    async def get_next_trains_at_station(self, station_id: int) -> List[RodaliesStation]:
         """Fetch all stations for a given line."""
         next_rodalies = await self._request("GET", f"/departures?stationId={station_id}&minute=90&fullResponse=true&lang=ca")       
         
         routes_dict = {}
         for item in next_rodalies["trains"]:
             line = item["line"]
-            if str(line["id"]) == str(line_id):
-                key = (line["name"], line["id"], item["destinationStation"]["name"])
+            key = (line["name"], line["id"], item["destinationStation"]["name"])
 
-                next_rodalies = NextTrip(
-                        id=item["technicalNumber"],
-                        arrival_time=normalize_to_seconds(datetime.fromisoformat(item["departureDateHourSelectedStation"]).timestamp()),
-                        platform=item["platformSelectedStation"],
-                        delay_in_minutes=item["delay"]
-                    )
-                
-                if key not in routes_dict:
-                    routes_dict[key] = LineRoute(
-                        route_id=line_id,
-                        line_name=line_id,
-                        line_id=line_id,
-                        destination=item["destinationStation"]["name"],
-                        next_trips=[next_rodalies],
-                        color=None,
-                        line_type=TransportType.RODALIES
-                    )
-                else:
-                    routes_dict[key].next_trips.append(next_rodalies)
+            next_rodalies = NextTrip(
+                    id=item["technicalNumber"],
+                    arrival_time=normalize_to_seconds(datetime.fromisoformat(item["departureDateHourSelectedStation"]).timestamp()),
+                    platform=item["platformSelectedStation"],
+                    delay_in_minutes=item["delay"]
+                )
+            
+            if key not in routes_dict:
+                routes_dict[key] = LineRoute(
+                    route_id=line["id"],
+                    line_name=line["name"],
+                    line_id=line["id"],
+                    destination=item["destinationStation"]["name"],
+                    next_trips=[next_rodalies],
+                    color=None,
+                    line_type=TransportType.RODALIES
+                )
+            else:
+                routes_dict[key].next_trips.append(next_rodalies)
 
         return list(routes_dict.values())
         

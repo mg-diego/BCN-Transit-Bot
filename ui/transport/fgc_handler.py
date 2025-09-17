@@ -78,11 +78,11 @@ class FgcHandler(HandlerBase):
 
         fgc_station = await self.fgc_service.get_station_by_id(fgc_station_id, line_id)
         message = await self.show_stop_intro(update, context, TransportType.FGC.value, line_id, fgc_station_id, fgc_station.name)
-        await self.fgc_service.get_station_routes(fgc_station.name, fgc_station.moute_id, line_id)
+        await self.fgc_service.get_station_routes(fgc_station.code)
         await self.update_manager.stop_loading(update, context)
         
         async def update_text():
-            next_fgc = "\n\n".join(LineRoute.scheduled_list(route) for route in await self.fgc_service.get_station_routes(fgc_station.name, fgc_station.moute_id, line_id))
+            next_fgc = "\n\n".join(LineRoute.scheduled_list(route) for route in await self.fgc_service.get_station_routes(fgc_station.code) if route.line_id == line_id)
             next_fgc = next_fgc if next_fgc != '' else self.language_manager.t('no.departures.found')
             is_fav = self.user_data_manager.has_favorite(user_id, TransportType.FGC.value, fgc_station_id)
             text = (

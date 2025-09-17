@@ -1,3 +1,4 @@
+import math
 from fastapi import APIRouter
 
 from application.services.transport.bicing_service import BicingService
@@ -7,6 +8,15 @@ from application.services.transport.metro_service import MetroService
 from application.services.transport.rodalies_service import RodaliesService
 from application.services.transport.tram_service import TramService
 from providers.helpers.utils import Utils
+
+def clean_floats(obj):
+    if isinstance(obj, float) and (math.isnan(obj) or math.isinf(obj)):
+        return None
+    if isinstance(obj, dict):
+        return {k: clean_floats(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [clean_floats(v) for v in obj]
+    return obj
 
 def get_metro_router(
     metro_service: MetroService
@@ -25,9 +35,9 @@ def get_metro_router(
     async def list_metro_stations_by_line(line_id: str):
         return await metro_service.get_stations_by_line(line_id)
     
-    @router.get("/stations/{station_id}/routes")
-    async def list_metro_station_routes(station_id: str):
-        return await metro_service.get_station_routes(station_id)
+    @router.get("/stations/{station_code}/routes")
+    async def list_metro_station_routes(station_code: str):
+        return await metro_service.get_station_routes(station_code)
 
     return router
 
@@ -48,9 +58,9 @@ def get_bus_router(
     async def list_tram_stations_by_line(line_id: str):
         return await bus_service.get_stops_by_line(line_id)
     
-    @router.get("/stops/{stop_id}/routes")
-    async def list_bus_stop_routes(stop_id: str):
-        return await bus_service.get_stop_routes(stop_id)
+    @router.get("/stops/{stop_code}/routes")
+    async def list_bus_stop_routes(stop_code: str):
+        return await bus_service.get_stop_routes(stop_code)
 
     return router
 
@@ -71,9 +81,9 @@ def get_tram_router(
     async def list_tram_stops_by_line(line_id: str):
         return await tram_service.get_stops_by_line(line_id)
     
-    @router.get("/stops/{stop_id}/routes")
-    async def list_tram_stop_routes(stop_id: str):
-        return await tram_service.get_stop_routes(stop_id)
+    @router.get("/stops/{stop_code}/routes")
+    async def list_tram_stop_routes(stop_code: str):
+        return await tram_service.get_stop_routes(stop_code)
 
     return router
 
@@ -94,9 +104,9 @@ def get_rodalies_router(
     async def list_rodalies_stations_by_line(line_id: str):
         return await rodalies_service.get_stations_by_line(line_id)
     
-    @router.get("/stations/{station_id}/routes")
-    async def list_rodalies_station_routes(station_id: str):
-        return await rodalies_service.get_station_routes(station_id)
+    @router.get("/stations/{station_code}/routes")
+    async def list_rodalies_station_routes(station_code: str):
+        return await rodalies_service.get_station_routes(station_code)
 
     return router
 
@@ -122,15 +132,16 @@ def get_fgc_router(
     
     @router.get("/stations")
     async def list_fgc_stations():
-        return await fgc_service.get_all_stations()
+        data = await fgc_service.get_all_stations()
+        return clean_floats(data)
     
     @router.get("/lines/{line_id}/stations")
     async def list_fgc_stations_by_line(line_id: str):
         return await fgc_service.get_stations_by_line(line_id)
     
-    @router.get("/stations/{station_id}/routes")
-    async def list_fgc_station_routes(station_id: str):
-        return await fgc_service.get_station_routes(station_id)
+    @router.get("/stations/{station_code}/routes")
+    async def list_fgc_station_routes(station_code: str):
+        return await fgc_service.get_station_routes(station_code)
 
     return router
 

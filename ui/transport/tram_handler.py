@@ -74,14 +74,14 @@ class TramHandler(HandlerBase):
 
         default_callback = Callbacks.TRAM_STATION.format(line_code=line_id, station_code=stop_id)
 
-        stop = await self.tram_service.get_stop_by_id(stop_id, line_id)
+        stop = await self.tram_service.get_stop_by_id(stop_id)
         message = await self.show_stop_intro(update, context, TransportType.TRAM.value, line_id, stop_id, stop.name)
 
-        await self.tram_service.get_stop_routes(stop.outboundCode, stop.returnCode)
+        await self.tram_service.get_stop_routes(stop.code)
         await self.update_manager.stop_loading(update, context)
 
         async def update_text():
-            routes = await self.tram_service.get_stop_routes(stop.outboundCode, stop.returnCode)
+            routes = await self.tram_service.get_stop_routes(stop.code)
             grouped_routes = LineRoute.grouped_list(routes, self.language_manager.t('no.departures.found'))
             text = (
                 f"{self.language_manager.t(f'{TransportType.TRAM.value}.stop.name', name=stop.name.upper())}\n\n"

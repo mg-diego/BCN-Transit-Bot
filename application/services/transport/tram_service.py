@@ -4,6 +4,7 @@ from collections import defaultdict
 from typing import List
 
 from domain.common.alert import Alert
+from domain.common.line_route import LineRoute
 from domain.transport_type import TransportType
 from providers.api import TramApiService
 from providers.manager import LanguageManager, UserDataManager
@@ -124,15 +125,16 @@ class TramService(ServiceBase):
         logger.info(f"[{self.__class__.__name__}] get_stops_by_line({line_id}) -> {len(stops)} stops (tiempo: {elapsed:.4f} s)")
         return stops
 
-    async def get_stop_routes(self, outbound_code: int, return_code: int) -> str:
+    async def get_stop_routes(self, stop_code: int) -> List[LineRoute]:
         start = time.perf_counter()
+        stop = await self.get_stop_by_code(stop_code)
         routes = await self._get_from_cache_or_api(
-            f"tram_routes_{outbound_code}_{return_code}",
-            lambda: self.tram_api_service.get_next_trams_at_stop(outbound_code, return_code),
+            f"tram_routes_{stop_code}",
+            lambda: self.tram_api_service.get_next_trams_at_stop(stop.outboundCode, stop.returnCode),
             cache_ttl=30,
         )
         elapsed = (time.perf_counter() - start)
-        logger.info(f"[{self.__class__.__name__}] get_stop_routes({outbound_code},{return_code}) -> {len(routes)} routes (tiempo: {elapsed:.4f} s)")
+        logger.info(f"[{self.__class__.__name__}] get_stop_routes({stop_code}) -> {len(routes)} routes (tiempo: {elapsed:.4f} s)")
         return routes
 
     async def get_tram_stop_connections(self, stop_id) -> List[TramConnection]:
@@ -165,10 +167,18 @@ class TramService(ServiceBase):
         logger.info(f"[{self.__class__.__name__}] get_line_by_id({line_id}) -> {line} (tiempo: {elapsed:.4f} s)")
         return line
 
-    async def get_stop_by_id(self, stop_id, line_id) -> TramStation:
+    async def get_stop_by_id(self, stop_id) -> TramStation:
         start = time.perf_counter()
-        stops = await self.get_stops_by_line(line_id)
+        stops = await self.get_all_stops()
         stop = next((s for s in stops if str(s.id) == str(stop_id)), None)
         elapsed = (time.perf_counter() - start)
-        logger.info(f"[{self.__class__.__name__}] get_stop_by_id({stop_id}, {line_id}) -> {stop} (tiempo: {elapsed:.4f} s)")
+        logger.info(f"[{self.__class__.__name__}] get_stop_by_id({stop_id}) -> {stop} (tiempo: {elapsed:.4f} s)")
+        return stop
+
+    async def get_stop_by_code(self, stop_code) -> TramStation:
+        start = time.perf_counter()
+        stops = await self.get_all_stops()
+        stop = next((s for s in stops if str(s.code) == str(stop_code)), None)
+        elapsed = (time.perf_counter() - start)
+        logger.info(f"[{self.__class__.__name__}] get_stop_by_code({stop_code}) -> {stop} (tiempo: {elapsed:.4f} s)")
         return stop

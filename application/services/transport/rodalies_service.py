@@ -88,16 +88,17 @@ class RodaliesService(ServiceBase):
         logger.info(f"[{self.__class__.__name__}] get_all_stations ejecutado en {elapsed:.4f} s")
         return stations
 
-    async def get_station_routes(self, station_id, line_id):
+    async def get_station_routes(self, station_code) -> List[LineRoute]:
         start = time.perf_counter()
+        station = await self.get_station_by_code(station_code)
         routes = await self._get_from_cache_or_api(
-            f"rodalies_station_{station_id}_routes",
-            lambda: self.rodalies_api_service.get_next_trains_at_station(station_id, line_id),
+            f"rodalies_station_{station_code}_routes",
+            lambda: self.rodalies_api_service.get_next_trains_at_station(station.id),
             cache_ttl=10
         )
         
         elapsed = (time.perf_counter() - start)
-        logger.info(f"[{self.__class__.__name__}] get_station_routes({station_id}) ejecutado en {elapsed:.4f} s")
+        logger.info(f"[{self.__class__.__name__}] get_station_routes({station_code}) ejecutado en {elapsed:.4f} s")
         return routes
 
     async def get_line_by_id(self, line_id: str) -> RodaliesLine:
@@ -133,10 +134,18 @@ class RodaliesService(ServiceBase):
         logger.info(f"[{self.__class__.__name__}] get_stations_by_name({station_name}) ejecutado en {elapsed:.4f} s")
         return result
 
-    async def get_station_by_id(self, station_id, line_id) -> RodaliesStation:
+    async def get_station_by_id(self, station_id) -> RodaliesStation:
         start = time.perf_counter()
-        stops = await self.get_stations_by_line(line_id)
+        stops = await self.get_all_stations()
         stop = next((s for s in stops if str(s.id) == str(station_id)), None)
         elapsed = (time.perf_counter() - start)
-        logger.info(f"[{self.__class__.__name__}] get_station_by_id({station_id}, line {line_id}) -> {stop} ejecutado en {elapsed:.4f} s")
+        logger.info(f"[{self.__class__.__name__}] get_station_by_id({station_id}) -> {stop} ejecutado en {elapsed:.4f} s")
+        return stop
+    
+    async def get_station_by_code(self, station_code) -> RodaliesStation:
+        start = time.perf_counter()
+        stops = await self.get_all_stations()
+        stop = next((s for s in stops if str(s.id) == str(station_code)), None)
+        elapsed = (time.perf_counter() - start)
+        logger.info(f"[{self.__class__.__name__}] get_station_by_code({station_code}) -> {stop} ejecutado en {elapsed:.4f} s")
         return stop

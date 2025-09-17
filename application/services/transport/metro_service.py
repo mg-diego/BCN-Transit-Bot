@@ -143,15 +143,15 @@ class MetroService(ServiceBase):
         logger.info(f"[{self.__class__.__name__}] get_station_accesses({group_code_id}) -> {len(data)} accesses ({elapsed:.4f} s)")
         return data
 
-    async def get_station_routes(self, metro_station_id) -> List[LineRoute]:
+    async def get_station_routes(self, station_code) -> List[LineRoute]:
         start = time.perf_counter()
         routes = await self._get_from_cache_or_api(
-            f"metro_station_{metro_station_id}_routes",
-            lambda: self.tmb_api_service.get_next_metro_at_station(metro_station_id),
+            f"metro_station_{station_code}_routes",
+            lambda: self.tmb_api_service.get_next_metro_at_station(station_code),
             cache_ttl=10
         )
         elapsed = time.perf_counter() - start
-        logger.info(f"[{self.__class__.__name__}] get_station_routes({metro_station_id}) -> {len(routes)} routes ({elapsed:.4f} s)")
+        logger.info(f"[{self.__class__.__name__}] get_station_routes({station_code}) -> {len(routes)} routes ({elapsed:.4f} s)")
         return routes
 
     async def get_stations_by_name(self, station_name) -> List[MetroStation]:

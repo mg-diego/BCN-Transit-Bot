@@ -128,6 +128,7 @@ class FgcApiService:
 
         # 4. Obtener info de estaciones
         stations_df = self._stops[self._stops["stop_id"].isin(stop_order_map.keys())].copy()
+        stations_df = stations_df.dropna(subset=["stop_id"])
 
         # 5. Crear lista de FgcStation con order correcto
         stations = [
@@ -139,17 +140,17 @@ class FgcApiService:
         stations.sort(key=lambda x: x.order)
         return stations
 
-    async def get_moute_next_departures(self, moute_id, line_name):
+    async def get_moute_next_departures(self, moute_id):
         data = await self._request("GET", f"{self.MOUTE_BASE_URL}/nextdeparturesNEW?paradaId={moute_id}&useRealTime=true&language=ca_ES", params=None, use_FGC_BASE_URL=False)
         lines = data["parada"]["lineas"]["linia"]
-        line_id = next(l['idLinia'] for l in lines if l['nomLinia'] == line_name)
-        directions = set([s["direccio"] for s in data["sortides"]["sortida"] if line_id in s["tripId"]])
+        #line_id = next(l['idLinia'] for l in lines if l['nomLinia'] == line_name)
+        directions = set([s["direccio"] for s in data["sortides"]["sortida"]])
 
         next_departures = {}
         for direction in directions:
             next_departures[direction] = []
-            sortides_realtime = [s for s in data["sortides"]["sortida"] if line_id in s["tripId"] and s["realtime"] and s["direccio"] == direction]
-            sortides_scheduled = [s for s in data["sortides"]["sortida"] if line_id in s["tripId"] and s["realtime"] == False and s["direccio"] == direction]
+            sortides_realtime = [s for s in data["sortides"]["sortida"] if s["realtime"] and s["direccio"] == direction]
+            sortides_scheduled = [s for s in data["sortides"]["sortida"] if s["realtime"] == False and s["direccio"] == direction]
 
             for rt in sortides_realtime:
                 next_departures[direction].append({
