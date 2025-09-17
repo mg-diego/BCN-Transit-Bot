@@ -1,3 +1,4 @@
+from domain.common.line_route import LineRoute
 from domain.transport_type import TransportType
 from telegram import Update
 from telegram.ext import ContextTypes
@@ -81,7 +82,7 @@ class FgcHandler(HandlerBase):
         await self.update_manager.stop_loading(update, context)
         
         async def update_text():
-            next_fgc = await self.fgc_service.get_station_routes(fgc_station.name, fgc_station.moute_id, line_id)
+            next_fgc = "\n\n".join(LineRoute.scheduled_list(route) for route in await self.fgc_service.get_station_routes(fgc_station.name, fgc_station.moute_id, line_id))
             next_fgc = next_fgc if next_fgc != '' else self.language_manager.t('no.departures.found')
             is_fav = self.user_data_manager.has_favorite(user_id, TransportType.FGC.value, fgc_station_id)
             text = (

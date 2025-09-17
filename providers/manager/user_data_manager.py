@@ -464,7 +464,7 @@ class UserDataManager:
         ws_alerts = self._load_alerts()
         
         for idx, ws_alert in enumerate(ws_alerts, start=2):  # start=2 porque la fila 1 es encabezado
-            if ws_alert.get("type") and str(ws_alert.get("type")) == str(alert.transport_type.value) and str(ws_alert.get("id")) == str(alert.id):
+            if ws_alert.get("type") and alert.transport_type is not None and str(ws_alert.get("type")) == str(alert.transport_type.value) and str(ws_alert.get("id")) == str(alert.id):
                 self.alerts_ws.delete_rows(idx)
                 logger.info(f"Alert removed from spreadsheet: type={alert.transport_type}, alert_id={alert.id}")
                 

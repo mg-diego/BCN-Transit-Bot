@@ -130,14 +130,10 @@ class BusService(ServiceBase):
             lambda: self.tmb_api_service.get_next_bus_at_stop(stop_id),
             cache_ttl=10
         )
-        msg = "\n\n".join(
-            LineRoute.simple_list(route, arriving_threshold=60,
-                                  default_msg=self.language_manager.t('no.departures.found'))
-            for route in routes
-        )
+
         elapsed = time.perf_counter() - start
         logger.info(f"[{self.__class__.__name__}] get_stop_routes({stop_id}) -> {len(routes)} routes ({elapsed:.4f} s)")
-        return msg
+        return routes
 
     # === OTHER CALLS ===
     async def get_stops_by_name(self, stop_name) -> List[BusLine]:

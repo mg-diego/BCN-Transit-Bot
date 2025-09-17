@@ -95,10 +95,10 @@ class RodaliesService(ServiceBase):
             lambda: self.rodalies_api_service.get_next_trains_at_station(station_id, line_id),
             cache_ttl=10
         )
-        result = "\n\n".join(LineRoute.scheduled_list(route, with_arrival_date=False) for route in routes)
+        
         elapsed = (time.perf_counter() - start)
         logger.info(f"[{self.__class__.__name__}] get_station_routes({station_id}) ejecutado en {elapsed:.4f} s")
-        return result
+        return routes
 
     async def get_line_by_id(self, line_id: str) -> RodaliesLine:
         start = time.perf_counter()

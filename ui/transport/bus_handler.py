@@ -3,6 +3,7 @@ from telegram.ext import ContextTypes
 
 from domain.bus.bus_stop import BusStop
 from domain.callbacks import Callbacks
+from domain.common.line_route import LineRoute
 from providers.helpers.google_maps_helper import GoogleMapsHelper
 from ui.keyboard_factory import KeyboardFactory
 from application import BusService, MessageService, UpdateManager, TelegraphService
@@ -86,7 +87,10 @@ class BusHandler(HandlerBase):
         await self.update_manager.stop_loading(update, context)
 
         async def update_text():
-            next_buses = await self.bus_service.get_stop_routes(bus_stop_id)
+            next_buses = "\n\n".join(
+                    LineRoute.simple_list(route, arriving_threshold=60,default_msg=self.language_manager.t('no.departures.found'))
+                    for route in await self.bus_service.get_stop_routes(bus_stop_id)
+                )
             is_fav = self.user_data_manager.has_favorite(user_id, TransportType.BUS.value, bus_stop_id)
             text = (
                 f"{self.language_manager.t(f'{TransportType.BUS.value}.stop.name', name=bus_stop.name.upper())}\n\n"

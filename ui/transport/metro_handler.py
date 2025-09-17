@@ -1,3 +1,4 @@
+from domain.common.line_route import LineRoute
 from domain.metro.metro_station import MetroStation
 from domain.transport_type import TransportType
 from domain.metro import format_metro_connections
@@ -86,7 +87,10 @@ class MetroHandler(HandlerBase):
         await self.update_manager.stop_loading(update, context)
 
         async def update_text():
-            routes = await self.metro_service.get_station_routes(metro_station_id)
+            routes = "\n\n".join(
+                LineRoute.simple_list(route, default_msg=self.language_manager.t('no.departures.found'))
+                for route in await self.metro_service.get_station_routes(metro_station_id)
+            )            
             text = (
                 f"{self.language_manager.t(f'{TransportType.METRO.value}.station.name', name=station.name.upper())}\n\n"
                 f"{alerts_message}"

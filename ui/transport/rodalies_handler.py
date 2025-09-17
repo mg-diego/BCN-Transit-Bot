@@ -1,3 +1,4 @@
+from domain.common.line_route import LineRoute
 from domain.transport_type import TransportType
 from telegram import Update
 from telegram.ext import ContextTypes
@@ -75,7 +76,7 @@ class RodaliesHandler(HandlerBase):
         await self.update_manager.stop_loading(update, context)
         
         async def update_text():
-            next_rodalies = await self.rodalies_service.get_station_routes(rodalies_station_id, line_id)
+            next_rodalies = "\n\n".join(LineRoute.scheduled_list(route, with_arrival_date=False) for route in await self.rodalies_service.get_station_routes(rodalies_station_id, line_id))
             next_rodalies = next_rodalies if next_rodalies != '' else self.language_manager.t('no.departures.found')
             is_fav = self.user_data_manager.has_favorite(user_id, TransportType.RODALIES.value, rodalies_station_id)
             text = (

@@ -184,11 +184,10 @@ class FgcService(ServiceBase):
                 routes,
                 cache_ttl=30,
             )
-
-        result = "\n\n".join(LineRoute.scheduled_list(route) for route in routes)
+        
         elapsed = (time.perf_counter() - start)
         logger.info(f"[{self.__class__.__name__}] get_station_routes({station_name}) ejecutado en {elapsed:.4f} s")
-        return result
+        return routes
 
     async def get_station_by_id(self, station_id, line_id) -> FgcStation:
         start = time.perf_counter()
