@@ -1,4 +1,3 @@
-from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import Optional
 
@@ -17,7 +16,7 @@ class Line:
     transport_type: TransportType
     name_with_emoji: Optional[str] = None
     has_alerts: Optional[bool] = False
-    alerts: Optional[list[Alert]] = field(default_factory=lambda: defaultdict(list))
+    alerts: Optional[list[Alert]] = field(default_factory=list)
 
     def __post_init__(self):
         if self.transport_type == TransportType.METRO:
