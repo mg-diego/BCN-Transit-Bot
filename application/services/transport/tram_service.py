@@ -74,6 +74,8 @@ class TramService(ServiceBase):
         alerts_dict = dict(result)
 
         for line in lines:
+            line_stops = await self.get_stops_by_line(line.id)
+            line.description = f"{line_stops[0].name} - {line_stops[-1].name}"
             line_alerts = alerts_dict.get(line.name, [])
             line.has_alerts = bool(line_alerts)
             line.alerts = line_alerts

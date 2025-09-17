@@ -19,6 +19,6 @@ def create_app(
     app.include_router(get_rodalies_router(rodalies_service), prefix="/api/rodalies")
     app.include_router(get_bicing_router(bicing_service), prefix="/api/bicing")
 
-    app.include_router(get_near_router(metro_service, bus_service, tram_service, rodalies_service, bicing_service, fgc_service), prefix="/api/near")
+    app.include_router(get_near_router(metro_service, bus_service, tram_service, rodalies_service, bicing_service, fgc_service), prefix="/api")
 
     return app
