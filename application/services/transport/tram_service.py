@@ -134,6 +134,11 @@ class TramService(ServiceBase):
             lambda: self.tram_api_service.get_next_trams_at_stop(stop.outboundCode, stop.returnCode),
             cache_ttl=30,
         )
+        lines = await self.get_all_lines()
+        for route in routes:
+            if line := next((l for l in lines if l.name == route.line_name), None):
+                route.line_id = line.id
+                route.line_code = line.code
         elapsed = (time.perf_counter() - start)
         logger.info(f"[{self.__class__.__name__}] get_stop_routes({stop_code}) -> {len(routes)} routes (tiempo: {elapsed:.4f} s)")
         return routes
