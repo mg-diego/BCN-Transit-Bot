@@ -123,16 +123,16 @@ class BusService(ServiceBase):
         logger.info(f"[{self.__class__.__name__}] get_stops_by_line({line_id}) -> {len(result)} stops ({elapsed:.4f} s)")
         return result
 
-    async def get_stop_routes(self, stop_id: str) -> str:
+    async def get_stop_routes(self, stop_code: str) -> str:
         start = time.perf_counter()
         routes = await self._get_from_cache_or_api(
-            f"bus_stop_{stop_id}_routes",
-            lambda: self.tmb_api_service.get_next_bus_at_stop(stop_id),
+            f"bus_stop_{stop_code}_routes",
+            lambda: self.tmb_api_service.get_next_bus_at_stop(stop_code),
             cache_ttl=10
         )
 
         elapsed = time.perf_counter() - start
-        logger.info(f"[{self.__class__.__name__}] get_stop_routes({stop_id}) -> {len(routes)} routes ({elapsed:.4f} s)")
+        logger.info(f"[{self.__class__.__name__}] get_stop_routes({stop_code}) -> {len(routes)} routes ({elapsed:.4f} s)")
         return routes
 
     # === OTHER CALLS ===
@@ -180,17 +180,17 @@ class BusService(ServiceBase):
         logger.info(f"[{self.__class__.__name__}] get_lines_by_category({bus_category}) -> {len(result)} lines ({elapsed:.4f} s)")
         return result
 
-    async def get_stop_by_id(self, stop_id) -> BusStop:
+    async def get_stop_by_code(self, stop_code) -> BusStop:
         start = time.perf_counter()
         stops = await self.get_all_stops()
         filtered_stops = [
             stop for stop in stops
-            if int(stop_id) == int(stop.code)
+            if int(stop_code) == int(stop.code)
         ]
         result = next((bs for bs in filtered_stops if bs.has_alerts),
                       filtered_stops[0] if filtered_stops else None)
         elapsed = time.perf_counter() - start
-        logger.info(f"[{self.__class__.__name__}] get_stop_by_id({stop_id}) -> {result} ({elapsed:.4f} s)")
+        logger.info(f"[{self.__class__.__name__}] get_stop_by_code({stop_code}) -> {result} ({elapsed:.4f} s)")
         return result
 
     async def _build_and_cache_static_stops(self) -> List[BusStop]:

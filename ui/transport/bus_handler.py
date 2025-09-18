@@ -72,26 +72,26 @@ class BusHandler(HandlerBase):
 
     async def show_stop(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Display a specific bus stop with next arrivals."""
-        user_id, chat_id, line_id, bus_stop_id = self.message_service.extract_context(update, context)
-        logger.info(f"Showing stop info for user {user_id}, line {line_id}, stop {bus_stop_id}")
+        user_id, chat_id, line_id, bus_stop_code = self.message_service.extract_context(update, context)
+        logger.info(f"Showing stop info for user {user_id}, line {line_id}, stop {bus_stop_code}")
 
-        default_callback = Callbacks.BUS_STATION.format(line_code=line_id, station_code=bus_stop_id)
+        default_callback = Callbacks.BUS_STATION.format(line_code=line_id, station_code=bus_stop_code)
 
-        bus_stop = await self.bus_service.get_stop_by_id(bus_stop_id)
+        bus_stop = await self.bus_service.get_stop_by_code(bus_stop_code)
         station_alerts = BusStop.get_alert_by_language(bus_stop, self.user_data_manager.get_user_language(user_id))
         alerts_message = f"{self.language_manager.t("common.alerts")}\n{station_alerts}\n\n" if any(station_alerts) else ""
         
-        message = await self.show_stop_intro(update, context, TransportType.BUS.value, line_id, bus_stop_id, bus_stop.name)
+        message = await self.show_stop_intro(update, context, TransportType.BUS.value, line_id, bus_stop_code, bus_stop.name)
         
-        await self.bus_service.get_stop_routes(bus_stop_id)
+        await self.bus_service.get_stop_routes(bus_stop.code)
         await self.update_manager.stop_loading(update, context)
 
         async def update_text():
             next_buses = "\n\n".join(
                     LineRoute.simple_list(route, arriving_threshold=60,default_msg=self.language_manager.t('no.departures.found'))
-                    for route in await self.bus_service.get_stop_routes(bus_stop_id)
+                    for route in await self.bus_service.get_stop_routes(bus_stop.code)
                 )
-            is_fav = self.user_data_manager.has_favorite(user_id, TransportType.BUS.value, bus_stop_id)
+            is_fav = self.user_data_manager.has_favorite(user_id, TransportType.BUS.value, bus_stop_code)
             text = (
                 f"{self.language_manager.t(f'{TransportType.BUS.value}.stop.name', name=bus_stop.name.upper())}\n\n"
                 f"{alerts_message}"
@@ -99,8 +99,8 @@ class BusHandler(HandlerBase):
                 f"{self.language_manager.t(f'{TransportType.BUS.value}.stop.next')}\n{next_buses.replace('🔜', self.language_manager.t('common.arriving'))}\n\n"
                 f"{self.language_manager.t('common.updates.every_x_seconds', seconds=self.UPDATE_INTERVAL)}"
             )
-            keyboard = self.keyboard_factory.update_menu(is_fav, TransportType.BUS.value, bus_stop_id, line_id, default_callback, has_connections=False)
+            keyboard = self.keyboard_factory.update_menu(is_fav, TransportType.BUS.value, bus_stop_code, line_id, default_callback, has_connections=False)
             return text, keyboard
 
         self.start_update_loop(user_id, chat_id, message.message_id, update_text, default_callback)
-        logger.info(f"Started update loop task for user {user_id}, station {bus_stop_id}")
+        logger.info(f"Started update loop task for user {user_id}, station {bus_stop_code}")

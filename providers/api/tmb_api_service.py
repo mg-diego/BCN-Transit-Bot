@@ -171,8 +171,8 @@ class TmbApiService:
                     routes.append(route)
         return routes
 
-    async def get_next_bus_at_stop(self, station_id) -> List[LineRoute]:
-        url = f"{self.BASE_URL_ITRANSIT}/bus/parades/{station_id}"
+    async def get_next_bus_at_stop(self, stop_code) -> List[LineRoute]:
+        url = f"{self.BASE_URL_ITRANSIT}/bus/parades/{stop_code}"
         data = await self._get(url)
 
         routes = []

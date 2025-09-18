@@ -201,7 +201,7 @@ class ReplyHandler:
             if bicing is not None:
                 bicing_stations.append(bicing)
 
-            stop = await bus_service.get_stop_by_id(value_to_search)
+            stop = await bus_service.get_stop_by_code(value_to_search)
             if stop is not None:
                 bus_stops.append(stop)
 

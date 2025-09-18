@@ -106,17 +106,17 @@ class MetroService(ServiceBase):
         logger.info(f"[{self.__class__.__name__}] get_all_stations() -> {len(static_stations)} stations ({elapsed:.4f} s)")
         return static_stations
 
-    async def get_stations_by_line(self, line_id) -> List[MetroStation]:
+    async def get_stations_by_line(self, line_code) -> List[MetroStation]:
         start = time.perf_counter()
-        cache_key = f"metro_line_{line_id}_stations"
+        cache_key = f"metro_line_{line_code}_stations"
         cached_stations = await self._get_from_cache_or_data(cache_key, None, cache_ttl=3600*24*7)
         if cached_stations:
             elapsed = time.perf_counter() - start
-            logger.info(f"[{self.__class__.__name__}] get_stations_by_line({line_id}) -> cached ({elapsed:.4f} s)")
+            logger.info(f"[{self.__class__.__name__}] get_stations_by_line({line_code}) -> cached ({elapsed:.4f} s)")
             return cached_stations
 
-        line = await self.get_line_by_id(line_id)
-        api_stations = await self.tmb_api_service.get_stations_by_metro_line(line_id)
+        line = await self.get_line_by_code(line_code)
+        api_stations = await self.tmb_api_service.get_stations_by_metro_line(line_code)
 
         semaphore_connections = asyncio.Semaphore(10)
 
@@ -172,21 +172,21 @@ class MetroService(ServiceBase):
         logger.info(f"[{self.__class__.__name__}] get_stations_by_name({station_name}) -> {len(result)} matches ({elapsed:.4f} s)")
         return result
 
-    async def get_station_by_id(self, station_id) -> MetroStation:
+    async def get_station_by_code(self, station_code) -> MetroStation:
         start = time.perf_counter()
         stations = await self.get_all_stations()
-        filtered_stations = [station for station in stations if int(station_id) == int(station.code)]
+        filtered_stations = [station for station in stations if int(station_code) == int(station.code)]
         station = filtered_stations[0] if filtered_stations else None
         elapsed = time.perf_counter() - start
-        logger.info(f"[{self.__class__.__name__}] get_station_by_id({station_id}) -> {station} ({elapsed:.4f} s)")
+        logger.info(f"[{self.__class__.__name__}] get_station_by_id({station_code}) -> {station} ({elapsed:.4f} s)")
         return station
 
-    async def get_line_by_id(self, line_id) -> MetroLine:
+    async def get_line_by_code(self, line_code) -> MetroLine:
         start = time.perf_counter()
         lines = await self.get_all_lines()
-        line = next((l for l in lines if str(l.code) == str(line_id)), None)
+        line = next((l for l in lines if str(l.code) == str(line_code)), None)
         elapsed = time.perf_counter() - start
-        logger.info(f"[{self.__class__.__name__}] get_line_by_id({line_id}) -> {line} ({elapsed:.4f} s)")
+        logger.info(f"[{self.__class__.__name__}] get_line_by_id({line_code}) -> {line} ({elapsed:.4f} s)")
         return line
 
     async def get_line_by_name(self, line_name):
