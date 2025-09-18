@@ -136,26 +136,27 @@ class FgcService(ServiceBase):
             if station.moute_id is not None:
                 raw_routes = await self.fgc_api_service.get_moute_next_departures(station.moute_id)
                 routes = []
-                for direction, trips in raw_routes.items():
-                    nextFgc = [
-                        NextTrip(
-                            id="",
-                            arrival_time=normalize_to_seconds(int(trip.get("departure_time"))),
+                for line, destinations in raw_routes.items():
+                    for destination, trips in destinations.items():
+                        nextFgc = [
+                            NextTrip(
+                                id="",
+                                arrival_time=normalize_to_seconds(int(trip.get("departure_time"))),
+                            )
+                            for trip in trips
+                        ]
+                        routes.append(
+                            LineRoute(
+                                destination=destination,
+                                next_trips=nextFgc,
+                                line_name=line,
+                                line_id=line,
+                                line_code=line,
+                                line_type=TransportType.FGC,
+                                color=None,
+                                route_id=line,
+                            )
                         )
-                        for trip in trips
-                    ]
-                    routes.append(
-                        LineRoute(
-                            destination=direction,
-                            next_trips=nextFgc,
-                            line_name=station.line_name,
-                            line_id=station.line_name,
-                            line_code=station.line_name,
-                            line_type=TransportType.FGC,
-                            color=None,
-                            route_id=station.line_name,
-                        )
-                    )
             else:
                 raw_routes = await self.fgc_api_service.get_next_departures(station.name, station.line_name)
                 routes = []

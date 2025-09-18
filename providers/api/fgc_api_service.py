@@ -143,29 +143,31 @@ class FgcApiService:
     async def get_moute_next_departures(self, moute_id):
         data = await self._request("GET", f"{self.MOUTE_BASE_URL}/nextdeparturesNEW?paradaId={moute_id}&useRealTime=true&language=ca_ES", params=None, use_FGC_BASE_URL=False)
         lines = data["parada"]["lineas"]["linia"]
-        #line_id = next(l['idLinia'] for l in lines if l['nomLinia'] == line_name)
-        directions = set([s["direccio"] for s in data["sortides"]["sortida"]])
 
         next_departures = {}
-        for direction in directions:
-            next_departures[direction] = []
-            sortides_realtime = [s for s in data["sortides"]["sortida"] if s["realtime"] and s["direccio"] == direction]
-            sortides_scheduled = [s for s in data["sortides"]["sortida"] if s["realtime"] == False and s["direccio"] == direction]
+        for line in lines:
+            line_id = line['idLinia']
+            next_departures[line.get('nomLinia')] = {}
+            directions = set([s["direccio"] for s in data["sortides"]["sortida"] if line_id in s["tripId"]])
+            for direction in directions:
+                next_departures[line.get('nomLinia')][direction] = []
+                sortides_realtime = [s for s in data["sortides"]["sortida"] if line_id in s["tripId"] and s["realtime"] and s["direccio"] == direction]
+                sortides_scheduled = [s for s in data["sortides"]["sortida"] if line_id in s["tripId"] and s["realtime"] == False and s["direccio"] == direction]
 
-            for rt in sortides_realtime:
-                next_departures[direction].append({
-                    "departure_time": datetime(year=int(rt["any"]), month=int(rt["mes"]), day=int(rt["dia"]), hour=int(rt["hora"]), minute=int(rt["minuts"])).timestamp(),
-                    "type": "RT"
-                })
-
-            for scheduled in sortides_scheduled:
-                if len(next_departures[direction]) < 3:
-                    next_departures[direction].append({
-                        "departure_time": datetime(year=int(scheduled["any"]), month=int(scheduled["mes"]), day=int(scheduled["dia"]), hour=int(scheduled["hora"]), minute=int(scheduled["minuts"])).timestamp(),
-                        "type": "Scheduled"
+                for rt in sortides_realtime:
+                    next_departures[line.get('nomLinia')][direction].append({
+                        "departure_time": datetime(year=int(rt["any"]), month=int(rt["mes"]), day=int(rt["dia"]), hour=int(rt["hora"]), minute=int(rt["minuts"])).timestamp(),
+                        "type": "RT"
                     })
-                else:
-                    break
+
+                for scheduled in sortides_scheduled:
+                    if len(next_departures[line.get('nomLinia')][direction]) < 3:
+                        next_departures[line.get('nomLinia')][direction].append({
+                            "departure_time": datetime(year=int(scheduled["any"]), month=int(scheduled["mes"]), day=int(scheduled["dia"]), hour=int(scheduled["hora"]), minute=int(scheduled["minuts"])).timestamp(),
+                            "type": "Scheduled"
+                        })
+                    else:
+                        break
 
         return next_departures
         
