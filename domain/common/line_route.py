@@ -16,7 +16,8 @@ class LineRoute:
     destination: str
     next_trips: List[NextTrip]
     name_with_emoji: Optional[str] = ""
-    line_id: Optional[str] = ""
+    line_id: Optional[str] = ""    
+    line_code: Optional[str] = ""
 
     def __post_init__(self):
         if self.line_type == TransportType.METRO:
