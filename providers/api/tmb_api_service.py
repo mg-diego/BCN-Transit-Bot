@@ -79,7 +79,7 @@ class TmbApiService:
         features = data['features']
 
         lines = []
-        lines.extend(BusLine.create_bus_line(feature) for feature in features)
+        lines.extend(BusLine.create_bus_line(feature) for feature in features if feature['properties']['NOM_FAMILIA'] and 'Llançadores' not in feature['properties']['NOM_LINIA'])
         lines.sort(key=self._natural_key)
         return lines
 
