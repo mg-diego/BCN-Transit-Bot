@@ -169,9 +169,7 @@ class TramService(ServiceBase):
         return line
 
     async def get_stop_by_id(self, stop_id) -> TramStation:
-    async def get_stop_by_id(self, stop_id) -> TramStation:
         start = time.perf_counter()
-        stops = await self.get_all_stops()
         stops = await self.get_all_stops()
         stop = next((s for s in stops if str(s.id) == str(stop_id)), None)
         elapsed = (time.perf_counter() - start)
