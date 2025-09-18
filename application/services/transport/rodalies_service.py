@@ -147,5 +147,5 @@ class RodaliesService(ServiceBase):
         stops = await self.get_all_stations()
         stop = next((s for s in stops if str(s.id) == str(station_code)), None)
         elapsed = (time.perf_counter() - start)
-        logger.info(f"[{self.__class__.__name__}] get_station_by_code({station_code}) -> {stop} ejecutado en {elapsed:.4f} s")
+        logger.info(f"[{self.__class__.__name__}] get_station_by_code({station_code}) -> {stop} ejecutado en {elapsed:.4f} s")  
         return stop

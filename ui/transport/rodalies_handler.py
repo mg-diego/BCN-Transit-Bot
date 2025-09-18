@@ -71,6 +71,7 @@ class RodaliesHandler(HandlerBase):
         default_callback = f"rodalies_station:{line_id}:{rodalies_station_id}"
 
         rodalies_station = await self.rodalies_service.get_station_by_id(rodalies_station_id)
+        rodalies_station = await self.rodalies_service.get_station_by_id(rodalies_station_id)
         message = await self.show_stop_intro(update, context, TransportType.RODALIES.value, line_id, rodalies_station_id, rodalies_station.name)
         await self.rodalies_service.get_station_routes(rodalies_station.code)
         await self.update_manager.stop_loading(update, context)

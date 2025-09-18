@@ -5,6 +5,7 @@ from typing import List
 
 from domain.common.alert import Alert
 from domain.common.line_route import LineRoute
+from domain.common.line_route import LineRoute
 from domain.transport_type import TransportType
 from providers.api import TramApiService
 from providers.manager import LanguageManager, UserDataManager
@@ -168,7 +169,9 @@ class TramService(ServiceBase):
         return line
 
     async def get_stop_by_id(self, stop_id) -> TramStation:
+    async def get_stop_by_id(self, stop_id) -> TramStation:
         start = time.perf_counter()
+        stops = await self.get_all_stops()
         stops = await self.get_all_stops()
         stop = next((s for s in stops if str(s.id) == str(stop_id)), None)
         elapsed = (time.perf_counter() - start)
