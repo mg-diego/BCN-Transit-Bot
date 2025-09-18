@@ -247,6 +247,7 @@ class TramApiService:
             if key not in routes_dict:
                 routes_dict[key] = LineRoute(
                     line_id=item["lineName"],
+                    line_code=item["lineName"],
                     route_id=item["code"],
                     line_name=item["lineName"],
                     destination=item["destination"],

@@ -91,6 +91,7 @@ class RodaliesApiService:
                     route_id=line["id"],
                     line_name=line["name"],
                     line_id=line["id"],
+                    line_code=line["id"],
                     destination=item["destinationStation"]["name"],
                     next_trips=[next_rodalies],
                     color=None,

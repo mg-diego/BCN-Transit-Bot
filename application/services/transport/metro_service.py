@@ -5,6 +5,8 @@ from typing import List
 import time
 
 from domain import LineRoute
+from domain.common.line import Line
+from domain.common.station import Station
 from domain.metro import MetroLine, MetroStation, MetroAccess
 from domain.common.alert import Alert
 from domain.transport_type import TransportType
@@ -203,7 +205,7 @@ class MetroService(ServiceBase):
         semaphore_lines = asyncio.Semaphore(5)
         semaphore_connections = asyncio.Semaphore(10)
 
-        async def process_station(api_station, line):
+        async def process_station(api_station: Station, line: Line):
             async with semaphore_connections:
                 connections = await self.tmb_api_service.get_station_connections(api_station.code)
                 station = MetroStation.update_metro_station_with_line_info(api_station, line)
