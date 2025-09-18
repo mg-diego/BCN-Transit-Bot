@@ -22,7 +22,7 @@ class TmbApiService:
         self.app_id = app_id
 
     def _natural_key(self, line):
-        name = line.ORIGINAL_NOM_LINIA.strip().upper()
+        name = line.name.strip().upper()
 
         # Si es puramente numérica: agrupar todas con prefijo "" y ordenar por número
         if name.isdigit():
@@ -73,10 +73,15 @@ class TmbApiService:
             items.sort(key=sort_key)
         return items, data
     
-    async def get_bus_lines(self) -> List[BusLine]:
+    async def get_bus_lines(self) -> List[BusLine]:   
         url = f'{self.BASE_URL_TRANSIT}/linies/bus'
-        items, _ = await self.fetch_transit_items(url, BusLine, sort_key=self._natural_key)
-        return items
+        data = await self._get(url)
+        features = data['features']
+
+        lines = []
+        lines.extend(BusLine.create_bus_line(feature) for feature in features)
+        lines.sort(key=self._natural_key)
+        return lines
 
     async def get_bus_line_stops(self, line_code) -> List[BusStop]:
         url = f'{self.BASE_URL_TRANSIT}/linies/bus/{line_code}/parades'

@@ -58,10 +58,10 @@ class BusHandler(HandlerBase):
 
         line = await self.bus_service.get_line_by_id(line_id)
         stops = await self.bus_service.get_stops_by_line(line_id)
-        encoded = self.mapper.map_bus_stops(stops, line_id, line.ORIGINAL_NOM_LINIA)
+        encoded = self.mapper.map_bus_stops(stops, line_id, line.name)
 
         if any(line.alerts):
-            line_alerts_url = self.telegraph_service.create_page(f'Bus {line.NOM_LINIA}: Alerts', line.alerts)
+            line_alerts_url = self.telegraph_service.create_page(f'Bus {line.name}: Alerts', line.alerts)
             line_alerts_html = f"{self.language_manager.t('common.alerts.line.1')} <a href='{line_alerts_url}'>{self.language_manager.t('common.alerts.line.2')}</a>"
 
         await self.message_service.send_new_message_from_callback(

@@ -109,7 +109,7 @@ class KeyboardFactory:
     
     def bus_lines_menu(self, bus_lines: List[BusLine]):
         buttons = [
-            InlineKeyboardButton(f"{line.NOM_LINIA} {'⚠️' if line.has_alerts else ''}  ", callback_data=Callbacks.BUS_LINE.format(line_code=line.CODI_LINIA, line_name=line.NOM_LINIA))
+            InlineKeyboardButton(f"{line.name} {'⚠️' if line.has_alerts else ''}  ", callback_data=Callbacks.BUS_LINE.format(line_code=line.code, line_name=line.name))
             for line in bus_lines
         ]
 

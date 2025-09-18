@@ -45,7 +45,7 @@ class BusService(ServiceBase):
         if cached_lines is not None and cached_lines:
             if cached_alerts:
                 for line in cached_lines:
-                    line_alerts = cached_alerts.get(line.ORIGINAL_NOM_LINIA, [])
+                    line_alerts = cached_alerts.get(line.name, [])
                     line.has_alerts = any(line_alerts)
                     line.alerts = line_alerts
             elapsed = time.perf_counter() - start
@@ -69,7 +69,7 @@ class BusService(ServiceBase):
         alerts_dict = dict(result)
 
         for line in lines:
-            line_alerts = alerts_dict.get(line.ORIGINAL_NOM_LINIA, [])
+            line_alerts = alerts_dict.get(line.name, [])
             line.has_alerts = any(line_alerts)
             line.alerts = line_alerts
 
@@ -156,7 +156,7 @@ class BusService(ServiceBase):
     async def get_line_by_id(self, line_id) -> BusLine:
         start = time.perf_counter()
         lines = await self.get_all_lines()
-        line = next((l for l in lines if str(l.CODI_LINIA) == str(line_id)), None)
+        line = next((l for l in lines if str(l.code) == str(line_id)), None)
         elapsed = time.perf_counter() - start
         logger.info(f"[{self.__class__.__name__}] get_line_by_id({line_id}) -> {line} ({elapsed:.4f} s)")
         return line
@@ -168,13 +168,13 @@ class BusService(ServiceBase):
             start_cat, end_cat = bus_category.split("-")
             result = [
                 line for line in lines
-                if int(start_cat) <= int(line.CODI_LINIA) <= int(end_cat)
-                and line.ORIGINAL_NOM_LINIA.isdigit()
+                if int(start_cat) <= int(line.code) <= int(end_cat)
+                and line.name.isdigit()
             ]
         else:
             result = [
                 line for line in lines
-                if bus_category == line.NOM_FAMILIA
+                if bus_category == line.category
             ]
         elapsed = time.perf_counter() - start
         logger.info(f"[{self.__class__.__name__}] get_lines_by_category({bus_category}) -> {len(result)} lines ({elapsed:.4f} s)")
@@ -200,9 +200,9 @@ class BusService(ServiceBase):
 
         semaphore_lines = asyncio.Semaphore(5)
 
-        async def process_line(line):
+        async def process_line(line: BusLine):
             async with semaphore_lines:
-                api_stops = await self.tmb_api_service.get_bus_line_stops(line.CODI_LINIA)
+                api_stops = await self.tmb_api_service.get_bus_line_stops(line.code)
             return [BusStop.update_bus_stop_with_line_info(s, line) for s in api_stops]
 
         results = await asyncio.gather(*[process_line(line) for line in lines])
@@ -222,9 +222,9 @@ class BusService(ServiceBase):
 
         semaphore = asyncio.Semaphore(10)
 
-        async def process_line(line):
+        async def process_line(line: BusLine):
             async with semaphore:
-                stops = await self.get_stops_by_line(line.CODI_LINIA)
+                stops = await self.get_stops_by_line(line.code)
             return [(stop.code, stop.alerts) for stop in stops]
 
         results = await asyncio.gather(*[process_line(line) for line in alert_lines])

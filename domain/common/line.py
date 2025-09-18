@@ -89,6 +89,17 @@ class Line:
                 "RL3": "🟩",
                 "RL4": "🟨",
             }
+        if self.transport_type == TransportType.BUS:
+            emojis = {
+                "H": "🟦",
+                "D": "🟪",
+                "V": "🟩",
+                "M": "🔴",
+                "X": "⚫"
+            }
+            if self.name.isdigit():
+                self.name_with_emoji = f"🔴 {self.name}"
+                return
 
         emoji = emojis.get(self.name, "")
         self.name_with_emoji = f"{emoji} {self.name}"
@@ -116,5 +127,3 @@ class Line:
                 "RL4": "FFDD00",
             }
             self.color = COLORS.get(self.name, self.color or "808080")
-
-

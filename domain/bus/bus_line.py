@@ -1,53 +1,22 @@
-from collections import defaultdict
-from dataclasses import dataclass, field
-from typing import Optional
-
-from domain.common.alert import Alert
+from dataclasses import dataclass
+from domain.common.line import Line
+from domain.transport_type import TransportType
 
 @dataclass
-class BusLine:
-    ID_LINIA: int
-    CODI_LINIA: int
-    NOM_LINIA: str
-    DESC_LINIA: str
-    ORIGEN_LINIA: str
-    DESTI_LINIA: str
-    NUM_PAQUETS: int
-    ID_OPERADOR: int
-    CODI_OPERADOR: str
-    NOM_OPERADOR: str
-    ID_TIPUS_TRANSPORT: int
-    NOM_TIPUS_TRANSPORT: str
-    ID_FAMILIA: int
-    CODI_FAMILIA: int
-    NOM_FAMILIA: str
-    ORDRE_FAMILIA: int
-    ORDRE_LINIA: int
-    CODI_TIPUS_CALENDARI: str
-    NOM_TIPUS_CALENDARI: str
-    DATA: str  # puedes usar datetime si lo vas a parsear
-    COLOR_LINIA: str
-    COLOR_AUX_LINIA: str
-    COLOR_TEXT_LINIA: str
-    ORIGINAL_NOM_LINIA: Optional[str] = None
-    has_alerts: Optional[bool] = False
-    alerts: Optional[list[Alert]] = field(default_factory=lambda: defaultdict(list))
+class BusLine(Line):
+    category: str
 
-    def __post_init__(self):
-        emojis = {
-            "H": "🟦",
-            "D": "🟪",
-            "V": "🟩",
-            "M": "🔴",
-            "X": "⚫"
-        }
-
-        self.ORIGINAL_NOM_LINIA = self.NOM_LINIA
-
-        for letra in self.NOM_LINIA:
-            if letra in emojis:
-                self.NOM_LINIA = f"{emojis[letra]} {self.NOM_LINIA}"
-                break
-        else:
-            if self.NOM_LINIA.isdigit():
-                self.NOM_LINIA = f"🔴 {self.NOM_LINIA}"
+    @staticmethod
+    def create_bus_line(feature: dict):
+        props = feature['properties']
+        return BusLine(
+            id=str(props.get('ID_LINIA', '')),
+            code=str(props.get('CODI_LINIA', '')),
+            name=props.get('NOM_LINIA', ''),
+            description=props.get('DESC_LINIA', ''),
+            origin=props.get('ORIGEN_LINIA', ''),
+            destination=props.get('DESTI_LINIA', ''),
+            color=props.get('COLOR_LINIA', ''),
+            category=props.get('NOM_FAMILIA', ''),
+            transport_type=TransportType.BUS
+        )
