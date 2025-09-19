@@ -1,5 +1,6 @@
 import asyncio
 from domain.bicing import BicingStation
+from domain.common.location import Location
 from domain.transport_type import TransportType
 from providers.helpers.distance_helper import DistanceHelper
 from providers.manager import audit_action
@@ -97,7 +98,7 @@ class ReplyHandler:
             await message_service.send_new_message(update, language_manager.t('results.location.received'))
             metro_stations, bus_stops, tram_stops, rodalies_stations, bicing_stations, fgc_stations = await self._search_stations('', only_bicing=False)
             near_stops = DistanceHelper.build_stops_list(metro_stations, bus_stops, tram_stops, rodalies_stations, bicing_stations, fgc_stations, user_location, results_to_return=999999, max_distance_km=0.5)
-            encoded = self.mapper.map_near_stations(near_stops, user_location.latitude, user_location.longitude)
+            encoded = self.mapper.map_near_stations(near_stops, user_location)
             
             await message_service.send_new_message(update, language_manager.t('common.map.open'), keyboard_factory.map_reply_menu(encoded))
 
@@ -111,7 +112,10 @@ class ReplyHandler:
 
         if user_location is None:
             await message_service.send_new_message(update, language_manager.t('results.location.ask'), keyboard_factory.location_keyboard())
-            self.current_search = str(update.message.text)
+            self.current_search = str(update.message.text)        
+        else:
+            user_location = Location(latitude=user_location.latitude, longitude=user_location.longitude)
+            
         message_service.set_bot_instance(context.bot)
 
         if len(self.current_search) < 3:
@@ -166,7 +170,7 @@ class ReplyHandler:
                 )
                 for stop in stops_with_distance
             ]
-            encoded = self.mapper.map_bicing_stations(near_bicing_stations, user_location.latitude, user_location.longitude)
+            encoded = self.mapper.map_bicing_stations(near_bicing_stations, user_location)
             await message_service.send_new_message(update, language_manager.t('results.location.received'), keyboard_factory.map_reply_menu(encoded))
             self.current_search = self.previous_search
             msg = language_manager.t('bicing.station.near')

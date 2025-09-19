@@ -7,6 +7,8 @@ from application.services.transport.fgc_service import FgcService
 from application.services.transport.metro_service import MetroService
 from application.services.transport.rodalies_service import RodaliesService
 from application.services.transport.tram_service import TramService
+from domain.common.location import Location
+from providers.helpers.distance_helper import DistanceHelper
 from providers.helpers.utils import Utils
 
 def clean_floats(obj):
@@ -156,7 +158,7 @@ def get_near_router(
     router = APIRouter()
 
     @router.get("/near")
-    async def list_near_stations(lat: float, lon: float, radius: int = 500):
+    async def list_near_stations(lat: float, lon: float, radius: float = 0.5):
         results = {
             "metro": await metro_service.get_stations_by_name(''),
             "bus": await bus_service.get_stops_by_name(''),
@@ -165,6 +167,17 @@ def get_near_router(
             "rodalies": await rodalies_service.get_stations_by_name(''),
             "bicing": await bicing_service.get_stations_by_name('')
         }
-        return results
+        near_results = DistanceHelper.build_stops_list(
+            metro_stations=results.get('metro'),
+            bus_stops=results.get('bus'),
+            tram_stops=results.get('tram'),
+            rodalies_stations=results.get('rodalies'),
+            bicing_stations=results.get('bicing'),
+            fgc_stations=results.get('fgc'),
+            user_location=Location(latitude=lat, longitude=lon),
+            results_to_return=999999,
+            max_distance_km=radius
+        )
+        return near_results
 
     return router

@@ -11,8 +11,8 @@ class TramLine(Line):
             code=str(props.get('code', '')),
             name=props.get('name', ''),
             description='TBD',
-            origin=None,
-            destination=None,
+            origin='',
+            destination='',
             color="008E78",
             transport_type=TransportType.TRAM
         )

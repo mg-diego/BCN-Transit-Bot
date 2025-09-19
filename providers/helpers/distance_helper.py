@@ -2,6 +2,7 @@ import math
 import time
 from typing import List, Optional, Tuple, Dict
 from domain.bus import BusStop
+from domain.common.location import Location
 from domain.metro import MetroStation
 from domain.tram import TramStation
 from domain.rodalies import RodaliesStation
@@ -48,7 +49,7 @@ class DistanceHelper:
         rodalies_stations: List[RodaliesStation],
         bicing_stations: List[BicingStation],
         fgc_stations: List[FgcStation],
-        user_location: Optional[object] = None,
+        user_location: Optional[Location] = None,
         results_to_return: int = 50,
         max_distance_km: float = 1000
     ) -> List[Dict]:

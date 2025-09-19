@@ -6,6 +6,7 @@ import unicodedata
 from typing import List, Dict, Any
 
 from domain.bus import BusStop
+from domain.common.location import Location
 from domain.metro import MetroStation
 from domain.rodalies import RodaliesLine, RodaliesStation
 from domain.tram import TramStation
@@ -110,7 +111,7 @@ class TransportDataCompressor:
 
     def map_metro_stations(self, stations: List[MetroStation], line_id: str, line_name: str) -> str:
         self._log_mapping_start(TransportType.METRO.value, len(stations), line_id, line_name)
-
+        
         stops_base = [
             {
                 "lat": station.latitude,
@@ -229,14 +230,14 @@ class TransportDataCompressor:
         self._log_mapping_end(TransportType.RODALIES.value, line.id)
         return compressed
     
-    def map_bicing_stations(self, stations: List[BicingStation], user_location_lat, user_location_long):
+    def map_bicing_stations(self, stations: List[BicingStation], user_location: Location):
         self._log_mapping_start(TransportType.BICING.value, len(stations), '', '')
 
         data = {
             "type": TransportType.BICING.value,
             "user_location": {
-                "latitude": user_location_lat,
-                "longitude": user_location_long
+                "latitude": user_location.latitude,
+                "longitude": user_location.longitude
             },
             "stops": [
                 {
@@ -287,7 +288,7 @@ class TransportDataCompressor:
         self._log_mapping_end(TransportType.FGC.value, line.id)
         return compressed
     
-    def map_near_stations(self, near_stations, latitude, longitude):
+    def map_near_stations(self, near_stations, user_location: Location):
         self._log_mapping_start("NEAR_STATIONS", len(near_stations), '', '')
 
         stops = [
@@ -305,8 +306,8 @@ class TransportDataCompressor:
         data = {
             "type": "near",
             "user_location": {
-                "latitude": latitude,
-                "longitude": longitude
+                "latitude": user_location.latitude,
+                "longitude": user_location.longitude
             },
             "stops": stops
         }
