@@ -179,7 +179,7 @@ class UserDataManager:
     # ---------------------------
 
     @audit_action(action_type="START", command_or_button="register_user", params_args=["user_id", "username"])
-    def register_user(self, user_id: int, username: str):
+    def register_user(self, user_id: str, username: str):
         """Registra usuario en 'users' si no existe, o actualiza 'last_start' si ya existe """
         logger.debug(f"Registering user_id={user_id}, username={username}")
         users = self._load_users()
@@ -277,7 +277,7 @@ class UserDataManager:
         ]
         """
         return User(
-            user_id=int(row.get('user_id')),
+            user_id=str(row.get('user_id')),
             username=row.get('username'),
             created_at=datetime.strptime(row.get('created_at'), "%Y:%m:%d %H:%M:%S"),
             language=row.get('language'),

@@ -200,7 +200,7 @@ def get_user_router(
     async def get_favorites(user_id: str):
         try:
             favorites = user_data_manager.get_favorites_by_user(user_id)
-            return {"favorites": favorites}
+            return favorites
         except Exception as e:
             return {"status": "ERROR", "message": str(e)}
         

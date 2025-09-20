@@ -4,7 +4,7 @@ from typing import List
 
 @dataclass
 class User:
-    user_id: int
+    user_id: str
     username: str
     created_at: datetime
     language: str
