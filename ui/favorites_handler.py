@@ -64,7 +64,8 @@ class FavoritesHandler:
                 "STATION_CODE": item_id,
                 "STATION_NAME": item.name,
                 "STATION_GROUP_CODE": item.CODI_GRUP_ESTACIO,
-                "LINE_NAME": item.line_name_with_emoji,
+                "LINE_NAME": item.line_name,
+                "LINE_NAME_WITH_EMOJI": item.line_name_with_emoji,
                 "LINE_CODE": line_id,
                 "coordinates": [item.latitude, item.longitude]
             }
@@ -85,6 +86,7 @@ class FavoritesHandler:
                 "STOP_CODE": item.id,
                 "STOP_NAME": item.name,
                 "LINE_NAME": line.name,
+                "LINE_NAME_WITH_EMOJI": line.name_with_emoji,
                 "LINE_CODE": line_id,
                 "coordinates": [item.latitude, item.longitude]
             }        
@@ -95,7 +97,8 @@ class FavoritesHandler:
             new_fav_item = {
                 "STOP_CODE": item.id,
                 "STOP_NAME": item.name,
-                "LINE_NAME": line.emoji_name,
+                "LINE_NAME": line.name,
+                "LINE_NAME_WITH_EMOJI": line.name_with_emoji,
                 "LINE_CODE": line_id,
                 "coordinates": [item.latitude, item.longitude]
             }
@@ -107,6 +110,7 @@ class FavoritesHandler:
                 "STATION_CODE": item.id,
                 "STATION_NAME": item.streetName,
                 "LINE_NAME": '',
+                "LINE_NAME_WITH_EMOJI": '',
                 "LINE_CODE": '',
                 "coordinates": [item.latitude, item.longitude]
             }
@@ -118,7 +122,8 @@ class FavoritesHandler:
             new_fav_item = {
                 "STATION_CODE": item.id,
                 "STATION_NAME": item.name,
-                "LINE_NAME": line.name_with_emoji,
+                "LINE_NAME": line.name,
+                "LINE_NAME_WITH_EMOJI": line.name_with_emoji,
                 "LINE_CODE": line_id,
                 "coordinates": [item.latitude, item.longitude]
             }

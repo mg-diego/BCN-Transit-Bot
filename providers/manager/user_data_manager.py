@@ -317,41 +317,41 @@ class UserDataManager:
                 self.favorites_ws.append_row([
                     user_id, type.lower(),
                     item.get('STATION_CODE'), item.get('STATION_NAME'),
-                    item.get('STATION_GROUP_CODE'), item.get('LINE_NAME'),
+                    item.get('STATION_GROUP_CODE'), item.get('LINE_NAME'), item.get('LINE_NAME_WITH_EMOJI'),
                     item.get('LINE_CODE'), coordinates[0], coordinates[1]
                 ])
             elif type.lower() == TransportType.BUS.value:
                 self.favorites_ws.append_row([
                     user_id, type.lower(),
                     item.get('STOP_CODE'), item.get('STOP_NAME'),
-                    '', '', item.get('LINE_CODE'), coordinates[1], coordinates[0]
+                    '', '', '', item.get('LINE_CODE'), coordinates[1], coordinates[0]
                 ])
             elif type.lower() == TransportType.TRAM.value:
                 self.favorites_ws.append_row([
                     user_id, type.lower(),
                     item.get('STOP_CODE'), item.get('STOP_NAME'),
-                    '', item.get('LINE_NAME'), item.get('LINE_CODE'),
+                    '', item.get('LINE_NAME'), item.get('LINE_NAME_WITH_EMOJI'), item.get('LINE_CODE'),
                     coordinates[1], coordinates[0]
                 ])
             elif type.lower() == TransportType.RODALIES.value:
                 self.favorites_ws.append_row([
                     user_id, type.lower(),
                     item.get('STOP_CODE'), item.get('STOP_NAME'),
-                    '', item.get('LINE_NAME'), item.get('LINE_CODE'),
+                    '', item.get('LINE_NAME'), item.get('LINE_NAME_WITH_EMOJI'), item.get('LINE_CODE'),
                     coordinates[1], coordinates[0]
                 ])
             elif type.lower() == TransportType.BICING.value:
                 self.favorites_ws.append_row([
                     user_id, type.lower(),
                     item.get('STATION_CODE'), item.get('STATION_NAME'),
-                    '', item.get('LINE_NAME'), item.get('LINE_CODE'),
+                    '', item.get('LINE_NAME'), item.get('LINE_NAME_WITH_EMOJI'), item.get('LINE_CODE'),
                     coordinates[1], coordinates[0]
                 ])
             elif type.lower() == TransportType.FGC.value:
                 self.favorites_ws.append_row([
                     user_id, type.lower(),
                     item.get('STATION_CODE'), item.get('STATION_NAME'),
-                    '', item.get('LINE_NAME'), item.get('LINE_CODE'),
+                    '', item.get('LINE_NAME'), item.get('LINE_NAME_WITH_EMOJI'), item.get('LINE_CODE'),
                     coordinates[1], coordinates[0]
                 ])
 

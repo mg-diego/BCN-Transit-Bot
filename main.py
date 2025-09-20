@@ -327,7 +327,8 @@ async def start_bot_and_api():
         tram_service=bot.tram_service,
         rodalies_service=bot.rodalies_service,
         bicing_service=bot.bicing_service,
-        fgc_service=bot.fgc_service
+        fgc_service=bot.fgc_service,
+        user_data_manager=bot.user_data_manager
     )
 
     # Ejecutar ambos en paralelo

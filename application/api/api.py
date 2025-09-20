@@ -10,6 +10,7 @@ from application.services.transport.tram_service import TramService
 from domain.common.location import Location
 from providers.helpers.distance_helper import DistanceHelper
 from providers.helpers.utils import Utils
+from providers.manager.user_data_manager import UserDataManager
 
 def clean_floats(obj):
     if isinstance(obj, float) and (math.isnan(obj) or math.isinf(obj)):
@@ -180,4 +181,27 @@ def get_near_router(
         )
         return near_results
 
+    return router
+
+def get_user_router(
+    user_data_manager: UserDataManager
+) -> APIRouter:
+    router = APIRouter()
+
+    @router.post("/{user_id}/register")
+    async def register_user(user_id: str):
+        try:
+            user_data_manager.register_user(user_id, 'android_user')
+            return {"status": "SUCCESS", "user_id": user_id}
+        except Exception as e:
+            return {"status": "ERROR", "message": str(e)}
+        
+    @router.get("/{user_id}/favorites")
+    async def get_favorites(user_id: str):
+        try:
+            favorites = user_data_manager.get_favorites_by_user(user_id)
+            return {"favorites": favorites}
+        except Exception as e:
+            return {"status": "ERROR", "message": str(e)}
+        
     return router
