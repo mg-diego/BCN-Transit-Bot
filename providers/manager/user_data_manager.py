@@ -141,8 +141,8 @@ class UserDataManager:
 
         # Conversión explícita de campos booleanos conocidos
         for user in users:
-            if "receive_notifications" in user:
-                user["receive_notifications"] = str(user["receive_notifications"]).strip().lower() in ("true", "1", "yes", "y")
+            if "RECEIVE_NOTIFICATIONS" in user:
+                user["RECEIVE_NOTIFICATIONS"] = str(user["RECEIVE_NOTIFICATIONS"]).strip().lower() in ("true", "1", "yes", "y")
 
         self._users_cache = {"data": users, "timestamp": datetime.now()}
         return users
@@ -178,21 +178,21 @@ class UserDataManager:
     # USERS
     # ---------------------------
 
-    @audit_action(action_type="START", command_or_button="register_user", params_args=["user_id", "username"])
+    @audit_action(action_type="START", command_or_button="register_user", params_args=["USER_ID", "USERNAME"])
     def register_user(self, user_id: str, username: str):
         """Registra usuario en 'users' si no existe, o actualiza 'last_start' si ya existe """
         logger.debug(f"Registering user_id={user_id}, username={username}")
         users = self._load_users()
         now = datetime.now().strftime("%Y:%m:%d %H:%M:%S")
-        if user_id not in [u["user_id"] for u in users]:
+        if user_id not in [u["USER_ID"] for u in users]:
             self.users_ws.append_row([user_id, username, now, 'en', True, json.dumps([])])
             self._users_cache["data"].append({
-                "user_id": user_id,
-                "username": username,
-                "created_at": now,
-                "language": "en",
-                "receive_notifications": True,
-                "already_notified": json.dumps([e.__dict__ for e in []], ensure_ascii=False)
+                "USER_ID": user_id,
+                "USERNAME": username,
+                "CREATED_AT": now,
+                "LANGUAGE": "en",
+                "RECEIVE_NOTIFICATIONS": True,
+                "ALREADY_NOTIFIED": json.dumps([e.__dict__ for e in []], ensure_ascii=False)
             })
             return 1
 
@@ -200,9 +200,9 @@ class UserDataManager:
         logger.debug(f"Updating language for user_id={user_id} to '{new_language}'")
         users = self._load_users()
         for idx, user in enumerate(users, start=2):
-            if str(user["user_id"]) == str(user_id):
+            if str(user["USER_ID"]) == str(user_id):
                 self.users_ws.update_cell(idx, self.USERS_LANGUAGE_INDEX, new_language)
-                self._users_cache["data"][idx - 2]["language"] = new_language
+                self._users_cache["data"][idx - 2]["LANGUAGE"] = new_language
                 return True
         return False
 
@@ -211,9 +211,9 @@ class UserDataManager:
         users = self._load_users()
         return next(
             (
-                user["language"]
+                user["LANGUAGE"]
                 for user in users
-                if str(user["user_id"]) == str(user_id)
+                if str(user["USER_ID"]) == str(user_id)
             ),
             "en",
         )
@@ -226,11 +226,11 @@ class UserDataManager:
         logger.debug(f"Updating notified alerts for user_id={user_id} -> '{alert_id}'")
         users = self._load_users()
         for idx, user in enumerate(users, start=2):
-            if str(user["user_id"]) == str(user_id):
-                already_notified = self.safe_str_to_list(user.get('already_notified'))
+            if str(user["USER_ID"]) == str(user_id):
+                already_notified = self.safe_str_to_list(user.get('ALREADY_NOTIFIED'))
                 already_notified.append(alert_id)
                 self.users_ws.update_cell(idx, self.USERS_ALREADY_NOTIFIED, json.dumps(already_notified))
-                self._users_cache["data"][idx - 2]["already_notified"] = already_notified
+                self._users_cache["data"][idx - 2]["ALREADY_NOTIFIED"] = already_notified
                 return True
         return False
     
@@ -238,11 +238,11 @@ class UserDataManager:
         logger.debug(f"Removing deprecated notified alerts for user_id={user_id} -> '{alert_id}'")
         users = self._load_users()
         for idx, user in enumerate(users, start=2):
-            if str(user["user_id"]) == str(user_id):
-                already_notified = self.safe_str_to_list(user.get('already_notified'))
+            if str(user["USER_ID"]) == str(user_id):
+                already_notified = self.safe_str_to_list(user.get('ALREADY_NOTIFIED'))
                 already_notified.remove(alert_id)
                 self.users_ws.update_cell(idx, self.USERS_ALREADY_NOTIFIED, json.dumps(already_notified))
-                self._users_cache["data"][idx - 2]["already_notified"] = already_notified
+                self._users_cache["data"][idx - 2]["ALREADY_NOTIFIED"] = already_notified
                 return True
         return False
 
@@ -251,9 +251,9 @@ class UserDataManager:
         users = self._load_users()
         return next(
             (
-                user["receive_notifications"]
+                user["RECEIVE_NOTIFICATIONS"]
                 for user in users
-                if str(user["user_id"]) == str(user_id)
+                if str(user["USER_ID"]) == str(user_id)
             ),
             False,
         )
@@ -263,9 +263,9 @@ class UserDataManager:
         logger.debug(f"Updating receive_notifications for user_id={user_id} to '{value}'")
         users = self._load_users()
         for idx, user in enumerate(users, start=2):
-            if str(user["user_id"]) == str(user_id):
+            if str(user["USER_ID"]) == str(user_id):
                 self.users_ws.update_cell(idx, self.USERS_RECEIVE_NOTIFICATIONS_INDEX, bool_value)                
-                self._users_cache["data"][idx - 2]["receive_notifications"] = bool_value
+                self._users_cache["data"][idx - 2]["RECEIVE_NOTIFICATIONS"] = bool_value
                 return True
         return False
     
@@ -277,12 +277,12 @@ class UserDataManager:
         ]
         """
         return User(
-            user_id=str(row.get('user_id')),
-            username=row.get('username'),
-            created_at=datetime.strptime(row.get('created_at'), "%Y:%m:%d %H:%M:%S"),
-            language=row.get('language'),
-            receive_notifications=row.get('receive_notifications'),
-            already_notified=self.safe_str_to_list(row.get('already_notified'))
+            user_id=str(row.get('USER_ID')),
+            username=row.get('USERNAME'),
+            created_at=datetime.strptime(row.get('CREATED_AT'), "%Y:%m:%d %H:%M:%S"),
+            language=row.get('LANGUAGE'),
+            receive_notifications=row.get('RECEIVE_NOTIFICATIONS'),
+            already_notified=self.safe_str_to_list(row.get('ALREADY_NOTIFIED'))
         )
     
     def safe_str_to_list(self, value):
@@ -366,7 +366,7 @@ class UserDataManager:
         logger.debug(f"Removing favorite: user_id={user_id}, type={type}, item_id={item_id}")
         favorites = self._load_favorites()
         for idx, fav in enumerate(favorites, start=2):
-            if str(fav["type"]) == str(type) and str(fav["station_code"]) == str(item_id):
+            if str(fav["TYPE"]) == str(type) and str(fav["STATION_CODE"]) == str(item_id):
                 self.favorites_ws.delete_rows(idx)
                 self._invalidate_favorites_cache()
                 return True
@@ -375,18 +375,18 @@ class UserDataManager:
     def get_favorites_by_user(self, user_id: int):
         logger.debug(f"Fetching favorites for user_id={user_id}")
         favorites = self._load_favorites()
-        user_fav = [f for f in favorites if str(f["user_id"]) == str(user_id)]
+        user_fav = [f for f in favorites if str(f["USER_ID"]) == str(user_id)]
     
         return sorted(
             user_fav,
-            key=lambda f: self.FAVORITE_TYPE_ORDER.get(f.get("type"), 999)
+            key=lambda f: self.FAVORITE_TYPE_ORDER.get(f.get("TYPE"), 999)
         )
 
     def has_favorite(self, user_id, type, item_id):
         logger.debug(f"Checking if user_id={user_id} has favorite {type}:{item_id}")
         favorites = self.get_favorites_by_user(user_id)
         return any(
-            f.get('type') == str(type) and str(f.get('station_code')) == str(item_id)
+            f.get('TYPE') == str(type) and str(f.get('STATION_CODE')) == str(item_id)
             for f in favorites
         )
 
@@ -401,24 +401,24 @@ class UserDataManager:
         now = datetime.now().strftime("%Y:%m:%d %H:%M:%S")
 
         for idx, search in enumerate(searches, start=2):
-            if (str(search.get("type")) == str(type) and
-                    str(search.get("code")) == str(code) and
-                    str(search.get("line")) == str(line)):
-                new_uses = int(search.get("searches", 0)) + 1
+            if (str(search.get("TYPE")) == str(type) and
+                    str(search.get("CODE")) == str(code) and
+                    str(search.get("LINE")) == str(line)):
+                new_uses = int(search.get("SEARCHES", 0)) + 1
                 self.searches_ws.update_cell(idx, self.SEARCHES_LAST_SEARCH_COLUMN_INDEX, now)
                 self.searches_ws.update_cell(idx, self.SEARCHES_USES_COLUMN_INDEX, new_uses)
-                self._searches_cache["data"][idx - 2]["searches"] = new_uses
+                self._searches_cache["data"][idx - 2]["SEARCHES"] = new_uses
                 return new_uses
 
         self.searches_ws.append_row([type, line, code, name, now, now, 1])
         self._searches_cache["data"].append({
-            "type": type,
-            "line": line,
-            "code": code,
+            "TYPE": type,
+            "LINE": line,
+            "CODE": code,
             "name": name,
-            "created_at": now,
-            "last_search": now,
-            "searches": 1
+            "CREATED_AT": now,
+            "LAST_SEARCH": now,
+            "SEARCHES": 1
         })
         return 1
     
@@ -432,20 +432,20 @@ class UserDataManager:
         ws_alerts = self._load_alerts()
         
         for idx, ws_alert in enumerate(ws_alerts, start=2):
-            if str(ws_alert.get("type")) == str(transport_type.value) and str(ws_alert.get("id")) == str(api_alert.id):
+            if str(ws_alert.get("TYPE")) == str(transport_type.value) and str(ws_alert.get("ID")) == str(api_alert.id):
                 logger.debug(f"Alert already registered: type={transport_type}, alert_id={api_alert.id}")
                 return False
             
         self.alerts_ws.append_row([api_alert.id, transport_type.value, api_alert.begin_date.isoformat() if api_alert.begin_date else "", api_alert.end_date.isoformat() if api_alert.end_date else "", api_alert.status, api_alert.cause, json.dumps([pub.__dict__ for pub in api_alert.publications], ensure_ascii=False), json.dumps([ent.__dict__ for ent in api_alert.affected_entities], ensure_ascii=False)])
         self._alerts_cache["data"].append({
-            "id": api_alert.id,
-            "transport_type": transport_type,
-            "begin_date": api_alert.begin_date.isoformat() if api_alert.begin_date else "",
-            "end_date": api_alert.end_date.isoformat() if api_alert.end_date else "",
-            "status": api_alert.status,
-            "cause": api_alert.cause,
-            "publications": json.dumps([pub.__dict__ for pub in api_alert.publications], ensure_ascii=False),
-            "affected_entitites": json.dumps([ent.__dict__ for ent in api_alert.affected_entities], ensure_ascii=False)
+            "ID": api_alert.id,
+            "TRANSPORT_TYPE": transport_type,
+            "BEGIN_DATE": api_alert.begin_date.isoformat() if api_alert.begin_date else "",
+            "END_DATE": api_alert.end_date.isoformat() if api_alert.end_date else "",
+            "STATUS": api_alert.status,
+            "CAUSE": api_alert.cause,
+            "PUBLICATIONS": json.dumps([pub.__dict__ for pub in api_alert.publications], ensure_ascii=False),
+            "AFFECTED_ENTITIES": json.dumps([ent.__dict__ for ent in api_alert.affected_entities], ensure_ascii=False)
         })        
 
         logger.info(f"New alert registered: type={transport_type}, alert_id={api_alert.id}")
@@ -464,14 +464,14 @@ class UserDataManager:
         ws_alerts = self._load_alerts()
         
         for idx, ws_alert in enumerate(ws_alerts, start=2):  # start=2 porque la fila 1 es encabezado
-            if ws_alert.get("type") and alert.transport_type is not None and str(ws_alert.get("type")) == str(alert.transport_type.value) and str(ws_alert.get("id")) == str(alert.id):
+            if ws_alert.get("TYPE") and alert.transport_type is not None and str(ws_alert.get("TYPE")) == str(alert.transport_type.value) and str(ws_alert.get("ID")) == str(alert.id):
                 self.alerts_ws.delete_rows(idx)
                 logger.info(f"Alert removed from spreadsheet: type={alert.transport_type}, alert_id={alert.id}")
                 
                 if self._alerts_cache["data"] is not None:
                     self._alerts_cache["data"] = [
                         a for a in self._alerts_cache["data"]
-                        if not (str(a.get("transport_type")) == str(alert.transport_type) and str(a.get("id")) == str(alert.id))
+                        if not (str(a.get("TRANSPORT_TYPE")) == str(alert.transport_type) and str(a.get("ID")) == str(alert.id))
                     ]
                 return True
         
@@ -492,23 +492,23 @@ class UserDataManager:
         """
         try:
             publications = [
-                Publication(**pub) for pub in json.loads(row.get("publications", "[]"))
+                Publication(**pub) for pub in json.loads(row.get("PUBLICATIONS", "[]"))
             ]
 
             affected_entities = [
-                AffectedEntity(**ent) for ent in json.loads(row.get("affected_entities", "[]"))
+                AffectedEntity(**ent) for ent in json.loads(row.get("AFFECTED_ENTITIES", "[]"))
             ]
 
-            begin_date = datetime.fromisoformat(row.get("begin_date")) if row.get("begin_date") else None
-            end_date = datetime.fromisoformat(row.get("end_date")) if row.get("end_date") else None
+            begin_date = datetime.fromisoformat(row.get("BEGIN_DATE")) if row.get("BEGIN_DATE") else None
+            end_date = datetime.fromisoformat(row.get("END_DATE")) if row.get("END_DATE") else None
 
             return Alert(
-                id=row.get("id"),
-                transport_type=TransportType(str(row.get('type').lower())) if row.get('type') else None,
+                id=row.get("ID"),
+                transport_type=TransportType(str(row.get('TYPE').lower())) if row.get('TYPE') else None,
                 begin_date=begin_date,
                 end_date=end_date,
-                status=row.get("status") if row.get("status") else None,
-                cause=row.get("cause") if row.get("cause") else None,
+                status=row.get("STATUS") if row.get("STATUS") else None,
+                cause=row.get("CAUSE") if row.get("CAUSE") else None,
                 publications=publications,
                 affected_entities=affected_entities
             )
