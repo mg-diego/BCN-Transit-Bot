@@ -366,7 +366,7 @@ class UserDataManager:
         logger.debug(f"Removing favorite: user_id={user_id}, type={type}, item_id={item_id}")
         favorites = self._load_favorites()
         for idx, fav in enumerate(favorites, start=2):
-            if str(fav["type"]) == str(type) and str(fav["code"]) == str(item_id):
+            if str(fav["type"]) == str(type) and str(fav["station_code"]) == str(item_id):
                 self.favorites_ws.delete_rows(idx)
                 self._invalidate_favorites_cache()
                 return True
@@ -386,7 +386,7 @@ class UserDataManager:
         logger.debug(f"Checking if user_id={user_id} has favorite {type}:{item_id}")
         favorites = self.get_favorites_by_user(user_id)
         return any(
-            f.get('type') == str(type) and str(f.get('code')) == str(item_id)
+            f.get('type') == str(type) and str(f.get('station_code')) == str(item_id)
             for f in favorites
         )
 

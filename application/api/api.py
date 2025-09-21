@@ -1,5 +1,8 @@
+
 import math
+from typing import List
 from fastapi import APIRouter
+from fastapi.params import Body
 
 from application.services.transport.bicing_service import BicingService
 from application.services.transport.bus_service import BusService
@@ -11,6 +14,24 @@ from domain.common.location import Location
 from providers.helpers.distance_helper import DistanceHelper
 from providers.helpers.utils import Utils
 from providers.manager.user_data_manager import UserDataManager
+from pydantic import BaseModel
+
+class FavoriteItem(BaseModel):
+    STATION_CODE: str
+    STATION_NAME: str
+    STATION_GROUP_CODE: str
+    LINE_NAME: str
+    LINE_NAME_WITH_EMOJI: str
+    LINE_CODE: str
+    coordinates: List[float]
+
+class FavoritePostRequest(BaseModel):
+    type: str
+    item: FavoriteItem
+
+class FavoriteDeleteRequest(BaseModel):
+    type: str
+    station_code: str
 
 def clean_floats(obj):
     if isinstance(obj, float) and (math.isnan(obj) or math.isinf(obj)):
@@ -201,6 +222,21 @@ def get_user_router(
         try:
             favorites = user_data_manager.get_favorites_by_user(user_id)
             return favorites
+        except Exception as e:
+            return {"status": "ERROR", "message": str(e)}
+        
+    @router.post("/{user_id}/favorites")
+    async def add_favorite(user_id: str, body: FavoritePostRequest = Body(...)):
+        try:
+            user_data_manager.add_favorite(user_id, type=body.type, item=body.item)
+            return body.item
+        except Exception as e:
+            return {"status": "ERROR", "message": str(e)}
+        
+    @router.delete("/{user_id}/favorites")
+    async def delete_favorite(user_id: str, body: FavoriteDeleteRequest = Body(...)):
+        try:
+            return user_data_manager.remove_favorite(user_id, type=body.type, item_id=body.station_code)
         except Exception as e:
             return {"status": "ERROR", "message": str(e)}
         
