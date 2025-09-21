@@ -386,7 +386,7 @@ class UserDataManager:
         logger.debug(f"Checking if user_id={user_id} has favorite {type}:{item_id}")
         favorites = self.get_favorites_by_user(user_id)
         return any(
-            f.get('TYPE') == str(type) and str(f.get('STATION_CODE')) == str(item_id)
+            f.get('TYPE') == str(type) and str(f.get('STATION_CODE')) == str(item_id) and str(f.get('USER_ID')) == str(user_id)
             for f in favorites
         )
 

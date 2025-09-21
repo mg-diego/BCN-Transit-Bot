@@ -169,7 +169,7 @@ def get_fgc_router(
 
     return router
 
-def get_near_router(
+def get_results_router(
     metro_service: MetroService,
     bus_service: BusService,
     tram_service: TramService,
@@ -201,6 +201,26 @@ def get_near_router(
             max_distance_km=radius
         )
         return near_results
+    
+    @router.get("/search")
+    async def search_stations(name: str):
+        results = {
+            "metro": await metro_service.get_stations_by_name(name),
+            "bus": await bus_service.get_stops_by_name(name),
+            "tram": await tram_service.get_stops_by_name(name),
+            "fgc": await fgc_service.get_stations_by_name(name),
+            "rodalies": await rodalies_service.get_stations_by_name(name),
+            "bicing": await bicing_service.get_stations_by_name(name)
+        }
+        search_results = DistanceHelper.build_stops_list(
+            metro_stations=results.get('metro'),
+            bus_stops=results.get('bus'),
+            tram_stops=results.get('tram'),
+            rodalies_stations=results.get('rodalies'),
+            bicing_stations=results.get('bicing'),
+            fgc_stations=results.get('fgc')
+        )
+        return search_results
 
     return router
 
@@ -222,6 +242,19 @@ def get_user_router(
         try:
             favorites = user_data_manager.get_favorites_by_user(user_id)
             return favorites
+        except Exception as e:
+            return {"status": "ERROR", "message": str(e)}
+        
+    
+    @router.get("/{user_id}/favorites/exists")
+    async def has_favorite(
+        user_id: str,
+        type: str = Query(..., description="Tipo de favorito, ej: metro, bus"),
+        item_id: str = Query(..., description="Código del item a buscar")
+    ):
+        try:
+            # Llamas a tu manager pasando los parámetros recibidos
+            return user_data_manager.has_favorite(user_id, type=type, item_id=item_id)
         except Exception as e:
             return {"status": "ERROR", "message": str(e)}
         
