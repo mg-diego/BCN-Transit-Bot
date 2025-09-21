@@ -273,7 +273,6 @@ def get_user_router(
         item_id: str = Query(..., description="Código del item a eliminar")
     ):
         try:
-            # Llamas a tu manager pasando los parámetros recibidos
             return user_data_manager.remove_favorite(user_id, type=type, item_id=item_id)
         except Exception as e:
             return {"status": "ERROR", "message": str(e)}
