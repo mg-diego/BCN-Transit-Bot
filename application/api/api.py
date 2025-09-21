@@ -1,7 +1,7 @@
 
 import math
 from typing import List
-from fastapi import APIRouter
+from fastapi import APIRouter, Query
 from fastapi.params import Body
 
 from application.services.transport.bicing_service import BicingService
@@ -234,9 +234,14 @@ def get_user_router(
             return {"status": "ERROR", "message": str(e)}
         
     @router.delete("/{user_id}/favorites")
-    async def delete_favorite(user_id: str, body: FavoriteDeleteRequest = Body(...)):
+    async def delete_favorite(
+        user_id: str,
+        type: str = Query(..., description="Tipo de favorito, ej: metro, bus"),
+        item_id: str = Query(..., description="Código del item a eliminar")
+    ):
         try:
-            return user_data_manager.remove_favorite(user_id, type=body.type, item_id=body.station_code)
+            # Llamas a tu manager pasando los parámetros recibidos
+            return user_data_manager.remove_favorite(user_id, type=type, item_id=item_id)
         except Exception as e:
             return {"status": "ERROR", "message": str(e)}
         
