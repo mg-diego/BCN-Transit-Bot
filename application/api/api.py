@@ -1,5 +1,6 @@
 
 import math
+from typing import List
 from fastapi import APIRouter, Query
 from fastapi.params import Body
 
@@ -238,18 +239,16 @@ def get_user_router(
     router = APIRouter()
 
     @router.post("/{user_id}/register")
-    async def register_user(user_id: str):
+    async def register_user(user_id: str) -> bool:
         try:
-            user_data_manager.register_user(user_id, 'android_user')
-            return {"status": "SUCCESS", "user_id": user_id}
+            return user_data_manager.register_user(user_id, 'android_user')
         except Exception as e:
             return {"status": "ERROR", "message": str(e)}
         
     @router.get("/{user_id}/favorites")
-    async def get_favorites(user_id: str):
+    async def get_favorites(user_id: str) -> List[FavoriteItem]:
         try:
-            favorites = user_data_manager.get_favorites_by_user(user_id)
-            return favorites
+            return user_data_manager.get_favorites_by_user(user_id)
         except Exception as e:
             return {"status": "ERROR", "message": str(e)}
         
@@ -259,18 +258,16 @@ def get_user_router(
         user_id: str,
         type: str = Query(..., description="Tipo de favorito, ej: metro, bus"),
         item_id: str = Query(..., description="Código del item a buscar")
-    ):
+    ) -> bool:
         try:
-            # Llamas a tu manager pasando los parámetros recibidos
             return user_data_manager.has_favorite(user_id, type=type, item_id=item_id)
         except Exception as e:
             return {"status": "ERROR", "message": str(e)}
         
     @router.post("/{user_id}/favorites")
-    async def add_favorite(user_id: str, body: FavoriteItem = Body(...)):
+    async def add_favorite(user_id: str, body: FavoriteItem = Body(...)) -> bool:
         try:
-            user_data_manager.add_favorite(user_id, type=body.TYPE, item=body)
-            return body
+            return user_data_manager.add_favorite(user_id, type=body.TYPE, item=body)
         except Exception as e:
             return {"status": "ERROR", "message": str(e)}
         
@@ -279,7 +276,7 @@ def get_user_router(
         user_id: str,
         type: str = Query(..., description="Tipo de favorito, ej: metro, bus"),
         item_id: str = Query(..., description="Código del item a eliminar")
-    ):
+    ) -> bool:
         try:
             return user_data_manager.remove_favorite(user_id, type=type, item_id=item_id)
         except Exception as e:

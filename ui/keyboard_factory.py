@@ -4,7 +4,7 @@ from typing import List
 
 from domain.api.favorite_model import FavoriteItem
 from domain.metro import MetroLine, MetroStation, MetroAccess
-from domain.bus import BusLine, BusStop
+from domain.bus import BusLine
 from domain.tram import TramLine, TramStation
 from domain.rodalies import RodaliesLine
 from domain.transport_type import TransportType

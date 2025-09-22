@@ -210,7 +210,9 @@ class UserDataManager:
                 "RECEIVE_NOTIFICATIONS": True,
                 "ALREADY_NOTIFIED": json.dumps([e.__dict__ for e in []], ensure_ascii=False)
             })
-            return 1
+            return True
+        else:
+            return False
 
     def update_user_language(self, user_id: int, new_language: str):
         logger.debug(f"Updating language for user_id={user_id} to '{new_language}'")
@@ -327,7 +329,7 @@ class UserDataManager:
     def add_favorite(self, user_id: int, type: str, item: FavoriteItem):
         """Añade una estación/parada favorita"""
         logger.debug(f"Adding favorite for user_id={user_id}, type={type}, item={item}")
-        coordinates = item.get('coordinates')
+        coordinates = item.coordinates
         try:
             if type.lower() == TransportType.METRO.value:
                 self.favorites_ws.append_row([
@@ -340,42 +342,43 @@ class UserDataManager:
                 self.favorites_ws.append_row([
                     user_id, type.lower(),
                     item.STATION_CODE, item.STATION_NAME,
-                    '', '', '', item.LINE_CODE, coordinates[1], coordinates[0]
+                    '', '', '', item.LINE_CODE, coordinates[0], coordinates[1]
                 ])
             elif type.lower() == TransportType.TRAM.value:
                 self.favorites_ws.append_row([
                     user_id, type.lower(),
                     item.STATION_CODE, item.STATION_NAME,
                     '', item.LINE_NAME, item.LINE_NAME_WITH_EMOJI, item.LINE_CODE,
-                    coordinates[1], coordinates[0]
+                    coordinates[0], coordinates[1]
                 ])
             elif type.lower() == TransportType.RODALIES.value:
                 self.favorites_ws.append_row([
                     user_id, type.lower(),
                     item.STATION_CODE, item.STATION_NAME,
                     '', item.LINE_NAME, item.LINE_NAME_WITH_EMOJI, item.LINE_CODE,
-                    coordinates[1], coordinates[0]
+                    coordinates[0], coordinates[1]
                 ])
             elif type.lower() == TransportType.BICING.value:
                 self.favorites_ws.append_row([
                     user_id, type.lower(),
                     item.STATION_CODE, item.STATION_NAME,
                     '', item.LINE_NAME, item.LINE_NAME_WITH_EMOJI, item.LINE_CODE,
-                    coordinates[1], coordinates[0]
+                    coordinates[0], coordinates[1]
                 ])
             elif type.lower() == TransportType.FGC.value:
                 self.favorites_ws.append_row([
                     user_id, type.lower(),
                     item.STATION_CODE, item.STATION_NAME,
                     '', item.LINE_NAME, item.LINE_NAME_WITH_EMOJI, item.LINE_CODE,
-                    coordinates[1], coordinates[0]
+                    coordinates[0], coordinates[1]
                 ])
 
             logger.info(f"Added {type} favorite for user_id={user_id}")
             self._invalidate_favorites_cache()
+            return True
         except Exception as e:
             logger.error(f"Failed to add favorite for user_id={user_id}: {e}")
-            raise
+            return False
 
     def remove_favorite(self, user_id: int, type: str, item_id: str):
         """Elimina una estación/parada favorita por user_id + stop_id"""
