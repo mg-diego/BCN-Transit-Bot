@@ -38,5 +38,5 @@ class Station:
     
     @staticmethod
     def update_station_with_connections(station, connections: List[Line]):
-        station.connections = sorted(connections, key=lambda c: HtmlHelper.custom_sort_key(c.name))
+        station.connections = connections
         return station

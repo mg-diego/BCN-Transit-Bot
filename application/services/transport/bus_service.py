@@ -1,4 +1,5 @@
 import asyncio
+import itertools
 import time
 from collections import defaultdict
 from typing import List
@@ -200,19 +201,28 @@ class BusService(ServiceBase):
 
     async def _build_and_cache_static_stops(self) -> List[BusStop]:
         start = time.perf_counter()
-        stops = []
         lines = await self.get_all_lines()
 
         semaphore_lines = asyncio.Semaphore(5)
+        semaphore_connections = asyncio.Semaphore(10)
+
+        stops: List[BusStop] = []
+
+        async def process_stop(api_stop: BusStop, line: BusLine):
+            async with semaphore_connections:
+                connections = await self.tmb_api_service.get_bus_stop_connections(api_stop.code)
+                stop = BusStop.update_bus_stop_with_line_info(api_stop, line)
+                stop = BusStop.update_station_with_connections(stop, connections)
+                stops.append(stop)
 
         async def process_line(line: BusLine):
             async with semaphore_lines:
                 api_stops = await self.tmb_api_service.get_bus_line_stops(line.code)
-            return [BusStop.update_bus_stop_with_line_info(s, line) for s in api_stops]
+            # Crear tareas concurrentes para cada parada
+            await asyncio.gather(*(process_stop(stop, line) for stop in api_stops))
 
-        results = await asyncio.gather(*[process_line(line) for line in lines])
-        for line_stops in results:
-            stops.extend(line_stops)
+        # Crear tareas para cada línea
+        await asyncio.gather(*(process_line(line) for line in lines))
 
         await self.cache_service.set("bus_stops_static", stops, ttl=3600 * 24)
         elapsed = time.perf_counter() - start
