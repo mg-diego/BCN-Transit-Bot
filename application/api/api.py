@@ -270,7 +270,7 @@ def get_user_router(
     async def add_favorite(user_id: str, body: FavoriteItem = Body(...)):
         try:
             user_data_manager.add_favorite(user_id, type=body.TYPE, item=body)
-            return body.item
+            return body
         except Exception as e:
             return {"status": "ERROR", "message": str(e)}
         
