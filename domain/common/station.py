@@ -3,6 +3,7 @@ from typing import List, Optional
 
 from domain.common.alert import Alert
 from domain.common.line import Line
+from providers.helpers.html_helper import HtmlHelper
 
 @dataclass(kw_only=True)
 class Station:
@@ -32,3 +33,8 @@ class Station:
                 for alert in station.alerts
             )
         return "\n".join(f"<pre>{alert}</pre>" for alert in set(raw_alerts))
+    
+    @staticmethod
+    def update_station_with_connections(station, connections: List[Line]):
+        station.connections = sorted(connections, key=lambda c: HtmlHelper.custom_sort_key(c.name))
+        return station

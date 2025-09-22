@@ -48,11 +48,6 @@ class MetroStation(Station):
                         metro_station.alerts = alert.publications
 
         return metro_station
-    
-    @staticmethod
-    def update_metro_station_with_connections(metro_station: Station, connections: List[Line]) -> Station:
-        metro_station.connections = sorted(connections, key=lambda c: HtmlHelper.custom_sort_key(c.name))
-        return metro_station
 
 def _set_emoji_at_name(name):
     emojis = {

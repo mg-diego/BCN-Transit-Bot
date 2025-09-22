@@ -122,9 +122,9 @@ class MetroService(ServiceBase):
 
         async def process_station(api_station):
             async with semaphore_connections:
-                connections = await self.tmb_api_service.get_station_connections(api_station.code)
+                connections = await self.tmb_api_service.get_metro_station_connections(api_station.code)
                 station = MetroStation.update_metro_station_with_line_info(api_station, line)
-                station = MetroStation.update_metro_station_with_connections(station, connections)
+                station = MetroStation.update_station_with_connections(station, connections)
                 return station
 
         line_stations = await asyncio.gather(*[process_station(s) for s in api_stations])
@@ -216,9 +216,9 @@ class MetroService(ServiceBase):
 
         async def process_station(api_station: Station, line: Line):
             async with semaphore_connections:
-                connections = await self.tmb_api_service.get_station_connections(api_station.code)
+                connections = await self.tmb_api_service.get_metro_station_connections(api_station.code)
                 station = MetroStation.update_metro_station_with_line_info(api_station, line)
-                station = MetroStation.update_metro_station_with_connections(station, connections)
+                station = MetroStation.update_station_with_connections(station, connections)
                 return station
 
         async def process_line(line):

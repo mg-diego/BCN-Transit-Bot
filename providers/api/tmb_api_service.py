@@ -203,7 +203,7 @@ class TmbApiService:
         return routes
 
     async def get_metro_station_accesses(self, group_station_code):
-        url = f"https://api.tmb.cat/v1/transit/estacions/{group_station_code}/accessos"
+        url = f"{self.BASE_URL_TRANSIT}/estacions/{group_station_code}/accessos"
         data = await self._get(url)
         features = data['features']
 
@@ -213,9 +213,16 @@ class TmbApiService:
             accesses.append(access)
 
         return accesses
+    
+    async def get_bus_stop_connections(self, bus_stop_id):
+        url = f"{self.BASE_URL_TRANSIT}/parades/{bus_stop_id}/corresp"
+        return await self._get_station_connections(url)
 
-    async def get_station_connections(self, metro_station_id):
-        url = f"https://api.tmb.cat/v1/transit/linies/metro/estacions/{metro_station_id}/corresp"
+    async def get_metro_station_connections(self, metro_station_id):
+        url = f"{self.BASE_URL_TRANSIT}/linies/metro/estacions/{metro_station_id}/corresp"
+        return await self._get_station_connections(url)
+    
+    async def _get_station_connections(self, url):
         data = await self._get(url)
         features = data['features']
 
@@ -237,8 +244,6 @@ class TmbApiService:
             elif str(props['NOM_OPERADOR']).lower() == str(TransportType.FGC.value).lower():
                 connection = FgcLine.create_fgc_connection(props)
                 connections.append(connection)
-            else:
-                pass
 
         return sorted(
             (

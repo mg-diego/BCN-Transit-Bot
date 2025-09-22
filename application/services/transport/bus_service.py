@@ -116,7 +116,12 @@ class BusService(ServiceBase):
         line = await self.get_line_by_id(line_id)
         api_stops = await self.tmb_api_service.get_bus_line_stops(line_id)
 
-        line_stops = [BusStop.update_bus_stop_with_line_info(s, line) for s in api_stops]
+        line_stops = []
+        for api_stop in api_stops:
+            connections = await self.tmb_api_service.get_bus_stop_connections(api_stop.code)
+            stop = BusStop.update_bus_stop_with_line_info(api_stop, line)
+            stop = BusStop.update_station_with_connections(stop, connections)
+            line_stops.append(stop)
         result = await self._get_from_cache_or_data(cache_key, line_stops, cache_ttl=3600*24)
 
         elapsed = time.perf_counter() - start
