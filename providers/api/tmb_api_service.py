@@ -240,7 +240,7 @@ class TmbApiService:
             else:
                 pass
 
-        return set(connections)
+        return list({line.id: line for line in connections}.values())
     
     async def get_global_alerts(self, transport_type: TransportType):
         url = f"https://api.tmb.cat/v1/alerts/{transport_type.value}/channels/WEB"
