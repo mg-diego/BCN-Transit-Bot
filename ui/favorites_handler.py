@@ -83,7 +83,7 @@ class FavoritesHandler:
             line = await self.tram_service.get_line_by_id(line_id)
 
             new_fav_item = {
-                "STOP_CODE": item.id,
+                "STOP_CODE": item.code,
                 "STOP_NAME": item.name,
                 "LINE_NAME": line.name,
                 "LINE_NAME_WITH_EMOJI": line.name_with_emoji,
@@ -95,7 +95,7 @@ class FavoritesHandler:
             line = await self.rodalies_service.get_line_by_id(line_id)
 
             new_fav_item = {
-                "STOP_CODE": item.id,
+                "STOP_CODE": item.code,
                 "STOP_NAME": item.name,
                 "LINE_NAME": line.name,
                 "LINE_NAME_WITH_EMOJI": line.name_with_emoji,
