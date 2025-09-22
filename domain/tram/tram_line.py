@@ -16,3 +16,16 @@ class TramLine(Line):
             color="008E78",
             transport_type=TransportType.TRAM
         )
+    
+    @staticmethod
+    def create_tram_connection(props: dict):
+        return Line(
+            id=str(props.get('ID_LINIA', '')),
+            code=str(props.get('CODI_LINIA', '')),
+            name=props.get('NOM_LINIA', ''),
+            description=props.get('DESC_LINIA', ''),
+            origin=props.get('ORIGEN_LINIA', ''),
+            destination=props.get('DESTI_LINIA', ''),
+            color="008E78",
+            transport_type=TransportType.TRAM
+        )

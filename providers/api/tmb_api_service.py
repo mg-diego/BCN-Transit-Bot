@@ -4,9 +4,13 @@ import re
 import inspect
 
 from domain import NextTrip, LineRoute, normalize_to_seconds
-from domain.metro import MetroLine, MetroConnection, MetroStation, create_metro_access
+from domain.common.line import Line
+from domain.fgc.fgc_line import FgcLine
+from domain.metro import MetroLine, MetroStation, create_metro_access
 from domain.bus import BusStop, BusLine
 
+from domain.rodalies.rodalies_line import RodaliesLine
+from domain.tram.tram_line import TramLine
 from domain.transport_type import TransportType
 from providers.helpers import logger
 
@@ -218,11 +222,25 @@ class TmbApiService:
         connections = []
         for feature in features:
             props = feature["properties"]
-            if props['NOM_OPERADOR'] == "Metro":
-                connection = MetroConnection(**props)
-                connections.append(connection) 
+            if str(props['NOM_OPERADOR']).lower() == str(TransportType.METRO.value).lower():
+                connection = MetroLine.create_metro_line(feature)
+                connections.append(connection)
+            elif str(props['NOM_OPERADOR']).lower() == "tb":
+                connection = BusLine.create_bus_line(feature)
+                connections.append(connection)
+            elif str(props['NOM_OPERADOR']).lower() == str(TransportType.TRAM.value).lower():
+                connection = TramLine.create_tram_connection(props)
+                connections.append(connection)
+            elif str(props['NOM_OPERADOR']).lower() == str(TransportType.RODALIES.value).lower():
+                connection = RodaliesLine.create_rodalies_connection(feature)
+                connections.append(connection)
+            elif str(props['NOM_OPERADOR']).lower() == str(TransportType.FGC.value).lower():
+                connection = FgcLine.create_fgc_connection(props)
+                connections.append(connection)
+            else:
+                pass
 
-        return [c for c in connections if "FM" not in c.NOM_LINIA] # Filter out Funicular
+        return connections
     
     async def get_global_alerts(self, transport_type: TransportType):
         url = f"https://api.tmb.cat/v1/alerts/{transport_type.value}/channels/WEB"

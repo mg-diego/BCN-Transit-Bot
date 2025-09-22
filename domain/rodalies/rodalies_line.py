@@ -22,3 +22,17 @@ class RodaliesLine(Line):
             stations=stations,
             color=None
         )
+    
+    @staticmethod
+    def create_rodalies_connection(line):
+        return RodaliesLine(
+            id=str(line.get('ID_LINIA', '')),
+            code=str(line.get('CODI_LINIA', '')),
+            name=str(line.get('NOM_LINIA', '')),
+            description=str(line.get('DESC_LINIA', '')),
+            transport_type=TransportType.RODALIES,
+            origin='',
+            destination='',
+            stations=[],
+            color=str(line.get('COLOR_LINIA', '')),
+        )

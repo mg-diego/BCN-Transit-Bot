@@ -1,7 +1,8 @@
 from dataclasses import dataclass
 from typing import List
 
-from domain.metro import MetroLine, MetroConnection
+from domain.common.line import Line
+from domain.metro import MetroLine
 from providers.helpers.html_helper import HtmlHelper
 from domain.common.station import Station
 
@@ -10,7 +11,6 @@ class MetroStation(Station):
     CODI_GRUP_ESTACIO: int
     ORIGEN_SERVEI: str
     DESTI_SERVEI: str
-    connections: List[MetroConnection] = None
 
     @staticmethod
     def create_metro_station(feature: dict):
@@ -50,8 +50,8 @@ class MetroStation(Station):
         return metro_station
     
     @staticmethod
-    def update_metro_station_with_connections(metro_station: Station, connections: List[MetroConnection]) -> Station:
-        metro_station.connections = sorted(connections, key=lambda c: HtmlHelper.custom_sort_key(c.NOM_LINIA))
+    def update_metro_station_with_connections(metro_station: Station, connections: List[Line]) -> Station:
+        metro_station.connections = sorted(connections, key=lambda c: HtmlHelper.custom_sort_key(c.name))
         return metro_station
 
 def _set_emoji_at_name(name):

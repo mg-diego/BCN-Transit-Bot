@@ -62,6 +62,10 @@ def get_metro_router(
     @router.get("/stations/{station_code}/routes")
     async def list_metro_station_routes(station_code: str):
         return await metro_service.get_station_routes(station_code)
+    
+    @router.get("/stations/{station_code}")
+    async def get_metro_station(station_code: str):
+        return await metro_service.get_station_by_code(station_code)
 
     return router
 

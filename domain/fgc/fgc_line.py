@@ -17,3 +17,16 @@ class FgcLine(Line):
             color = line.get('route_color'),
             transport_type=TransportType.FGC
         )
+    
+    @staticmethod
+    def create_fgc_connection(line: dict):
+        return FgcLine(
+            id = str(line.get('ID_LINIA')),
+            code = str(line.get('CODI_LINIA')),
+            name = line.get('NOM_LINIA'),
+            description = line.get('DESC_LINIA'),
+            origin = '',
+            destination = '',
+            color = line.get('COLOR_LINIA'),
+            transport_type=TransportType.FGC
+        )

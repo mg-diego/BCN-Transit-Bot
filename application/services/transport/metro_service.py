@@ -131,8 +131,17 @@ class MetroService(ServiceBase):
         result = await self._get_from_cache_or_data(cache_key, line_stations, cache_ttl=3600*24*7)
 
         elapsed = time.perf_counter() - start
-        logger.info(f"[{self.__class__.__name__}] get_stations_by_line({line_id}) -> {len(result)} stations ({elapsed:.4f} s)")
+        logger.info(f"[{self.__class__.__name__}] get_stations_by_line({line_code}) -> {len(result)} stations ({elapsed:.4f} s)")
         return result
+    
+    async def get_lines_by_station(self, station_code) -> List[MetroLine]:
+        start = time.perf_counter()
+        stations = await self.get_all_stations()
+        station = next((s for s in stations if str(s.code) == str(station_code)), None)
+        lines = await self.get_all_lines() if station else []
+        elapsed = time.perf_counter() - start
+        logger.info(f"[{self.__class__.__name__}] get_lines_by_station({station_code}) -> {len(lines)} lines ({elapsed:.4f} s)")
+        return lines
 
     async def get_station_accesses(self, group_code_id) -> List[MetroAccess]:
         start = time.perf_counter()
