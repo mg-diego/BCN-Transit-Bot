@@ -15,9 +15,6 @@ class FavoriteItem(BaseModel):
     LINE_CODE: str
     coordinates: List[float]
 
-class FavoritePostRequest(BaseModel):
-    item: FavoriteItem
-
 class FavoriteDeleteRequest(BaseModel):
     type: str
     station_code: str

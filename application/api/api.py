@@ -9,7 +9,7 @@ from application.services.transport.fgc_service import FgcService
 from application.services.transport.metro_service import MetroService
 from application.services.transport.rodalies_service import RodaliesService
 from application.services.transport.tram_service import TramService
-from domain.api.favorite_model import FavoritePostRequest
+from domain.api.favorite_model import FavoriteItem
 from domain.common.location import Location
 from providers.helpers.distance_helper import DistanceHelper
 from providers.helpers.utils import Utils
@@ -267,9 +267,9 @@ def get_user_router(
             return {"status": "ERROR", "message": str(e)}
         
     @router.post("/{user_id}/favorites")
-    async def add_favorite(user_id: str, body: FavoritePostRequest = Body(...)):
+    async def add_favorite(user_id: str, body: FavoriteItem = Body(...)):
         try:
-            user_data_manager.add_favorite(user_id, type=body.type, item=body.item)
+            user_data_manager.add_favorite(user_id, type=body.TYPE, item=body)
             return body.item
         except Exception as e:
             return {"status": "ERROR", "message": str(e)}
