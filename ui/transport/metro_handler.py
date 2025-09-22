@@ -81,6 +81,7 @@ class MetroHandler(HandlerBase):
 
         await self.metro_service.get_station_routes(station_code)
         station_alerts = MetroStation.get_alert_by_language(station, self.user_data_manager.get_user_language(user_id))
+        station_connections = await self.metro_service.get_station_connections(station.code)
         alerts_message = f"{self.language_manager.t("common.alerts")}\n{station_alerts}\n\n" if any(station_alerts) else ""
 
         await self.update_manager.stop_loading(update, context)
@@ -98,7 +99,7 @@ class MetroHandler(HandlerBase):
                 f"{self.language_manager.t('common.updates.every_x_seconds', seconds=self.UPDATE_INTERVAL)}"
             )
             is_fav = self.user_data_manager.has_favorite(user_id, TransportType.METRO.value, station_code)
-            keyboard = self.keyboard_factory.update_menu(is_fav, TransportType.METRO.value, station_code, line_id, callback, has_connections=any(station.connections))
+            keyboard = self.keyboard_factory.update_menu(is_fav, TransportType.METRO.value, station_code, line_id, callback, has_connections=any(station_connections))
             return text, keyboard
 
         self.start_update_loop(user_id, chat_id, message.message_id, update_text, default_callback)
@@ -118,6 +119,7 @@ class MetroHandler(HandlerBase):
         station = await self.metro_service.get_station_by_code(station_code)        
         station_accesses = await self.metro_service.get_station_accesses(station.CODI_GRUP_ESTACIO)
         station_alerts = MetroStation.get_alert_by_language(station, self.user_data_manager.get_user_language(user_id))
+        station_connections = await self.metro_service.get_station_connections(station.code)
         alerts_message = f"{self.language_manager.t("common.alerts")}\n{station_alerts}\n\n" if any(station_alerts) else ""
         logger.info(f"[MetroHandler] Showing accesses for station ID: {station_code}")
 
@@ -138,7 +140,7 @@ class MetroHandler(HandlerBase):
         await self.message_service.edit_inline_message(
             update,
             text,
-            reply_markup=self.keyboard_factory.update_menu(is_fav, TransportType.METRO.value, station_code, line_id, self.message_service.get_callback_query(update), has_connections=any(station.connections))
+            reply_markup=self.keyboard_factory.update_menu(is_fav, TransportType.METRO.value, station_code, line_id, self.message_service.get_callback_query(update), has_connections=any(station_connections))
         )
 
     @audit_action(action_type="SEARCH", command_or_button="show_station_connections")

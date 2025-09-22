@@ -24,7 +24,6 @@ class Station:
     line_name_with_emoji: Optional[str] = None
     has_alerts: Optional[bool] = False
     alerts: Optional[List[Alert]] = field(default_factory=list)
-    connections: Optional[List[Line]] = field(default_factory=list)
 
     @staticmethod
     def get_alert_by_language(station, language: str):
@@ -35,8 +34,3 @@ class Station:
                 for alert in station.alerts
             )
         return "\n".join(f"<pre>{alert}</pre>" for alert in set(raw_alerts))
-    
-    @staticmethod
-    def update_station_with_connections(station, connections: List[Line]):
-        station.connections = connections
-        return station

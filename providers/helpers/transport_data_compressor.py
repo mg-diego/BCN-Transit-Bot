@@ -119,7 +119,7 @@ class TransportDataCompressor:
                 "name": f"{station.code} - {self._normalize_name(station.name)}",
                 "color": station.line_color,
                 "alert": '⚠️' if station.has_alerts else '',
-                "connections": "".join(connection.NOM_LINIA for connection in station.connections)
+                "connections": "".join(connection for connection in []) #TODO: Fix this
             }
             for station in stations
         ]
