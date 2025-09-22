@@ -1,7 +1,6 @@
 from domain.common.line_route import LineRoute
 from domain.metro.metro_station import MetroStation
 from domain.transport_type import TransportType
-from domain.metro import format_metro_connections
 from telegram import Update
 from telegram.ext import ContextTypes
 
@@ -154,7 +153,7 @@ class MetroHandler(HandlerBase):
         # 2. Obtener datos necesarios de la callback
         _, line_id, station_code = self.message_service.get_callback_data(update)
         station = await self.metro_service.get_station_by_code(station_code)        
-        station_connections = format_metro_connections(station.connections)
+        station_connections = ''#format_metro_connections(station.connections) #TODO: Fix this
         station_alerts = MetroStation.get_alert_by_language(station, self.user_data_manager.get_user_language(user_id))
         alerts_message = f"{self.language_manager.t("common.alerts")}\n{station_alerts}\n\n" if any(station_alerts) else ""
         logger.info(f"[MetroHandler] Showing connections for station ID: {station_code}")
