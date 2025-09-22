@@ -5,6 +5,7 @@ from typing import List
 import time
 
 from domain import LineRoute
+from domain.common.connections import Connections
 from domain.common.line import Line
 from domain.common.station import Station
 from domain.metro import MetroLine, MetroStation, MetroAccess
@@ -122,10 +123,7 @@ class MetroService(ServiceBase):
 
         async def process_station(api_station):
             async with semaphore_connections:
-                connections = await self.tmb_api_service.get_metro_station_connections(api_station.code)
-                station = MetroStation.update_metro_station_with_line_info(api_station, line)
-                station = MetroStation.update_station_with_connections(station, connections)
-                return station
+                return MetroStation.update_metro_station_with_line_info(api_station, line)
 
         line_stations = await asyncio.gather(*[process_station(s) for s in api_stations])
         result = await self._get_from_cache_or_data(cache_key, line_stations, cache_ttl=3600*24*7)
@@ -134,14 +132,16 @@ class MetroService(ServiceBase):
         logger.info(f"[{self.__class__.__name__}] get_stations_by_line({line_code}) -> {len(result)} stations ({elapsed:.4f} s)")
         return result
     
-    async def get_lines_by_station(self, station_code) -> List[MetroLine]:
+    async def get_station_connections(self, station_code) -> Connections:
         start = time.perf_counter()
-        stations = await self.get_all_stations()
-        station = next((s for s in stations if str(s.code) == str(station_code)), None)
-        lines = await self.get_all_lines() if station else []
+        data = await self._get_from_cache_or_api(
+            f"metro_station_{station_code}_connections",
+            lambda: self.tmb_api_service.get_metro_station_connections(station_code),
+            cache_ttl=3600*24
+        )
         elapsed = time.perf_counter() - start
-        logger.info(f"[{self.__class__.__name__}] get_lines_by_station({station_code}) -> {len(lines)} lines ({elapsed:.4f} s)")
-        return lines
+        logger.info(f"[{self.__class__.__name__}] get_station_connections({station_code}) -> {len(data)} connections ({elapsed:.4f} s)")
+        return data
 
     async def get_station_accesses(self, group_code_id) -> List[MetroAccess]:
         start = time.perf_counter()
@@ -216,10 +216,7 @@ class MetroService(ServiceBase):
 
         async def process_station(api_station: Station, line: Line):
             async with semaphore_connections:
-                connections = await self.tmb_api_service.get_metro_station_connections(api_station.code)
-                station = MetroStation.update_metro_station_with_line_info(api_station, line)
-                station = MetroStation.update_station_with_connections(station, connections)
-                return station
+                return MetroStation.update_metro_station_with_line_info(api_station, line)
 
         async def process_line(line):
             async with semaphore_lines:

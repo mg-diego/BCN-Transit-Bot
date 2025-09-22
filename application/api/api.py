@@ -51,6 +51,10 @@ def get_metro_router(
     @router.get("/stations/{station_code}")
     async def get_metro_station(station_code: str):
         return await metro_service.get_station_by_code(station_code)
+    
+    @router.get("/stations/{station_code}/connections")
+    async def get_metro_station_connections(station_code: str):
+        return await metro_service.get_station_connections(station_code)
 
     return router
 
@@ -74,6 +78,10 @@ def get_bus_router(
     @router.get("/stops/{stop_code}/routes")
     async def list_bus_stop_routes(stop_code: str):
         return await bus_service.get_stop_routes(stop_code)
+    
+    @router.get("/stations/{station_code}/connections")
+    async def get_bus_stop_connections(station_code: str):
+        return await bus_service.get_stop_connections(station_code)
     
     @router.get("/stops/{stop_code}")
     async def get_bus_stop(stop_code: str):

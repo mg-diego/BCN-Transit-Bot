@@ -1,10 +1,6 @@
 from dataclasses import dataclass
-from typing import List
-
-from domain.common.line import Line
 from domain.metro import MetroLine
 from domain.transport_type import TransportType
-from providers.helpers.html_helper import HtmlHelper
 from domain.common.station import Station
 
 @dataclass

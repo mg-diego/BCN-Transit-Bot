@@ -4,6 +4,7 @@ from collections import defaultdict
 from typing import List
 
 from domain.common.alert import Alert
+from domain.common.connections import Connections
 from domain.transport_type import TransportType
 from providers.api.tmb_api_service import TmbApiService
 
@@ -117,9 +118,7 @@ class BusService(ServiceBase):
 
         line_stops = []
         for api_stop in api_stops:
-            connections = await self.tmb_api_service.get_bus_stop_connections(api_stop.code)
             stop = BusStop.update_bus_stop_with_line_info(api_stop, line)
-            stop = BusStop.update_station_with_connections(stop, connections)
             line_stops.append(stop)
         result = await self._get_from_cache_or_data(cache_key, line_stops, cache_ttl=3600*24)
 
@@ -138,6 +137,17 @@ class BusService(ServiceBase):
         elapsed = time.perf_counter() - start
         logger.info(f"[{self.__class__.__name__}] get_stop_routes({stop_code}) -> {len(routes)} routes ({elapsed:.4f} s)")
         return routes
+    
+    async def get_stop_connections(self, stop_code) -> Connections:
+        start = time.perf_counter()
+        data = await self._get_from_cache_or_api(
+            f"bus_stop_{stop_code}_connections",
+            lambda: self.tmb_api_service.get_bus_stop_connections(stop_code),
+            cache_ttl=3600*24
+        )
+        elapsed = time.perf_counter() - start
+        logger.info(f"[{self.__class__.__name__}] get_stop_connections({stop_code}) -> {len(data)} connections ({elapsed:.4f} s)")
+        return data
 
     # === OTHER CALLS ===
     async def get_stops_by_name(self, stop_name) -> List[BusLine]:
@@ -208,9 +218,7 @@ class BusService(ServiceBase):
 
         async def process_stop(api_stop: BusStop, line: BusLine):
             async with semaphore_connections:
-                connections = await self.tmb_api_service.get_bus_stop_connections(api_stop.code)
                 stop = BusStop.update_bus_stop_with_line_info(api_stop, line)
-                stop = BusStop.update_station_with_connections(stop, connections)
                 stops.append(stop)
 
         async def process_line(line: BusLine):

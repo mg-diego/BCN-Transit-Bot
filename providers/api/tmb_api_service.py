@@ -4,6 +4,7 @@ import re
 import inspect
 
 from domain import NextTrip, LineRoute, normalize_to_seconds
+from domain.common.connections import Connections
 from domain.common.line import Line
 from domain.fgc.fgc_line import FgcLine
 from domain.metro import MetroLine, MetroStation, create_metro_access
@@ -214,11 +215,11 @@ class TmbApiService:
 
         return accesses
     
-    async def get_bus_stop_connections(self, bus_stop_id):
+    async def get_bus_stop_connections(self, bus_stop_id) -> Connections:
         url = f"{self.BASE_URL_TRANSIT}/parades/{bus_stop_id}/corresp"
         return await self._get_station_connections(url)
 
-    async def get_metro_station_connections(self, metro_station_id):
+    async def get_metro_station_connections(self, metro_station_id) -> Connections:
         url = f"{self.BASE_URL_TRANSIT}/linies/metro/estacions/{metro_station_id}/corresp"
         return await self._get_station_connections(url)
     
