@@ -34,8 +34,8 @@ class AlertsService:
                     logger.warning(f"User {user.user_id} has no favorite stations. Skipping...")
                     continue
 
-                user_favorites_station_codes = [f.get('code') for f in user_favorites]
-                user_favorites_station_names = [f.get('name') for f in user_favorites]
+                user_favorites_station_codes = [f.STATION_CODE for f in user_favorites]
+                user_favorites_station_names = [f.STATION_NAME for f in user_favorites]
                 logger.debug(f"User {user.user_id} favorites: {user_favorites_station_names} ({user_favorites_station_codes})")
 
                 for alert in alerts:
