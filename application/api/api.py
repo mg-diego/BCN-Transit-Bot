@@ -89,6 +89,10 @@ def get_bus_router(
     @router.get("/stops/{stop_code}/routes")
     async def list_bus_stop_routes(stop_code: str):
         return await bus_service.get_stop_routes(stop_code)
+    
+    @router.get("/stops/{stop_code}")
+    async def get_bus_stop(stop_code: str):
+        return await bus_service.get_stop_by_code(stop_code)
 
     return router
 
@@ -112,6 +116,10 @@ def get_tram_router(
     @router.get("/stops/{stop_code}/routes")
     async def list_tram_stop_routes(stop_code: str):
         return await tram_service.get_stop_routes(stop_code)
+    
+    @router.get("/stops/{stop_code}")
+    async def get_bus_stop(stop_code: str):
+        return await tram_service.get_stop_by_code(stop_code)
 
     return router
 
@@ -135,6 +143,10 @@ def get_rodalies_router(
     @router.get("/stations/{station_code}/routes")
     async def list_rodalies_station_routes(station_code: str):
         return await rodalies_service.get_station_routes(station_code)
+    
+    @router.get("/stations/{station_code}")
+    async def get_rodalies_station(station_code: str):
+        return await rodalies_service.get_station_by_code(station_code)
 
     return router
 
@@ -170,6 +182,10 @@ def get_fgc_router(
     @router.get("/stations/{station_code}/routes")
     async def list_fgc_station_routes(station_code: str):
         return await fgc_service.get_station_routes(station_code)
+    
+    @router.get("/stations/{station_code}")
+    async def get_fgc_station(station_code: str):
+        return await fgc_service.get_station_by_code(station_code)
 
     return router
 
