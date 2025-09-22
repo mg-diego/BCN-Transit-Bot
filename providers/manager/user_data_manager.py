@@ -1,6 +1,8 @@
 import json
 from typing import Dict, List
-import uuid
+
+
+from domain.api.favorite_model import FavoriteItem
 from domain.common.alert import AffectedEntity, Alert, Publication
 from domain.common.user import User
 from domain.transport_type import TransportType
@@ -147,13 +149,27 @@ class UserDataManager:
         self._users_cache = {"data": users, "timestamp": datetime.now()}
         return users
 
-    def _load_favorites(self, force_refresh=False):
+    def _load_favorites(self, force_refresh=False) -> List[FavoriteItem]:
         if not force_refresh and self._favorites_cache["data"] is not None:
             if datetime.now() - self._favorites_cache["timestamp"] < timedelta(seconds=self.CACHE_TTL):
                 return self._favorites_cache["data"]
         favorites = self.favorites_ws.get_all_records()
-        self._favorites_cache = {"data": favorites, "timestamp": datetime.now()}
-        return favorites
+        favoriteItems = []
+        for fav in favorites:
+            favoriteItems.append(FavoriteItem(
+                USER_ID=str(fav.get("USER_ID", '')),
+                TYPE=fav.get("TYPE", ''),
+                STATION_CODE=str(fav.get("STATION_CODE", '')),
+                STATION_NAME=fav.get("STATION_NAME", ''),
+                STATION_GROUP_CODE=str(fav.get("STATION_GROUP_CODE", '')),
+                LINE_NAME=fav.get("LINE_NAME", ''),
+                LINE_NAME_WITH_EMOJI=fav.get("LINE_NAME_WITH_EMOJI", ''),
+                LINE_CODE=str(fav.get("LINE_CODE", '')),
+                coordinates=[fav.get("LONGITUDE", 0), fav.get("LATITUDE", 0)]
+            ))
+
+        self._favorites_cache = {"data": favoriteItems, "timestamp": datetime.now()}
+        return favoriteItems
 
     def _load_searches(self, force_refresh=False):
         if not force_refresh and self._searches_cache["data"] is not None:
@@ -308,7 +324,7 @@ class UserDataManager:
     # FAVORITES
     # ---------------------------
 
-    def add_favorite(self, user_id: int, type: str, item):
+    def add_favorite(self, user_id: int, type: str, item: FavoriteItem):
         """Añade una estación/parada favorita"""
         logger.debug(f"Adding favorite for user_id={user_id}, type={type}, item={item}")
         coordinates = item.get('coordinates')
@@ -316,42 +332,42 @@ class UserDataManager:
             if type.lower() == TransportType.METRO.value:
                 self.favorites_ws.append_row([
                     user_id, type.lower(),
-                    item.get('STATION_CODE'), item.get('STATION_NAME'),
-                    item.get('STATION_GROUP_CODE'), item.get('LINE_NAME'), item.get('LINE_NAME_WITH_EMOJI'),
-                    item.get('LINE_CODE'), coordinates[0], coordinates[1]
+                    item.STATION_CODE, item.STATION_NAME,
+                    item.STATION_GROUP_CODE, item.LINE_NAME, item.LINE_NAME_WITH_EMOJI,
+                    item.LINE_CODE, coordinates[0], coordinates[1]
                 ])
             elif type.lower() == TransportType.BUS.value:
                 self.favorites_ws.append_row([
                     user_id, type.lower(),
-                    item.get('STOP_CODE'), item.get('STOP_NAME'),
-                    '', '', '', item.get('LINE_CODE'), coordinates[1], coordinates[0]
+                    item.STATION_CODE, item.STATION_NAME,
+                    '', '', '', item.LINE_CODE, coordinates[1], coordinates[0]
                 ])
             elif type.lower() == TransportType.TRAM.value:
                 self.favorites_ws.append_row([
                     user_id, type.lower(),
-                    item.get('STOP_CODE'), item.get('STOP_NAME'),
-                    '', item.get('LINE_NAME'), item.get('LINE_NAME_WITH_EMOJI'), item.get('LINE_CODE'),
+                    item.STATION_CODE, item.STATION_NAME,
+                    '', item.LINE_NAME, item.LINE_NAME_WITH_EMOJI, item.LINE_CODE,
                     coordinates[1], coordinates[0]
                 ])
             elif type.lower() == TransportType.RODALIES.value:
                 self.favorites_ws.append_row([
                     user_id, type.lower(),
-                    item.get('STOP_CODE'), item.get('STOP_NAME'),
-                    '', item.get('LINE_NAME'), item.get('LINE_NAME_WITH_EMOJI'), item.get('LINE_CODE'),
+                    item.STATION_CODE, item.STATION_NAME,
+                    '', item.LINE_NAME, item.LINE_NAME_WITH_EMOJI, item.LINE_CODE,
                     coordinates[1], coordinates[0]
                 ])
             elif type.lower() == TransportType.BICING.value:
                 self.favorites_ws.append_row([
                     user_id, type.lower(),
-                    item.get('STATION_CODE'), item.get('STATION_NAME'),
-                    '', item.get('LINE_NAME'), item.get('LINE_NAME_WITH_EMOJI'), item.get('LINE_CODE'),
+                    item.STATION_CODE, item.STATION_NAME,
+                    '', item.LINE_NAME, item.LINE_NAME_WITH_EMOJI, item.LINE_CODE,
                     coordinates[1], coordinates[0]
                 ])
             elif type.lower() == TransportType.FGC.value:
                 self.favorites_ws.append_row([
                     user_id, type.lower(),
-                    item.get('STATION_CODE'), item.get('STATION_NAME'),
-                    '', item.get('LINE_NAME'), item.get('LINE_NAME_WITH_EMOJI'), item.get('LINE_CODE'),
+                    item.STATION_CODE, item.STATION_NAME,
+                    '', item.LINE_NAME, item.LINE_NAME_WITH_EMOJI, item.LINE_CODE,
                     coordinates[1], coordinates[0]
                 ])
 
@@ -366,27 +382,27 @@ class UserDataManager:
         logger.debug(f"Removing favorite: user_id={user_id}, type={type}, item_id={item_id}")
         favorites = self._load_favorites()
         for idx, fav in enumerate(favorites, start=2):
-            if str(fav["TYPE"]) == str(type) and str(fav["STATION_CODE"]) == str(item_id) and str(fav["USER_ID"]) == str(user_id):
+            if str(fav.TYPE) == str(type) and str(fav.STATION_CODE) == str(item_id) and str(fav.USER_ID) == str(user_id):
                 self.favorites_ws.delete_rows(idx)
                 self._invalidate_favorites_cache()
                 return True
         return False
 
-    def get_favorites_by_user(self, user_id: int):
+    def get_favorites_by_user(self, user_id: int) -> List[FavoriteItem]:
         logger.debug(f"Fetching favorites for user_id={user_id}")
         favorites = self._load_favorites()
-        user_fav = [f for f in favorites if str(f["USER_ID"]) == str(user_id)]
+        user_fav = [f for f in favorites if str(f.USER_ID) == str(user_id)]
     
         return sorted(
             user_fav,
-            key=lambda f: self.FAVORITE_TYPE_ORDER.get(f.get("TYPE"), 999)
+            key=lambda f: self.FAVORITE_TYPE_ORDER.get(f.TYPE, 999)
         )
 
     def has_favorite(self, user_id, type, item_id):
         logger.debug(f"Checking if user_id={user_id} has favorite {type}:{item_id}")
         favorites = self.get_favorites_by_user(user_id)
         return any(
-            f.get('TYPE') == str(type) and str(f.get('STATION_CODE')) == str(item_id) and str(f.get('USER_ID')) == str(user_id)
+            f.TYPE == str(type) and str(f.STATION_CODE) == str(item_id) and str(f.USER_ID) == str(user_id)
             for f in favorites
         )
 

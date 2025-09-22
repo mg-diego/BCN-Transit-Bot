@@ -1,3 +1,4 @@
+from domain.api.favorite_model import FavoriteItem
 from domain.transport_type import TransportType
 from providers.helpers import BoolConverter
 from telegram import Update
@@ -60,73 +61,86 @@ class FavoritesHandler:
         if item_type == TransportType.METRO.value:
             item = await self.metro_service.get_station_by_code(item_id)
             
-            new_fav_item = {
-                "STATION_CODE": item_id,
-                "STATION_NAME": item.name,
-                "STATION_GROUP_CODE": item.CODI_GRUP_ESTACIO,
-                "LINE_NAME": item.line_name,
-                "LINE_NAME_WITH_EMOJI": item.line_name_with_emoji,
-                "LINE_CODE": line_id,
-                "coordinates": [item.latitude, item.longitude]
-            }
+            new_fav_item = FavoriteItem(
+                TYPE=item_type,
+                STATION_CODE=item.code,
+                STATION_NAME=item.name,
+                STATION_GROUP_CODE=item.CODI_GRUP_ESTACIO,
+                LINE_NAME=item.line_name,
+                LINE_NAME_WITH_EMOJI=item.line_name_with_emoji,
+                LINE_CODE=line_id,
+                coordinates=[item.latitude, item.longitude]
+            )
         elif item_type == TransportType.BUS.value:
             item = await self.bus_service.get_stop_by_code(item_id)
 
-            new_fav_item = {
-                "STOP_CODE": item_id,
-                "STOP_NAME": item.name,
-                "LINE_CODE": line_id,
-                "coordinates": [item.latitude, item.longitude]
-            }
+            new_fav_item = FavoriteItem(
+                TYPE=item_type,
+                STATION_CODE=item.code,
+                STATION_NAME=item.name,
+                STATION_GROUP_CODE='',
+                LINE_NAME=item.line_name,
+                LINE_NAME_WITH_EMOJI=item.line_name_with_emoji,
+                LINE_CODE=line_id,
+                coordinates=[item.latitude, item.longitude]
+            )
         elif item_type == TransportType.TRAM.value:
             item = await self.tram_service.get_stop_by_id(item_id)
-            line = await self.tram_service.get_line_by_id(line_id)
+            line = await self.tram_service.get_line_by_id(line_id)      
 
-            new_fav_item = {
-                "STOP_CODE": item.code,
-                "STOP_NAME": item.name,
-                "LINE_NAME": line.name,
-                "LINE_NAME_WITH_EMOJI": line.name_with_emoji,
-                "LINE_CODE": line_id,
-                "coordinates": [item.latitude, item.longitude]
-            }        
+            new_fav_item = FavoriteItem(
+                TYPE=item_type,
+                STATION_CODE=item.code,
+                STATION_NAME=item.name,
+                STATION_GROUP_CODE='',
+                LINE_NAME=item.line_name,
+                LINE_NAME_WITH_EMOJI=item.line_name_with_emoji,
+                LINE_CODE=line_id,
+                coordinates=[item.latitude, item.longitude]
+            )
         elif item_type == TransportType.RODALIES.value:
             item = await self.rodalies_service.get_station_by_id(item_id)
             line = await self.rodalies_service.get_line_by_id(line_id)
 
-            new_fav_item = {
-                "STOP_CODE": item.code,
-                "STOP_NAME": item.name,
-                "LINE_NAME": line.name,
-                "LINE_NAME_WITH_EMOJI": line.name_with_emoji,
-                "LINE_CODE": line_id,
-                "coordinates": [item.latitude, item.longitude]
-            }
+            new_fav_item = FavoriteItem(
+                TYPE=item_type,
+                STATION_CODE=item.code,
+                STATION_NAME=item.name,
+                STATION_GROUP_CODE='',
+                LINE_NAME=item.line_name,
+                LINE_NAME_WITH_EMOJI=item.line_name_with_emoji,
+                LINE_CODE=line_id,
+                coordinates=[item.latitude, item.longitude]
+            )
                 
         elif item_type == TransportType.BICING.value:
             item = await self.bicing_service.get_station_by_id(item_id)
 
-            new_fav_item = {
-                "STATION_CODE": item.id,
-                "STATION_NAME": item.streetName,
-                "LINE_NAME": '',
-                "LINE_NAME_WITH_EMOJI": '',
-                "LINE_CODE": '',
-                "coordinates": [item.latitude, item.longitude]
-            }
+            new_fav_item = FavoriteItem(
+                TYPE=item_type,
+                STATION_CODE=item.id,
+                STATION_NAME=item.streetName,
+                STATION_GROUP_CODE='',
+                LINE_NAME='',
+                LINE_NAME_WITH_EMOJI='',
+                LINE_CODE='',
+                coordinates=[item.latitude, item.longitude]
+            )
                 
         elif item_type == TransportType.FGC.value:
             item = await self.fgc_service.get_station_by_id(item_id, line_id)
             line = await self.fgc_service.get_line_by_id(line_id)
 
-            new_fav_item = {
-                "STATION_CODE": item.id,
-                "STATION_NAME": item.name,
-                "LINE_NAME": line.name,
-                "LINE_NAME_WITH_EMOJI": line.name_with_emoji,
-                "LINE_CODE": line_id,
-                "coordinates": [item.latitude, item.longitude]
-            }
+            new_fav_item = FavoriteItem(
+                TYPE=item_type,
+                STATION_CODE=item.code,
+                STATION_NAME=item.name,
+                STATION_GROUP_CODE='',
+                LINE_NAME=line.name,
+                LINE_NAME_WITH_EMOJI=line.name_with_emoji,
+                LINE_CODE=line_id,
+                coordinates=[item.latitude, item.longitude]
+            )
 
         self.user_data_manager.add_favorite(user_id, item_type, new_fav_item)
         keyboard = self.keyboard_factory.update_menu(is_favorite=True, item_type=item_type, item_id=item_id, line_id=line_id, previous_callback=previous_callback, has_connections=BoolConverter.from_string(has_connections))

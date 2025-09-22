@@ -1,6 +1,5 @@
 
 import math
-from typing import List
 from fastapi import APIRouter, Query
 from fastapi.params import Body
 
@@ -10,28 +9,13 @@ from application.services.transport.fgc_service import FgcService
 from application.services.transport.metro_service import MetroService
 from application.services.transport.rodalies_service import RodaliesService
 from application.services.transport.tram_service import TramService
+from domain.api.favorite_model import FavoritePostRequest
 from domain.common.location import Location
 from providers.helpers.distance_helper import DistanceHelper
 from providers.helpers.utils import Utils
 from providers.manager.user_data_manager import UserDataManager
-from pydantic import BaseModel
 
-class FavoriteItem(BaseModel):
-    STATION_CODE: str
-    STATION_NAME: str
-    STATION_GROUP_CODE: str
-    LINE_NAME: str
-    LINE_NAME_WITH_EMOJI: str
-    LINE_CODE: str
-    coordinates: List[float]
 
-class FavoritePostRequest(BaseModel):
-    type: str
-    item: FavoriteItem
-
-class FavoriteDeleteRequest(BaseModel):
-    type: str
-    station_code: str
 
 def clean_floats(obj):
     if isinstance(obj, float) and (math.isnan(obj) or math.isinf(obj)):

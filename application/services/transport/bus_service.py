@@ -1,10 +1,8 @@
 import asyncio
-import itertools
 import time
 from collections import defaultdict
 from typing import List
 
-from domain import LineRoute
 from domain.common.alert import Alert
 from domain.transport_type import TransportType
 from providers.api.tmb_api_service import TmbApiService

@@ -2,6 +2,7 @@ import re
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton, WebAppInfo
 from typing import List
 
+from domain.api.favorite_model import FavoriteItem
 from domain.metro import MetroLine, MetroStation, MetroAccess
 from domain.bus import BusLine, BusStop
 from domain.tram import TramLine, TramStation
@@ -232,7 +233,7 @@ class KeyboardFactory:
             [fav_button]
         ])
     
-    def favorites_menu(self, favs):
+    def favorites_menu(self, favs: List[FavoriteItem]):
         TRANSPORT_CONFIG = {
             TransportType.METRO.value: {
                 "emoji": TransportType.METRO.emoji,
@@ -287,7 +288,7 @@ class KeyboardFactory:
         fav_keyboard = []
 
         for item in favs:
-            config = TRANSPORT_CONFIG.get(item["type"])
+            config = TRANSPORT_CONFIG.get(item.TYPE)
             if not config:
                 continue
 
