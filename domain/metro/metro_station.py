@@ -3,6 +3,7 @@ from typing import List
 
 from domain.common.line import Line
 from domain.metro import MetroLine
+from domain.transport_type import TransportType
 from providers.helpers.html_helper import HtmlHelper
 from domain.common.station import Station
 
@@ -31,7 +32,8 @@ class MetroStation(Station):
             ORIGEN_SERVEI=props.get('ORIGEN_SERVEI', ''),
             DESTI_SERVEI=props.get('DESTI_SERVEI', ''),
             latitude=coords[1],
-            longitude=coords[0]
+            longitude=coords[0],
+            transport_type=TransportType.METRO
         )
 
     @staticmethod

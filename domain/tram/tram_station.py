@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from domain.common.line import Line
 from domain.common.station import Station
+from domain.transport_type import TransportType
 
 @dataclass
 class TramStation(Station):
@@ -18,7 +19,8 @@ class TramStation(Station):
             returnCode=props.get('returnCode', ''),
             description=props.get('description', ''),
             latitude=props.get('latitude', ''),
-            longitude=props.get('longitude', '')
+            longitude=props.get('longitude', ''),
+            transport_type=TransportType.TRAM
         )
     
     @staticmethod

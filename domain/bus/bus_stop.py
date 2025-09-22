@@ -2,6 +2,7 @@ from dataclasses import dataclass
 
 from domain.bus.bus_line import BusLine
 from domain.common.station import Station
+from domain.transport_type import TransportType
 
 @dataclass
 class BusStop(Station):
@@ -24,7 +25,8 @@ class BusStop(Station):
             DESTI_SENTIT=props.get("DESTI_SENTIT", ""),
             line_color=props.get("COLOR_REC", ""),
             latitude=coords[1],
-            longitude=coords[0]
+            longitude=coords[0],
+            transport_type=TransportType.BUS
         )
 
     @staticmethod

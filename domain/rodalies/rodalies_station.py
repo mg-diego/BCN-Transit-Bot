@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from domain.common.line import Line
 from domain.common.station import Station
+from domain.transport_type import TransportType
 
 @dataclass
 class RodaliesStation(Station):
@@ -13,7 +14,8 @@ class RodaliesStation(Station):
             order=None,
             name=station_data["name"],
             latitude=station_data["latitude"],
-            longitude=station_data["longitude"]
+            longitude=station_data["longitude"],
+            transport_type=TransportType.RODALIES
         )
     
     @staticmethod

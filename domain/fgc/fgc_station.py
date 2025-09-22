@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import Optional
 from domain.common.station import Station
 from domain.fgc.fgc_line import FgcLine
+from domain.transport_type import TransportType
 
 @dataclass
 class FgcStation(Station):
@@ -18,7 +19,8 @@ class FgcStation(Station):
             line_id=line_name,
             line_name=line_name,
             moute_id=station_data.get("moute_id"),
-            order=order
+            order=order,
+            transport_type=TransportType.FGC
         )
     
     @staticmethod

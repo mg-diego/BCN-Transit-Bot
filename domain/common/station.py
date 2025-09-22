@@ -3,6 +3,7 @@ from typing import List, Optional
 
 from domain.common.alert import Alert
 from domain.common.line import Line
+from domain.transport_type import TransportType
 from providers.helpers.html_helper import HtmlHelper
 
 @dataclass(kw_only=True)
@@ -13,6 +14,7 @@ class Station:
     latitude: float
     longitude: float
     order: int
+    transport_type: TransportType
     name_with_emoji: Optional[str] = None
     description: Optional[str] = None
     line_id: Optional[int] = None
