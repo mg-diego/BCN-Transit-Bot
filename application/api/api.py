@@ -118,7 +118,7 @@ def get_tram_router(
         return await tram_service.get_stop_routes(stop_code)
     
     @router.get("/stops/{stop_code}")
-    async def get_bus_stop(stop_code: str):
+    async def get_tram_stop(stop_code: str):
         return await tram_service.get_stop_by_code(stop_code)
 
     return router
@@ -158,6 +158,10 @@ def get_bicing_router(
     @router.get("/stations")
     async def list_bicing_stations():
         return await bicing_service.get_all_stations()
+    
+    @router.get("/stations/{station_id}")
+    async def get_bicing_station(station_id: str):
+        return await bicing_service.get_station_by_id(station_id)
 
     return router
 
