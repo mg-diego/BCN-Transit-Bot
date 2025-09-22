@@ -232,7 +232,7 @@ class TmbApiService:
                 connection = TramLine.create_tram_connection(props)
                 connections.append(connection)
             elif str(props['NOM_OPERADOR']).lower() == str(TransportType.RODALIES.value).lower():
-                connection = RodaliesLine.create_rodalies_connection(feature)
+                connection = RodaliesLine.create_rodalies_connection(props)
                 connections.append(connection)
             elif str(props['NOM_OPERADOR']).lower() == str(TransportType.FGC.value).lower():
                 connection = FgcLine.create_fgc_connection(props)
@@ -240,7 +240,7 @@ class TmbApiService:
             else:
                 pass
 
-        return connections
+        return set(connections)
     
     async def get_global_alerts(self, transport_type: TransportType):
         url = f"https://api.tmb.cat/v1/alerts/{transport_type.value}/channels/WEB"

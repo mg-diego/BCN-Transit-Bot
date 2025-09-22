@@ -31,8 +31,8 @@ class RodaliesLine(Line):
             name=str(line.get('NOM_LINIA', '')),
             description=str(line.get('DESC_LINIA', '')),
             transport_type=TransportType.RODALIES,
-            origin='',
-            destination='',
+            origin=line.get('DESC_LINIA').split("-")[0].strip() if line.get('DESC_LINIA') and "-" in line.get('DESC_LINIA') else '',
+            destination=line.get('DESC_LINIA').split("-")[1].strip() if line.get('DESC_LINIA') and "-" in line.get('DESC_LINIA') else '',
             stations=[],
             color=str(line.get('COLOR_LINIA', '')),
         )
