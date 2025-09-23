@@ -55,6 +55,10 @@ def get_metro_router(
     @router.get("/stations/{station_code}/connections")
     async def get_metro_station_connections(station_code: str):
         return await metro_service.get_station_connections(station_code)
+    
+    @router.get("/stations/{station_code}/accesses")
+    async def get_metro_station_accesses(station_code: str):
+        return await metro_service.get_station_accesses(station_code)
 
     return router
 
@@ -186,6 +190,9 @@ def get_fgc_router(
 
     return router
 
+import asyncio
+from fastapi import APIRouter
+
 def get_results_router(
     metro_service: MetroService,
     bus_service: BusService,
@@ -198,48 +205,55 @@ def get_results_router(
 
     @router.get("/near")
     async def list_near_stations(lat: float, lon: float, radius: float = 0.5):
-        results = {
-            "metro": await metro_service.get_stations_by_name(''),
-            "bus": await bus_service.get_stops_by_name(''),
-            "tram": await tram_service.get_stops_by_name(''),
-            "fgc": await fgc_service.get_stations_by_name(''),
-            "rodalies": await rodalies_service.get_stations_by_name(''),
-            "bicing": await bicing_service.get_stations_by_name('')
-        }
+        # Lanza todas las tareas a la vez
+        metro_task = metro_service.get_stations_by_name('')
+        bus_task = bus_service.get_stops_by_name('')
+        tram_task = tram_service.get_stops_by_name('')
+        fgc_task = fgc_service.get_stations_by_name('')
+        rodalies_task = rodalies_service.get_stations_by_name('')
+        bicing_task = bicing_service.get_stations_by_name('')
+
+        metro, bus, tram, fgc, rodalies, bicing = await asyncio.gather(
+            metro_task, bus_task, tram_task, fgc_task, rodalies_task, bicing_task
+        )
+
         near_results = DistanceHelper.build_stops_list(
-            metro_stations=results.get('metro'),
-            bus_stops=results.get('bus'),
-            tram_stops=results.get('tram'),
-            rodalies_stations=results.get('rodalies'),
-            bicing_stations=results.get('bicing'),
-            fgc_stations=results.get('fgc'),
+            metro_stations=metro,
+            bus_stops=bus,
+            tram_stops=tram,
+            rodalies_stations=rodalies,
+            bicing_stations=bicing,
+            fgc_stations=fgc,
             user_location=Location(latitude=lat, longitude=lon),
             results_to_return=999999,
             max_distance_km=radius
         )
         return near_results
-    
+
     @router.get("/search")
     async def search_stations(name: str):
-        results = {
-            "metro": await metro_service.get_stations_by_name(name),
-            "bus": await bus_service.get_stops_by_name(name),
-            "tram": await tram_service.get_stops_by_name(name),
-            "fgc": await fgc_service.get_stations_by_name(name),
-            "rodalies": await rodalies_service.get_stations_by_name(name),
-            "bicing": await bicing_service.get_stations_by_name(name)
-        }
+        tasks = [
+            metro_service.get_stations_by_name(name),
+            bus_service.get_stops_by_name(name),
+            tram_service.get_stops_by_name(name),
+            fgc_service.get_stations_by_name(name),
+            rodalies_service.get_stations_by_name(name),
+            bicing_service.get_stations_by_name(name),
+        ]
+        metro, bus, tram, fgc, rodalies, bicing = await asyncio.gather(*tasks)
+
         search_results = DistanceHelper.build_stops_list(
-            metro_stations=results.get('metro'),
-            bus_stops=results.get('bus'),
-            tram_stops=results.get('tram'),
-            rodalies_stations=results.get('rodalies'),
-            bicing_stations=results.get('bicing'),
-            fgc_stations=results.get('fgc')
+            metro_stations=metro,
+            bus_stops=bus,
+            tram_stops=tram,
+            rodalies_stations=rodalies,
+            bicing_stations=bicing,
+            fgc_stations=fgc
         )
         return search_results
 
     return router
+
 
 def get_user_router(
     user_data_manager: UserDataManager
