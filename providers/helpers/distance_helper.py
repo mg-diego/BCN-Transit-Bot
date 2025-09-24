@@ -104,7 +104,7 @@ class DistanceHelper:
                 "type": "tram" if isinstance(t, TramStation) else "rodalies" if isinstance(t, RodaliesStation) else "fgc",                
                 "line_name": m.line_name,
                 "line_name_with_emoji": m.line_name_with_emoji,
-                "line_code": t.line_id,
+                "line_code": t.line_code,
                 "station_name": t.name,
                 "station_code": t.id,
                 "coordinates": (t.latitude, t.longitude),
