@@ -261,17 +261,21 @@ class TramApiService:
         return list(routes_dict.values())
 
     async def get_global_alerts(self):
-        url = "https://t-mobilitat.atm.cat/opendata/alerts/json/user/token/open"
-        data = await self._request("GET", url, use_base_url=False)
-        alerts = data.get('entity', [])
-        today_alerts = [alert for alert in alerts if datetime.fromtimestamp(alert['alert']['active_period'][0]['start']).date() == datetime.now().date()]
-        tram_alerts = [
-                alert
-                for alert in today_alerts
-                if any(
-                    "route_id" in entity and "TB" in entity["route_id"]
-                    for entity in alert.get("alert", {}).get("informed_entity", [])
-                )
-            ]
+        try:
+            url = "https://t-mobilitat.atm.cat/opendata/alerts/json/user/token/open"
+            data = await self._request("GET", url, use_base_url=False)
+            alerts = data.get('entity', [])
+            today_alerts = [alert for alert in alerts if datetime.fromtimestamp(alert['alert']['active_period'][0]['start']).date() == datetime.now().date()]
+            tram_alerts = [
+                    alert
+                    for alert in today_alerts
+                    if any(
+                        "route_id" in entity and "TB" in entity["route_id"]
+                        for entity in alert.get("alert", {}).get("informed_entity", [])
+                    )
+                ]
+        except Exception as e:
+            self.logger.error(f"Error fetching TRAM global alerts: {e}")
+            tram_alerts = []
 
         return tram_alerts

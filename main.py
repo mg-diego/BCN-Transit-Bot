@@ -267,8 +267,6 @@ class BotApp:
 
     async def run(self):
         """Main async entrypoint for the bot."""
-        # Initialize synchronous services
-        #self.init_services()
         
         # Run the async seeder
         await self.run_seeder()
@@ -312,7 +310,13 @@ class BotApp:
             await self.application.shutdown()
 
 async def start_fastapi(app):
-    config = uvicorn.Config(app, host="0.0.0.0", port=8000, log_level="info")
+    config = uvicorn.Config(
+        app,
+        host="0.0.0.0",
+        port=8000,
+        log_level="info",   
+        log_config=None
+    )
     server = uvicorn.Server(config)
     await server.serve()
 

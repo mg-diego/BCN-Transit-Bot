@@ -37,3 +37,10 @@ logger.addHandler(console_handler)
 
 # Evitar que se propaguen logs duplicados a root logger
 logger.propagate = False
+
+
+for name in ("uvicorn", "uvicorn.error", "uvicorn.access", "fastapi"):
+    uvicorn_logger = logging.getLogger(name)
+    uvicorn_logger.handlers = logger.handlers       # comparte handlers
+    uvicorn_logger.setLevel(logger.level)           # mismo nivel
+    uvicorn_logger.propagate = False
