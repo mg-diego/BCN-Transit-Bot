@@ -365,7 +365,7 @@ class KeyboardFactory:
 
             # Build text and callback depending on type
             if stop["type"] == "metro":
-                text = f"{TransportType.METRO.emoji} {stop['line_name']} - {stop['station_name']}{distance_str}"
+                text = f"{TransportType.METRO.emoji} {stop['line_name_with_emoji']} - {stop['station_name']}{distance_str}"
                 callback = Callbacks.METRO_STATION.format(
                     line_code=stop["line_code"],
                     station_code=stop["station_code"]
@@ -377,13 +377,13 @@ class KeyboardFactory:
                     station_code=stop["station_code"]
                 )
             elif stop["type"] == "tram":
-                text = f"{TransportType.TRAM.emoji} {stop['line_name']} - {stop['station_name']}{distance_str}"
+                text = f"{TransportType.TRAM.emoji} {stop['line_name_with_emoji']} - {stop['station_name']}{distance_str}"
                 callback = Callbacks.TRAM_STATION.format(
                     line_code=stop["line_code"],
                     station_code=stop["station_code"]
                 )
             elif stop["type"] == "rodalies":
-                text = f"{TransportType.RODALIES.emoji} {stop['line_name']} - {stop['station_name']}{distance_str}"
+                text = f"{TransportType.RODALIES.emoji} {stop['line_name_with_emoji']} - {stop['station_name']}{distance_str}"
                 callback = Callbacks.RODALIES_STATION.format(
                     line_code=stop["line_code"],
                     station_code=stop["station_code"]
@@ -395,7 +395,7 @@ class KeyboardFactory:
                     station_code=stop["station_code"]
                 )
             elif stop["type"] == "fgc":
-                text = f"{TransportType.FGC.emoji} {stop['line_name']} - {stop['station_name']}{distance_str}"
+                text = f"{TransportType.FGC.emoji} {stop['line_name_with_emoji']} - {stop['station_name']}{distance_str}"
                 callback = Callbacks.FGC_STATION.format(
                     line_code=stop["line_code"],
                     station_code=stop["station_code"]

@@ -83,7 +83,8 @@ class DistanceHelper:
                 continue
             stops.append({
                 "type": "metro",
-                "line_name": m.line_name_with_emoji,
+                "line_name": m.line_name,
+                "line_name_with_emoji": m.line_name_with_emoji,
                 "line_code": m.line_code,
                 "station_name": m.name,
                 "station_code": m.code,
@@ -100,8 +101,9 @@ class DistanceHelper:
             if distance_km is not None and distance_km > max_distance_km:
                 continue
             stops.append({
-                "type": "tram" if isinstance(t, TramStation) else "rodalies" if isinstance(t, RodaliesStation) else "fgc",
-                "line_name": t.line_name_with_emoji,
+                "type": "tram" if isinstance(t, TramStation) else "rodalies" if isinstance(t, RodaliesStation) else "fgc",                
+                "line_name": m.line_name,
+                "line_name_with_emoji": m.line_name_with_emoji,
                 "line_code": t.line_id,
                 "station_name": t.name,
                 "station_code": t.id,
@@ -120,7 +122,7 @@ class DistanceHelper:
             stops.append({
                 "type": "bicing",
                 "line_name": '',
-                "line_code": '',
+                "line_name_with_emoji": '',
                 "station_name": b.streetName,
                 "station_code": b.id,
                 "coordinates": (b.latitude, b.longitude),
