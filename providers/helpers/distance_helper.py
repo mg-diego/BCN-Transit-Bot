@@ -102,8 +102,8 @@ class DistanceHelper:
                 continue
             stops.append({
                 "type": "tram" if isinstance(t, TramStation) else "rodalies" if isinstance(t, RodaliesStation) else "fgc",                
-                "line_name": m.line_name,
-                "line_name_with_emoji": m.line_name_with_emoji,
+                "line_name": t.line_name,
+                "line_name_with_emoji": t.line_name_with_emoji,
                 "line_code": t.line_code,
                 "station_name": t.name,
                 "station_code": t.id,
