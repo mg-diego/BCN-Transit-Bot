@@ -144,6 +144,10 @@ def get_rodalies_router(
     @router.get("/stations/{station_code}")
     async def get_rodalies_station(station_code: str):
         return await rodalies_service.get_station_by_code(station_code)
+    
+    @router.get("/stations/{station_code}/connections")
+    async def get_rodalies_station_connections(station_code: str):
+        return [] # TODO: Complete implementation
 
     return router
 
@@ -187,6 +191,10 @@ def get_fgc_router(
     @router.get("/stations/{station_code}")
     async def get_fgc_station(station_code: str):
         return await fgc_service.get_station_by_code(station_code)
+    
+    @router.get("/stations/{station_code}/connections")
+    async def get_fgc_station_connections(station_code: str):
+        return [] # TODO: Complete implementation
 
     return router
 
