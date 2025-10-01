@@ -149,11 +149,11 @@ class BotApp:
         service_times = []
 
         preload_tasks = [
-            #("Metro", self.metro_service, ["get_all_lines", "get_all_stations"]),
-            #("Bus", self.bus_service, ["get_all_lines", "get_all_stops"]),
-            #("Tram", self.tram_service, ["get_all_lines", "get_all_stops"]),
+            ("Metro", self.metro_service, ["get_all_lines", "get_all_stations"]),
+            ("Bus", self.bus_service, ["get_all_lines", "get_all_stops"]),
+            ("Tram", self.tram_service, ["get_all_lines", "get_all_stops"]),
             ("Rodalies", self.rodalies_service, ["get_all_lines", "get_all_stations"]),
-            #("FGC", self.fgc_service, ["get_all_lines", "get_all_stations"])
+            ("FGC", self.fgc_service, ["get_all_lines", "get_all_stations"])
         ]
 
         try:
