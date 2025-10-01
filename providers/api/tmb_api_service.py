@@ -7,9 +7,10 @@ from domain import NextTrip, LineRoute, normalize_to_seconds
 from domain.common.connections import Connections
 from domain.common.line import Line
 from domain.fgc.fgc_line import FgcLine
-from domain.metro import MetroLine, MetroStation, create_metro_access
+from domain.metro import MetroLine, MetroStation
 from domain.bus import BusStop, BusLine
 
+from domain.metro.metro_access import MetroAccess
 from domain.rodalies.rodalies_line import RodaliesLine
 from domain.tram.tram_line import TramLine
 from domain.transport_type import TransportType
@@ -210,7 +211,7 @@ class TmbApiService:
 
         accesses = []
         for feature in features:
-            access = create_metro_access(feature)
+            access = MetroAccess.create_metro_access(feature)
             accesses.append(access)
 
         return accesses
