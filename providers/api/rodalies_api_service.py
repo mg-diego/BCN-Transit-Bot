@@ -79,6 +79,9 @@ class RodaliesApiService:
             line = item["line"]
             key = (line["name"], line["id"], item["destinationStation"]["name"])
 
+            if item["departureDateHourSelectedStation"] < datetime.now().isoformat():
+                continue
+            
             next_rodalies = NextTrip(
                     id=item["technicalNumber"],
                     arrival_time=normalize_to_seconds(datetime.fromisoformat(item["departureDateHourSelectedStation"]).timestamp()),
