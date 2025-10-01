@@ -83,13 +83,17 @@ def get_bus_router(
     async def list_bus_stop_routes(stop_code: str):
         return await bus_service.get_stop_routes(stop_code)
     
-    @router.get("/stops/{station_code}/connections")
+    @router.get("/stops/{stop_code}/connections")
     async def get_bus_stop_connections(station_code: str):
         return await bus_service.get_stop_connections(station_code)
     
     @router.get("/stops/{stop_code}")
     async def get_bus_stop(stop_code: str):
         return await bus_service.get_stop_by_code(stop_code)
+    
+    @router.get("/stops/{stop_code}/accesses")
+    async def get_bus_stop_accesses(stop_code: str):
+        return []
 
     return router
 
@@ -117,6 +121,14 @@ def get_tram_router(
     @router.get("/stops/{stop_code}")
     async def get_tram_stop(stop_code: str):
         return await tram_service.get_stop_by_code(stop_code)
+    
+    @router.get("/stops/{stop_code}/connections")
+    async def get_tram_stop_connections(stop_code: str):
+        return [] #TODO: Complete implementation
+    
+    @router.get("/stops/{stop_code}/accesses")
+    async def get_bus_stop_accesses(stop_code: str):
+        return []
 
     return router
 
@@ -148,6 +160,10 @@ def get_rodalies_router(
     @router.get("/stations/{station_code}/connections")
     async def get_rodalies_station_connections(station_code: str):
         return [] # TODO: Complete implementation
+
+    @router.get("/stations/{station_code}/accesses")
+    async def get_rodalies_station_accesses(station_code: str):
+        return []
 
     return router
 
@@ -195,6 +211,10 @@ def get_fgc_router(
     @router.get("/stations/{station_code}/connections")
     async def get_fgc_station_connections(station_code: str):
         return [] # TODO: Complete implementation
+
+    @router.get("/stations/{station_code}/accesses")
+    async def get_fgc_station_accesses(station_code: str):
+        return []
 
     return router
 
