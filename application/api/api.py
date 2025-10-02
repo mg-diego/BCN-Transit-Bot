@@ -88,8 +88,8 @@ def get_bus_router(
         return await bus_service.get_stop_routes(stop_code)
     
     @router.get("/stops/{stop_code}/connections")
-    async def get_bus_stop_connections(station_code: str):
-        return await bus_service.get_stop_connections(station_code)
+    async def get_bus_stop_connections(stop_code: str):
+        return await bus_service.get_stop_connections(stop_code)
     
     @router.get("/stops/{stop_code}")
     async def get_bus_stop(stop_code: str):
