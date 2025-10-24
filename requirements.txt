@@ -9,3 +9,5 @@ fastapi
 pydantic
 uvicorn
 pandas
+protobuf
+gtfs-realtime-bindings
