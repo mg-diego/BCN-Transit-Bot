@@ -1,4 +1,5 @@
 import json
+import os
 from typing import Dict, List
 
 
@@ -99,7 +100,26 @@ class UserDataManager:
                 "https://spreadsheets.google.com/feeds",
                 "https://www.googleapis.com/auth/drive"
             ]
-            creds = ServiceAccountCredentials.from_json_keyfile_name(credentials_file, scope)
+
+            creds = None
+
+            # 1️⃣ Intentar cargar desde archivo
+            if os.path.isfile(credentials_file):
+                logger.info(f"Loading credentials from file '{credentials_file}'")
+                creds = ServiceAccountCredentials.from_json_keyfile_name(credentials_file, scope)
+            else:
+                # 2️⃣ Intentar cargar desde variable de entorno
+                creds_json = os.getenv("GOOGLE_CREDENTIALS_JSON")
+                if creds_json:
+                    logger.info("Loading credentials from environment variable 'GOOGLE_CREDENTIALS_JSON'")
+                    creds_dict = json.loads(creds_json)
+                    creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
+                else:
+                    raise FileNotFoundError(
+                        f"Credentials file '{credentials_file}' not found and 'GOOGLE_CREDENTIALS_JSON' environment variable is not set."
+                    )
+
+            # Autorizar cliente
             client = gspread.authorize(creds)
 
             # Abrir spreadsheet y pestañas
@@ -111,14 +131,12 @@ class UserDataManager:
             self.audit_ws = self.sheet.worksheet("audit")
             self.audit_logger = AuditLogger(self.audit_ws, max_buffer_size=50)
 
+            # Inicializar caches y columnas
             self.USERS_LANGUAGE_INDEX = 4
             self.USERS_RECEIVE_NOTIFICATIONS_INDEX = 5
             self.USERS_ALREADY_NOTIFIED = 6
-
             self.SEARCHES_LAST_SEARCH_COLUMN_INDEX = 6
             self.SEARCHES_USES_COLUMN_INDEX = 7
-
-            # Inicializar cachés
             self._users_cache = {"data": None, "timestamp": None}
             self._favorites_cache = {"data": None, "timestamp": None}
             self._searches_cache = {"data": None, "timestamp": None}
@@ -126,6 +144,7 @@ class UserDataManager:
             self._audit_cache = {"data": None, "timestamp": None}
 
             logger.info(f"Connected to Google Spreadsheet '{spreadsheet_name}' successfully.")
+
         except Exception as e:
             logger.critical(f"Failed to initialize UserDataManager: {e}")
             raise
