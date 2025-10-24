@@ -9,7 +9,7 @@ from providers.manager import UserDataManager
 from providers.helpers.logger import logger
 
 class AlertsService:
-    def __init__(self, bot: Bot, message_service: MessageService, user_data_manager: UserDataManager, interval: int = 60):
+    def __init__(self, bot: Bot, message_service: MessageService, user_data_manager: UserDataManager, interval: int = 300):
         self.bot = bot
         self.message_service = message_service
         self.user_data_manager = user_data_manager
