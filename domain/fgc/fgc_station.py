@@ -25,6 +25,7 @@ class FgcStation(Station):
     
     @staticmethod
     def update_line_info(fgc_station: Station, line: FgcLine):
+        fgc_station.line_description = line.description
         fgc_station.line_name_with_emoji = line.name_with_emoji
         fgc_station.line_color = line.color
         fgc_station.line_id = line.id

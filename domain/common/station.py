@@ -19,6 +19,7 @@ class Station:
     description: Optional[str] = None
     line_id: Optional[int] = None
     line_code: Optional[int] = None
+    line_description: Optional[str] = None
     line_color: Optional[str] = None
     line_name: Optional[str] = None
     line_name_with_emoji: Optional[str] = None

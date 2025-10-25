@@ -153,7 +153,7 @@ class TramService(ServiceBase):
             return connections
         
         same_stops = [s for s in await self.get_all_stops() if s.code == stop_code]
-        connections = [TramLine.create_tram_connection(s.line_id, s.line_code, s.line_name, '', '', '') for s in same_stops]
+        connections = [TramLine.create_tram_connection(s.line_id, s.line_code, s.line_name, s.line_description, '', '') for s in same_stops]
         await self.cache_service.set(f"tram_stop_connections_{stop_code}", connections, ttl=3600*24)
 
         elapsed = (time.perf_counter() - start)

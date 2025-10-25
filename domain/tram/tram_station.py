@@ -25,6 +25,7 @@ class TramStation(Station):
     
     @staticmethod
     def update_line_info(tram_station: Station, line: Line):
+        tram_station.line_description = line.description
         tram_station.line_name_with_emoji = line.name_with_emoji
         tram_station.line_name = line.name
         tram_station.line_code = line.code

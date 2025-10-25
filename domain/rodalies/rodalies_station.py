@@ -20,6 +20,7 @@ class RodaliesStation(Station):
     
     @staticmethod
     def update_line_info(rodalies_station: Station, line: Line):
+        rodalies_station.line_description = line.description
         rodalies_station.line_name_with_emoji = line.name_with_emoji
         rodalies_station.line_color = line.color
         rodalies_station.line_id = line.id

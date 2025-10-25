@@ -22,6 +22,7 @@ class BusStop(Station):
             line_id=props.get("ID_LINIA", ""),
             line_code=props.get("CODI_LINIA", ""),
             line_name=props.get("NOM_LINIA", ""),
+            line_description=props.get("DESC_LINIA", ""),
             DESTI_SENTIT=props.get("DESTI_SENTIT", ""),
             line_color=props.get("COLOR_REC", ""),
             latitude=coords[1],
