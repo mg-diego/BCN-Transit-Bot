@@ -106,7 +106,7 @@ class DistanceHelper:
                 "line_name_with_emoji": t.line_name_with_emoji,
                 "line_code": t.line_code,
                 "station_name": t.name,
-                "station_code": t.id,
+                "station_code": t.code,
                 "coordinates": (t.latitude, t.longitude),
                 "distance_km": distance_km
             })
