@@ -2,6 +2,7 @@ from collections import defaultdict
 from typing import List
 import time
 from domain.common.alert import Alert
+from domain.common.connections import Connections
 from domain.rodalies import RodaliesLine, RodaliesStation
 from domain import LineRoute
 from domain.transport_type import TransportType
@@ -149,3 +150,19 @@ class RodaliesService(ServiceBase):
         elapsed = (time.perf_counter() - start)
         logger.info(f"[{self.__class__.__name__}] get_station_by_code({station_code}) -> {stop} ejecutado en {elapsed:.4f} s")  
         return stop
+    
+    async def get_rodalies_station_connections(self, station_code) -> Connections:
+        start = time.perf_counter()
+        connections = await self.cache_service.get(f"rodalies_station_connections_{station_code}")
+        if connections:
+            elapsed = (time.perf_counter() - start)
+            logger.info(f"[{self.__class__.__name__}] get_rodalies_station_connections({station_code}) from cache -> {len(connections)} connections (tiempo: {elapsed:.4f} s)")
+            return connections
+        
+        same_stops = [s for s in await self.get_all_stations() if s.code == station_code]
+        connections = [RodaliesLine.create_rodalies_connection(s.line_id, s.line_code, s.line_name, '', '', '', s.line_color) for s in same_stops]
+        await self.cache_service.set(f"rodalies_station_connections_{station_code}", connections, ttl=3600*24)
+
+        elapsed = (time.perf_counter() - start)
+        logger.info(f"[{self.__class__.__name__}] get_rodalies_station_connections({station_code}) from cache -> {len(connections)} connections (tiempo: {elapsed:.4f} s)")
+        return connections

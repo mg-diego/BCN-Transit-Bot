@@ -30,3 +30,16 @@ class FgcLine(Line):
             color = line.get('COLOR_LINIA'),
             transport_type=TransportType.FGC
         )
+    
+    @staticmethod
+    def create_fgc_connection(id, code, name, description, color):
+        return FgcLine(
+            id = id,
+            code = code,
+            name = name,
+            description = description,
+            origin = '',
+            destination = '',
+            color = color,
+            transport_type=TransportType.FGC
+        )

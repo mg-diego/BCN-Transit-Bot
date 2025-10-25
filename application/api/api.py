@@ -128,10 +128,10 @@ def get_tram_router(
     
     @router.get("/stops/{stop_code}/connections")
     async def get_tram_stop_connections(stop_code: str):
-        return [] #TODO: Complete implementation
+        return await tram_service.get_tram_stop_connections(stop_code)
     
     @router.get("/stops/{stop_code}/accesses")
-    async def get_bus_stop_accesses(stop_code: str):
+    async def get_tram_stop_accesses(stop_code: str):
         return []
 
     return router
@@ -163,7 +163,7 @@ def get_rodalies_router(
     
     @router.get("/stations/{station_code}/connections")
     async def get_rodalies_station_connections(station_code: str):
-        return [] # TODO: Complete implementation
+        return await rodalies_service.get_rodalies_station_connections(station_code)
 
     @router.get("/stations/{station_code}/accesses")
     async def get_rodalies_station_accesses(station_code: str):
@@ -214,7 +214,7 @@ def get_fgc_router(
     
     @router.get("/stations/{station_code}/connections")
     async def get_fgc_station_connections(station_code: str):
-        return [] # TODO: Complete implementation
+        return await fgc_service.get_fgc_station_connections(station_code)
 
     @router.get("/stations/{station_code}/accesses")
     async def get_fgc_station_accesses(station_code: str):
@@ -237,7 +237,6 @@ def get_results_router(
 
     @router.get("/near")
     async def list_near_stations(lat: float, lon: float, radius: float = 0.5):
-        # Lanza todas las tareas a la vez
         metro_task = metro_service.get_stations_by_name('')
         bus_task = bus_service.get_stops_by_name('')
         tram_task = tram_service.get_stops_by_name('')

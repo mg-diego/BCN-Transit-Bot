@@ -4,6 +4,7 @@ from collections import defaultdict
 from typing import List
 
 from domain.common.alert import Alert
+from domain.common.connections import Connections
 from domain.common.line_route import LineRoute
 from domain.common.line_route import LineRoute
 from domain.transport_type import TransportType
@@ -143,16 +144,21 @@ class TramService(ServiceBase):
         logger.info(f"[{self.__class__.__name__}] get_stop_routes({stop_code}) -> {len(routes)} routes (tiempo: {elapsed:.4f} s)")
         return routes
 
-    async def get_tram_stop_connections(self, stop_id) -> List[TramConnection]:
+    async def get_tram_stop_connections(self, stop_code) -> Connections:
         start = time.perf_counter()
-        connections = await self._get_from_cache_or_api(
-            f"tram_stop_connections_{stop_id}",
-            lambda: self.tram_api_service.get_connections_at_stop(stop_id),
-            cache_ttl=3600*24
-        )
+        connections = await self.cache_service.get(f"tram_stop_connections_{stop_code}")
+        if connections:
+            elapsed = (time.perf_counter() - start)
+            logger.info(f"[{self.__class__.__name__}] get_tram_stop_connections({stop_code}) from cache -> {len(connections)} connections (tiempo: {elapsed:.4f} s)")
+            return connections
+        
+        same_stops = [s for s in await self.get_all_stops() if s.code == stop_code]
+        connections = [TramLine.create_tram_connection(s.line_id, s.line_code, s.line_name, '', '', '') for s in same_stops]
+        await self.cache_service.set(f"tram_stop_connections_{stop_code}", connections, ttl=3600*24)
+
         elapsed = (time.perf_counter() - start)
-        logger.info(f"[{self.__class__.__name__}] get_tram_stop_connections({stop_id}) -> {len(connections)} connections (tiempo: {elapsed:.4f} s)")
-        return "\n".join(str(c) for c in connections)
+        logger.info(f"[{self.__class__.__name__}] get_tram_stop_connections({stop_code}) from cache -> {len(connections)} connections (tiempo: {elapsed:.4f} s)")
+        return connections
 
     # === OTHER CALLS ===
     async def get_stops_by_name(self, stop_name):

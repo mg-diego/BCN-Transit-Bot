@@ -1,8 +1,8 @@
 import asyncio
 import time
 from typing import List
-import json
 
+from domain.common.connections import Connections
 from domain.common.line import Line
 from domain.fgc import FgcLine, FgcStation
 from domain import NextTrip, LineRoute, normalize_to_seconds
@@ -223,3 +223,19 @@ class FgcService(ServiceBase):
             f"-> {line} ejecutado en {elapsed:.4f} s"
         )
         return line
+    
+    async def get_fgc_station_connections(self, station_code) -> Connections:
+        start = time.perf_counter()
+        connections = await self.cache_service.get(f"fgc_station_connections_{station_code}")
+        if connections:
+            elapsed = (time.perf_counter() - start)
+            logger.info(f"[{self.__class__.__name__}] get_fgc_station_connections({station_code}) from cache -> {len(connections)} connections (tiempo: {elapsed:.4f} s)")
+            return connections
+        
+        same_stops = [s for s in await self.get_all_stations() if s.code == station_code]
+        connections = [FgcLine.create_fgc_connection(s.line_id, s.line_code, s.line_name, '', '', '', s.line_color) for s in same_stops]
+        await self.cache_service.set(f"fgc_station_connections_{station_code}", connections, ttl=3600*24)
+
+        elapsed = (time.perf_counter() - start)
+        logger.info(f"[{self.__class__.__name__}] get_fgc_station_connections({station_code}) from cache -> {len(connections)} connections (tiempo: {elapsed:.4f} s)")
+        return connections

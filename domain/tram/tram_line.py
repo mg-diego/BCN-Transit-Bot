@@ -29,3 +29,16 @@ class TramLine(Line):
             color="008E78",
             transport_type=TransportType.TRAM
         )
+    
+    @staticmethod
+    def create_tram_connection(id, code, name, description, origin, destination):
+        return Line(
+            id=id,
+            code=code,
+            name=name,
+            description=description,
+            origin=origin,
+            destination=destination,
+            color="008E78",
+            transport_type=TransportType.TRAM
+        )
