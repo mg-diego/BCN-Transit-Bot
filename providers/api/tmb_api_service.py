@@ -238,13 +238,13 @@ class TmbApiService:
                 connection = BusLine.create_bus_line(feature)
                 connections.append(connection)
             elif str(props['NOM_OPERADOR']).lower() == str(TransportType.TRAM.value).lower():
-                connection = TramLine.create_tram_connection(props)
+                connection = TramLine.create_tram_connection_from_dict(props)
                 connections.append(connection)
             elif str(props['NOM_OPERADOR']).lower() == str(TransportType.RODALIES.value).lower():
-                connection = RodaliesLine.create_rodalies_connection(props)
+                connection = RodaliesLine.create_rodalies_connection_from_dict(props)
                 connections.append(connection)
             elif str(props['NOM_OPERADOR']).lower() == str(TransportType.FGC.value).lower():
-                connection = FgcLine.create_fgc_connection(props)
+                connection = FgcLine.create_fgc_connection_from_dict(props)
                 connections.append(connection)
 
         return sorted(

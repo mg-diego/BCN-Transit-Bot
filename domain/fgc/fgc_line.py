@@ -19,7 +19,7 @@ class FgcLine(Line):
         )
     
     @staticmethod
-    def create_fgc_connection(line: dict):
+    def create_fgc_connection_from_dict(line: dict):
         return FgcLine(
             id = str(line.get('ID_LINIA')),
             code = str(line.get('CODI_LINIA')),

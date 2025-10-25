@@ -24,7 +24,7 @@ class RodaliesLine(Line):
         )
     
     @staticmethod
-    def create_rodalies_connection(line):
+    def create_rodalies_connection_from_dict(line: dict):
         return RodaliesLine(
             id=str(line.get('ID_LINIA', '')),
             code=str(line.get('CODI_LINIA', '')),

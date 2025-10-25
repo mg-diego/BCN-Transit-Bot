@@ -18,7 +18,7 @@ class TramLine(Line):
         )
     
     @staticmethod
-    def create_tram_connection(props: dict):
+    def create_tram_connection_from_dict(props: dict):
         return Line(
             id=str(props.get('ID_LINIA', '')),
             code=str(props.get('CODI_LINIA', '')),
