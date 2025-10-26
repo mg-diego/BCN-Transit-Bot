@@ -293,7 +293,7 @@ def get_user_router(
     router = APIRouter()
 
     @router.post("/register")
-    async def register_user(request: RegisterRequest):
+    async def register_user(request: RegisterRequest = Body(...)):
         try:
             result = user_data_manager.register_user(
                 request.androidId,
