@@ -2,10 +2,6 @@ import json
 import os
 from typing import Dict, List
 
-import firebase_admin
-from firebase_admin import credentials
-from firebase_admin import messaging
-
 from domain.api.favorite_model import FavoriteItem
 from domain.common.alert import AffectedEntity, Alert, Publication
 from domain.common.user import User
@@ -98,7 +94,6 @@ class UserDataManager:
 
     def __init__(self, spreadsheet_name: str = "TMB"):
         google_sheets_credentials_file = "google-sheets-credentials.json"
-        firebase_credentials_file = "firebase-credentials.json"
 
         logger.info("Initializing UserDataManager...")
         try:
@@ -108,7 +103,6 @@ class UserDataManager:
             ]
 
             google_creds_json = None
-            firebase_creds_json = None
 
             # GOOGLE SHEETS
             if os.path.isfile(google_sheets_credentials_file):
@@ -123,32 +117,7 @@ class UserDataManager:
                 else:
                     raise FileNotFoundError(
                         f"Credentials file '{google_sheets_credentials_file}' not found and 'GOOGLE_CREDENTIALS_JSON' environment variable is not set."
-                    )
-                
-                # FIREBASE
-                if os.path.isfile(firebase_credentials_file):
-                    logger.info(f"Loading credentials from file '{firebase_credentials_file}'")
-                    cred = credentials.Certificate(firebase_credentials_file)
-                    firebase_admin.initialize_app(cred)
-                else:
-                    firebase_creds_json = os.getenv("FIREBASE_CREDENTIALS_JSON")
-                    if firebase_creds_json:
-                        logger.info("Loading credentials from environment variable 'FIREBASE_CREDENTIALS_JSON'")
-                        try:
-                            creds_dict = json.loads(firebase_creds_json)
-                            cred = credentials.Certificate.from_json(creds_dict)
-                        except Exception:
-                            # fallback si from_json no está disponible en tu versión
-                            import tempfile
-                            with tempfile.NamedTemporaryFile(mode="w+", delete=False) as tmp:
-                                tmp.write(firebase_creds_json)
-                                tmp.flush()
-                                cred = credentials.Certificate(tmp.name)
-                        firebase_admin.initialize_app(cred)
-                    else:
-                        raise FileNotFoundError(
-                            f"Credentials file '{firebase_credentials_file}' not found and 'FIREBASE_CREDENTIALS_JSON' environment variable is not set."
-                        )
+                    )                
 
             # Autorizar cliente
             client = gspread.authorize(google_creds)

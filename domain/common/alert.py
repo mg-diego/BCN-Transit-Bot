@@ -39,8 +39,8 @@ class Alert:
     publications: List[Publication]
     affected_entities: List[AffectedEntity]
 
-    def format_alert(self):
-        # Tomamos el primer texto en español como descripción principal
+    def _get_alert_content(self):
+         # Tomamos el primer texto en español como descripción principal
         title = self.publications[0].headerEs if self.publications and self.publications[0].headerEs else ""
         description = self.publications[0].textEs if self.publications and self.publications[0].textEs else "Sin descripción"
         description = html.escape(description)
@@ -75,6 +75,19 @@ class Alert:
             "OTHER": "ℹ️ Otros"
         }
         cause_str = cause_map.get(self.cause.upper(), self.cause)
+
+        return title, begin_str, end_str, lineas_str, estaciones_str, cause_str, description
+
+    def format_app_alert(self):
+        title, begin_str, end_str, lineas_str, estaciones_str, cause_str, description = self._get_alert_content()
+        return (
+            f"🚇 Líneas: {lineas_str}\n"
+            f"📍 Estaciones: {estaciones_str}\n\n"
+            f"📝 Info:\n{description}"
+        )
+
+    def format_html_alert(self):
+        title, begin_str, end_str, lineas_str, estaciones_str, cause_str, description = self._get_alert_content()
 
         return (
             f"🚨 <b>NUEVA ALERTA</b> 🚨\n\n"
