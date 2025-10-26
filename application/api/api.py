@@ -1,8 +1,9 @@
 
 import math
 from typing import List
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, HTTPException, Query
 from fastapi.params import Body
+from pydantic import BaseModel
 
 from application.services.transport.bicing_service import BicingService
 from application.services.transport.bus_service import BusService
@@ -291,12 +292,17 @@ def get_user_router(
 ) -> APIRouter:
     router = APIRouter()
 
-    @router.post("/{user_id}/{fcm_token}/register")
-    async def register_user(user_id: str, fcm_token: str) -> bool:
+    @router.post("/register")
+    async def register_user(request: RegisterRequest):
         try:
-            return user_data_manager.register_user(user_id, 'android_user', fcm_token)
+            result = user_data_manager.register_user(
+                request.androidId,
+                'android_user',
+                request.fcmToken
+            )
+            return result
         except Exception as e:
-            return {"status": "ERROR", "message": str(e)}
+            raise HTTPException(status_code=500, detail=str(e))
         
     @router.get("/{user_id}/favorites")
     async def get_favorites(user_id: str) -> List[FavoriteItem]:
@@ -336,3 +342,8 @@ def get_user_router(
             return {"status": "ERROR", "message": str(e)}
         
     return router
+
+
+class RegisterRequest(BaseModel):
+    androidId: str
+    fcmToken: str
