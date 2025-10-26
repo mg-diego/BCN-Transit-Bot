@@ -135,6 +135,7 @@ class UserDataManager:
             self.USERS_LANGUAGE_INDEX = 4
             self.USERS_RECEIVE_NOTIFICATIONS_INDEX = 5
             self.USERS_ALREADY_NOTIFIED = 6
+            self.USERS_FCM_TOKEN = 7
             self.SEARCHES_LAST_SEARCH_COLUMN_INDEX = 6
             self.SEARCHES_USES_COLUMN_INDEX = 7
             self._users_cache = {"data": None, "timestamp": None}
@@ -214,20 +215,21 @@ class UserDataManager:
     # ---------------------------
 
     @audit_action(action_type="START", command_or_button="register_user", params_args=["USER_ID", "USERNAME"])
-    def register_user(self, user_id: str, username: str):
+    def register_user(self, user_id: str, username: str, fcm_token: str = "") -> bool:
         """Registra usuario en 'users' si no existe, o actualiza 'last_start' si ya existe """
         logger.debug(f"Registering user_id={user_id}, username={username}")
         users = self._load_users()
         now = datetime.now().strftime("%Y:%m:%d %H:%M:%S")
         if user_id not in [u["USER_ID"] for u in users]:
-            self.users_ws.append_row([user_id, username, now, 'en', True, json.dumps([])])
+            self.users_ws.append_row([user_id, username, now, 'en', True, json.dumps([]), fcm_token])
             self._users_cache["data"].append({
                 "USER_ID": user_id,
                 "USERNAME": username,
                 "CREATED_AT": now,
                 "LANGUAGE": "en",
                 "RECEIVE_NOTIFICATIONS": True,
-                "ALREADY_NOTIFIED": json.dumps([e.__dict__ for e in []], ensure_ascii=False)
+                "ALREADY_NOTIFIED": json.dumps([e.__dict__ for e in []], ensure_ascii=False),
+                "FCM_TOKEN": fcm_token
             })
             return True
         else:
@@ -319,7 +321,8 @@ class UserDataManager:
             created_at=datetime.strptime(row.get('CREATED_AT'), "%Y:%m:%d %H:%M:%S"),
             language=row.get('LANGUAGE'),
             receive_notifications=row.get('RECEIVE_NOTIFICATIONS'),
-            already_notified=self.safe_str_to_list(row.get('ALREADY_NOTIFIED'))
+            already_notified=self.safe_str_to_list(row.get('ALREADY_NOTIFIED')),
+            fcm_token=row.get('FCM_TOKEN', '')
         )
     
     def safe_str_to_list(self, value):

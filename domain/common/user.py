@@ -10,3 +10,4 @@ class User:
     language: str
     receive_notifications: bool
     already_notified: List[int] = field(default_factory=list)
+    fcm_token: str = ""

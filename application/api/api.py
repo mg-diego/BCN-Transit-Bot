@@ -291,10 +291,10 @@ def get_user_router(
 ) -> APIRouter:
     router = APIRouter()
 
-    @router.post("/{user_id}/register")
-    async def register_user(user_id: str) -> bool:
+    @router.post("/{user_id}/{fcm_token}/register")
+    async def register_user(user_id: str, fcm_token: str) -> bool:
         try:
-            return user_data_manager.register_user(user_id, 'android_user')
+            return user_data_manager.register_user(user_id, 'android_user', fcm_token)
         except Exception as e:
             return {"status": "ERROR", "message": str(e)}
         
