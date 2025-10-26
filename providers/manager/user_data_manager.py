@@ -2,6 +2,9 @@ import json
 import os
 from typing import Dict, List
 
+import firebase_admin
+from firebase_admin import credentials
+from firebase_admin import messaging
 
 from domain.api.favorite_model import FavoriteItem
 from domain.common.alert import AffectedEntity, Alert, Publication
@@ -93,7 +96,10 @@ class UserDataManager:
         TransportType.RODALIES.value: 3
     }
 
-    def __init__(self, spreadsheet_name: str = "TMB", credentials_file: str = "credentials.json"):
+    def __init__(self, spreadsheet_name: str = "TMB"):
+        google_sheets_credentials_file = "google-sheets-credentials.json"
+        firebase_credentials_file = "firebase-credentials.json"
+
         logger.info("Initializing UserDataManager...")
         try:
             scope = [
@@ -101,26 +107,42 @@ class UserDataManager:
                 "https://www.googleapis.com/auth/drive"
             ]
 
-            creds = None
+            google_creds_json = None
+            firebase_creds_json = None
 
-            # 1️⃣ Intentar cargar desde archivo
-            if os.path.isfile(credentials_file):
-                logger.info(f"Loading credentials from file '{credentials_file}'")
-                creds = ServiceAccountCredentials.from_json_keyfile_name(credentials_file, scope)
+            # GOOGLE SHEETS
+            if os.path.isfile(google_sheets_credentials_file):
+                logger.info(f"Loading credentials from file '{google_sheets_credentials_file}'")
+                google_creds = ServiceAccountCredentials.from_json_keyfile_name(google_sheets_credentials_file, scope)
             else:
-                # 2️⃣ Intentar cargar desde variable de entorno
-                creds_json = os.getenv("GOOGLE_CREDENTIALS_JSON")
-                if creds_json:
+                google_creds_json = os.getenv("GOOGLE_CREDENTIALS_JSON")
+                if google_creds_json:
                     logger.info("Loading credentials from environment variable 'GOOGLE_CREDENTIALS_JSON'")
-                    creds_dict = json.loads(creds_json)
-                    creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
+                    google_creds_dict = json.loads(google_creds_json)
+                    google_creds = ServiceAccountCredentials.from_json_keyfile_dict(google_creds_dict, scope)
                 else:
                     raise FileNotFoundError(
-                        f"Credentials file '{credentials_file}' not found and 'GOOGLE_CREDENTIALS_JSON' environment variable is not set."
+                        f"Credentials file '{google_sheets_credentials_file}' not found and 'GOOGLE_CREDENTIALS_JSON' environment variable is not set."
+                    )
+                
+            # FIREBASE
+            if os.path.isfile(firebase_credentials_file):
+                logger.info(f"Loading credentials from file '{firebase_credentials_file}'")                
+                firebase_creds_json = credentials.Certificate("firebase-credentials.json")
+                firebase_admin.initialize_app(firebase_creds_json)
+            else:
+                firebase_creds_json = os.getenv("FIREBASE_CREDENTIALS_JSON")
+                if firebase_creds_json:
+                    logger.info("Loading credentials from environment variable 'FIREBASE_CREDENTIALS_JSON'")
+                    firebase_creds_json = json.loads(firebase_creds_json)
+                    firebase_admin.initialize_app(firebase_creds_json)
+                else:
+                    raise FileNotFoundError(
+                        f"Credentials file '{firebase_credentials_file}' not found and 'FIREBASE_CREDENTIALS_JSON' environment variable is not set."
                     )
 
             # Autorizar cliente
-            client = gspread.authorize(creds)
+            client = gspread.authorize(google_creds)
 
             # Abrir spreadsheet y pestañas
             self.sheet = client.open(spreadsheet_name)
@@ -216,11 +238,16 @@ class UserDataManager:
 
     @audit_action(action_type="START", command_or_button="register_user", params_args=["USER_ID", "USERNAME"])
     def register_user(self, user_id: str, username: str, fcm_token: str = "") -> bool:
-        """Registra usuario en 'users' si no existe, o actualiza 'last_start' si ya existe """
-        logger.debug(f"Registering user_id={user_id}, username={username}")
+        """Registra usuario en 'users' si no existe, o actualiza 'last_start' y FCM_TOKEN si es necesario"""
+        logger.debug(f"Registering user_id={user_id}, username={username}, fcm_token={fcm_token}")
         users = self._load_users()
         now = datetime.now().strftime("%Y:%m:%d %H:%M:%S")
-        if user_id not in [u["USER_ID"] for u in users]:
+
+        # Buscar usuario existente
+        existing_user = next((u for u in users if u["USER_ID"] == user_id), None)
+
+        if existing_user is None:
+            # Usuario no existe → crear
             self.users_ws.append_row([user_id, username, now, 'en', True, json.dumps([]), fcm_token])
             self._users_cache["data"].append({
                 "USER_ID": user_id,
@@ -233,6 +260,9 @@ class UserDataManager:
             })
             return True
         else:
+            # Usuario existe → actualizar FCM_TOKEN si es diferente
+            if existing_user.get("FCM_TOKEN") != fcm_token:
+                self.update_user_fcm_token(user_id, fcm_token)
             return False
 
     def update_user_language(self, user_id: int, new_language: str):
@@ -242,6 +272,16 @@ class UserDataManager:
             if str(user["USER_ID"]) == str(user_id):
                 self.users_ws.update_cell(idx, self.USERS_LANGUAGE_INDEX, new_language)
                 self._users_cache["data"][idx - 2]["LANGUAGE"] = new_language
+                return True
+        return False
+    
+    def update_user_fcm_token(self, user_id: int, new_fcm_token: str):
+        logger.debug(f"Updating FCM_TOKEN for user_id={user_id} to '{new_fcm_token}'")
+        users = self._load_users()
+        for idx, user in enumerate(users, start=2):
+            if str(user["USER_ID"]) == str(user_id):
+                self.users_ws.update_cell(idx, self.USERS_FCM_TOKEN, new_fcm_token)
+                self._users_cache["data"][idx - 2]["FCM_TOKEN"] = new_fcm_token
                 return True
         return False
 

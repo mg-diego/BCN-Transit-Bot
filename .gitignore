@@ -210,6 +210,8 @@ __marimo__/
 
 secrets
 credentials.json
+firebase-credentials.json
+google-sheets-credentials.json
 test.py
 temp/
 app.log

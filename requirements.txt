@@ -11,3 +11,4 @@ uvicorn
 pandas
 protobuf
 gtfs-realtime-bindings
+firebase-admin

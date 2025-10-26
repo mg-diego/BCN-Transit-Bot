@@ -7,6 +7,7 @@ from application import MessageService
 from domain.common.alert import Alert
 from providers.manager import UserDataManager
 from providers.helpers.logger import logger
+from firebase_admin import messaging
 
 class AlertsService:
     def __init__(self, bot: Bot, message_service: MessageService, user_data_manager: UserDataManager, interval: int = 300):
@@ -14,6 +15,34 @@ class AlertsService:
         self.message_service = message_service
         self.user_data_manager = user_data_manager
         self.interval = interval
+
+    def send_push_notification(self, fcm_token: str, title: str, body: str, data: dict = None):
+        """
+        Envía una notificación push a un dispositivo específico
+        
+        Args:
+            fcm_token: El token FCM del dispositivo
+            title: Título de la notificación
+            body: Cuerpo de la notificación
+            data: Datos adicionales (opcional)
+        """
+        try:
+            self.user_data_manager.get_user_language
+            message = messaging.Message(
+                notification=messaging.Notification(
+                    title=title,
+                    body=body,
+                ),
+                data=data or {},
+                token=fcm_token,
+            )
+            
+            response = messaging.send(message)
+            print(f"Notificación enviada exitosamente: {response}")
+            return response
+        except Exception as e:
+            print(f"Error enviando notificación: {e}")
+            raise
 
     async def check_new_alerts(self):
         """Comprueba alertas activas y notifica a los usuarios que tengan nuevas alertas."""
@@ -52,9 +81,17 @@ class AlertsService:
                                     f"({entity.station_name} - code {entity.station_code})"
                                 )
                                 self.user_data_manager.update_notified_alerts(user.user_id, alert.id)
-                                await self.message_service.send_new_message_from_bot(
-                                    self.bot, user.user_id, Alert.format_alert(alert)
-                                )
+                                if user.fcm_token is not None:
+                                    self.send_push_notification(
+                                        user.fcm_token,
+                                        title="📢 Nueva Alerta de Transporte",
+                                        body=Alert.format_alert(alert),
+                                        data={"alert_id": str(alert.id)}
+                                    )
+                                else:
+                                    await self.message_service.send_new_message_from_bot(
+                                        self.bot, user.user_id, Alert.format_alert(alert)
+                                    )
                                 sent_alerts_count += 1
                             else:
                                 logger.debug(
