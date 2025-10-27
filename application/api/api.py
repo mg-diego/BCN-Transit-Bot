@@ -292,15 +292,33 @@ def get_user_router(
 ) -> APIRouter:
     router = APIRouter()
 
-    @router.post("/register")
-    async def register_user(request: RegisterRequest = Body(...)):
+    @router.post("/{user_id}/register")
+    async def register_user(user_id: str, request: RegisterRequest = Body(...)):
         try:
             result = user_data_manager.register_user(
-                request.androidId,
+                user_id,
                 'android_user',
                 request.fcmToken
             )
             return result
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+        
+    @router.post("/{user_id}/notifications/toggle/{status}")
+    async def toggle_user_notifications(user_id: str, status: bool):
+        try:
+            result = user_data_manager.update_user_receive_notifications(
+                user_id,
+                status
+            )
+            return result
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+        
+    @router.get("/{user_id}/notifications/configuration")
+    async def get_user_notifications_configuration(user_id: str) -> bool:
+        try:
+            return user_data_manager.get_user_receive_notifications(user_id)
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
         
@@ -345,5 +363,4 @@ def get_user_router(
 
 
 class RegisterRequest(BaseModel):
-    androidId: str
     fcmToken: str
