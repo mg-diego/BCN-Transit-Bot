@@ -233,7 +233,7 @@ class FgcService(ServiceBase):
             return connections
         
         same_stops = [s for s in await self.get_all_stations() if s.code == station_code]
-        connections = [FgcLine.create_fgc_connection(s.line_id, s.line_code, s.line_name, s.line_description, '', '', s.line_color) for s in same_stops]
+        connections = [FgcLine.create_fgc_connection(s.line_id, s.line_code, s.line_name, s.line_description, s.line_color) for s in same_stops]
         await self.cache_service.set(f"fgc_station_connections_{station_code}", connections, ttl=3600*24)
 
         elapsed = (time.perf_counter() - start)
