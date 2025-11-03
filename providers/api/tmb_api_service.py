@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 from typing import List
 import aiohttp
 import re
@@ -175,6 +177,55 @@ class TmbApiService:
                         line_type=TransportType.METRO
                     )
                     routes.append(route)
+        return routes
+    
+    async def get_next_scheduled_metro_at_station(self, station_id) -> List[LineRoute]:
+        url = (
+            f'{self.BASE_URL_TRANSIT}/core/horaris/?'
+            f'transit_namespace_element=metro&codi_element={station_id}&transit_namespace=metro'
+        )
+        data = await self._get(url)
+
+        routes = []
+        tz_madrid = ZoneInfo("Europe/Madrid")
+        now = datetime.now(tz_madrid)
+
+        for feature in data.get("features", []):
+            properties = feature.get("properties", {})
+            day_dt = datetime.fromisoformat(properties["DIA"].replace("Z", "+00:00")).astimezone(tz_madrid)
+
+            next_trips = []
+            for scheduled_time in properties.get("HORES_PAS", "").split(","):
+                if not scheduled_time.strip():
+                    continue
+                h, m, s = map(int, scheduled_time.split(":"))
+                ts_dt = day_dt.replace(hour=h, minute=m, second=s, microsecond=0)
+
+                # Ajuste si la hora está antes del día base (pasa a día siguiente)
+                if ts_dt < day_dt:
+                    ts_dt += timedelta(days=1)
+
+                # Solo incluir horas futuras
+                if ts_dt >= now:
+                    next_trips.append(NextTrip(
+                        id=None,
+                        arrival_time=ts_dt.timestamp()
+                    ))
+
+            # Si hay trips futuros, crear un solo LineRoute por feature
+            if next_trips:
+                route = LineRoute(
+                    line_id=properties.get("ID_LINIA"),
+                    line_code=properties.get("CODI_LINIA"),
+                    line_name=properties.get("NOM_LINIA"),
+                    color="",
+                    route_id=properties.get("ID_RECORREGUT"),
+                    destination=properties.get("DESTI_TRAJECTE"),
+                    next_trips=next_trips,
+                    line_type=TransportType.METRO
+                )
+                routes.append(route)
+
         return routes
 
     async def get_next_bus_at_stop(self, stop_code) -> List[LineRoute]:

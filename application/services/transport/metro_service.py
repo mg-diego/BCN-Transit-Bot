@@ -156,11 +156,25 @@ class MetroService(ServiceBase):
 
     async def get_station_routes(self, station_code) -> List[LineRoute]:
         start = time.perf_counter()
-        routes = await self._get_from_cache_or_api(
+
+        routes = await self._get_from_cache_or_data(
             f"metro_station_{station_code}_routes",
-            lambda: self.tmb_api_service.get_next_metro_at_station(station_code),
+            None,
             cache_ttl=10
         )
+
+        if not routes:
+            routes = await self.tmb_api_service.get_next_metro_at_station(station_code)
+            routes = list({r.route_id: r for r in routes}.values())
+            if not any(r.next_trips for r in routes):
+                routes = await self.tmb_api_service.get_next_scheduled_metro_at_station(station_code)
+            
+        routes = await self._get_from_cache_or_data(
+            f"metro_station_{station_code}_routes",
+            routes,
+            cache_ttl=10
+        )
+        
         elapsed = time.perf_counter() - start
         logger.info(f"[{self.__class__.__name__}] get_station_routes({station_code}) -> {len(routes)} routes ({elapsed:.4f} s)")
         return routes
