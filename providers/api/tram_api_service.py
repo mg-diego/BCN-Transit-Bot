@@ -1,4 +1,5 @@
 import time
+from zoneinfo import ZoneInfo
 import aiohttp
 import inspect
 from datetime import datetime
@@ -241,7 +242,7 @@ class TramApiService:
 
             next_tram = NextTrip(
                 id=item["vehicleId"],
-                arrival_time=normalize_to_seconds(int(datetime.fromisoformat(item["arrivalTime"]).timestamp()))
+                arrival_time=normalize_to_seconds(int(datetime.fromisoformat(item["arrivalTime"]).replace(tzinfo=ZoneInfo("Europe/Madrid")).timestamp()))
             )
 
             if key not in routes_dict:
