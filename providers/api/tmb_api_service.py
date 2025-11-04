@@ -304,7 +304,10 @@ class TmbApiService:
                 for line in {line.id: line for line in connections}.values()
                 if line.name != "FM"
             ),
-            key=lambda line: (line.transport_type.id, line.name)
+            key=lambda line: (
+                line.transport_type.id,
+                int(line.name) if line.name.isdigit() else line.name
+            )
         )
     
     async def get_global_alerts(self, transport_type: TransportType):
