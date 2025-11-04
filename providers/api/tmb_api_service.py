@@ -306,7 +306,7 @@ class TmbApiService:
             ),
             key=lambda line: (
                 line.transport_type.id,
-                int(line.name) if line.name.isdigit() else line.name
+                (0, int(line.name)) if line.name.isdigit() else (1, line.name)
             )
         )
     
