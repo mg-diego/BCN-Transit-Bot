@@ -228,7 +228,7 @@ class TramApiService:
             for connection in connections
         ]
 
-    async def get_next_trams_at_stop(self, outbound_code: int, return_code: int):
+    async def get_next_trams_at_stop(self, outbound_code: int, return_code: int):   
         next_trams = await self._request(
             "GET",
             f"https://tram-web-service.tram.cat/api/opendata/stopTimes"
@@ -236,13 +236,30 @@ class TramApiService:
             use_base_url=False
         )
 
+        madrid_tz = ZoneInfo("Europe/Madrid")
+
         routes_dict = {}
         for item in next_trams:
+            raw_time = item.get("arrivalTime")
+            if not raw_time:
+                continue
+
+            try:
+                dt = datetime.fromisoformat(raw_time)
+
+                if dt.tzinfo is None:
+                    dt = dt.replace(tzinfo=madrid_tz)
+
+                final_timestamp = normalize_to_seconds(int(dt.timestamp()))
+
+            except ValueError:
+                continue
+
             key = (item["lineName"], item["code"], item["stopName"], item["destination"])
 
             next_tram = NextTrip(
                 id=item["vehicleId"],
-                arrival_time=normalize_to_seconds(int(datetime.fromisoformat(item["arrivalTime"]).replace(tzinfo=ZoneInfo("Europe/Madrid")).timestamp()))
+                arrival_time=final_timestamp
             )
 
             if key not in routes_dict:

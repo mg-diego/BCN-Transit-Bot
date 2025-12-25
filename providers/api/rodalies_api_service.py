@@ -1,6 +1,7 @@
 import aiohttp
 import inspect
 from datetime import datetime
+from zoneinfo import ZoneInfo
 from typing import Any, List
 
 from domain.transport_type import TransportType
@@ -72,19 +73,26 @@ class RodaliesApiService:
     # ==== Stations ====
     async def get_next_trains_at_station(self, station_id: int) -> List[RodaliesStation]:
         """Fetch all stations for a given line."""
-        next_rodalies = await self._request("GET", f"/departures?stationId={station_id}&minute=90&fullResponse=true&lang=ca")       
+        next_rodalies = await self._request("GET", f"/departures?stationId={station_id}&minute=90&fullResponse=true&lang=ca")
+        
+        # Definimos la zona horaria una vez
+        madrid_tz = ZoneInfo("Europe/Madrid")
         
         routes_dict = {}
         for item in next_rodalies["trains"]:
             line = item["line"]
             key = (line["name"], line["id"], item["destinationStation"]["name"])
 
-            if item["departureDateHourSelectedStation"] < datetime.now().isoformat():
+            dt_naive = datetime.fromisoformat(item["departureDateHourSelectedStation"])            
+            dt_aware = dt_naive.replace(tzinfo=madrid_tz)
+            utc_timestamp = dt_aware.timestamp()
+
+            if utc_timestamp < datetime.now(tz=madrid_tz).timestamp():
                 continue
             
             next_rodalies = NextTrip(
                     id=item["technicalNumber"],
-                    arrival_time=normalize_to_seconds(datetime.fromisoformat(item["departureDateHourSelectedStation"]).timestamp()),
+                    arrival_time=normalize_to_seconds(utc_timestamp), 
                     platform=item["platformSelectedStation"],
                     delay_in_minutes=item["delay"]
                 )
