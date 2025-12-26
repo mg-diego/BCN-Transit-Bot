@@ -480,7 +480,7 @@ class UserDataManager:
     # ---------------------------
     # SEARCHES
     # ---------------------------
-    async def register_search(self, type: str, line: str, code: str, name: str, user_id_ext: str = None):
+    async def register_search(self, query: str, user_id_ext: str = None):
         async with AsyncSessionLocal() as session:
             internal_id = None
             if user_id_ext:
@@ -489,14 +489,28 @@ class UserDataManager:
             if internal_id:
                 new_search = DBSearchHistory(
                     user_id=internal_id,
-                    query=f"{type} | {line} | {name}", 
-                    result_type="STATION" if code else "LINE",
-                    selected_id=code or line
+                    query=query
                 )
                 session.add(new_search)
                 await session.commit()
                 return 1
             return 0
+        
+    async def get_search_history(self, user_id_ext: str) -> List[str]:
+        async with AsyncSessionLocal() as session:
+            internal_id = await self._get_user_internal_id(session, user_id_ext)
+            if not internal_id:
+                return []
+
+            stmt = (
+                select(DBSearchHistory.query)
+                .where(DBSearchHistory.user_id == internal_id)
+                .order_by(DBSearchHistory.timestamp.desc())
+                .limit(10)
+            )
+            result = await session.execute(stmt)
+            searches = result.scalars().all()
+            return searches
 
     # ---------------------------
     # ALERTS (Service Incidents)

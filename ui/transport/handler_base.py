@@ -157,10 +157,7 @@ class HandlerBase:
     
     @audit_action(action_type="SHOW_STATION", params_args=["line_id", "stop_id", "stop_name"])
     async def show_stop_intro(self, update: Update, context, transport_type: str, line_id, stop_id, stop_name):        
-        message = await self.update_manager.start_loading(update, context, self.language_manager.t("common.stop.loading"))
-        await self.user_data_manager.register_search(transport_type, line_id, stop_id, stop_name)
-
-        return message
+        return await self.update_manager.start_loading(update, context, self.language_manager.t("common.stop.loading"))
 
     def start_update_loop(self, user_id: int, chat_id: int, message_id: int, get_text_callable, previous_callback: str):
         """

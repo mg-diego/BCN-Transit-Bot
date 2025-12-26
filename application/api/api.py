@@ -266,17 +266,10 @@ def get_results_router(
 
     @router.get("/search")
     async def search_stations(name: str, user_id: str = None):
-        # 1. Registrar auditoría (Fire and Forget)
-        # Aunque search espera (type, line, code), aquí es una búsqueda genérica de texto.
-        # Puedes adaptar register_search o crear uno nuevo log_generic_search
         if user_id:
-             # Lanzamos la tarea sin await para no frenar la búsqueda
              asyncio.create_task(
                  user_data_manager.register_search(
-                     type="GLOBAL", 
-                     line="", 
-                     code="", 
-                     name=name, 
+                     query=name, 
                      user_id_ext=user_id
                  )
              )
@@ -300,6 +293,12 @@ def get_results_router(
             fgc_stations=fgc
         )
         return search_results
+
+    @router.get("/search/history")
+    async def search_history(user_id: str):
+        if user_id:
+            return await user_data_manager.get_search_history(user_id_ext=user_id)
+        return []
 
     return router
 
