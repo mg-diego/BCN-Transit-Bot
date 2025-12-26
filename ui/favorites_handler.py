@@ -1,4 +1,5 @@
 from domain.api.favorite_model import FavoriteItem
+from domain.clients import ClientType
 from domain.transport_type import TransportType
 from providers.helpers import BoolConverter
 from telegram import Update
@@ -22,10 +23,9 @@ class FavoritesHandler:
         self.fgc_service = fgc_service
         self.language_manager = language_manager      
 
-    @audit_action(action_type="SHOW_FAVORITES")
     async def show_favorites(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_id = self.message_service.get_user_id(update)
-        favs = await self.user_data_manager.get_favorites_by_user(user_id)
+        favs = await self.user_data_manager.get_favorites_by_user(ClientType.TELEGRAM.value, user_id)
 
         await self.message_service.send_new_message(
             update,
@@ -47,7 +47,6 @@ class FavoritesHandler:
                 reply_markup=self.keyboard_factory.favorites_menu(favs)
             )
 
-    @audit_action(action_type="ADD_FAVORITE")
     async def add_favorite(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         query = update.callback_query
         await query.answer()
@@ -141,12 +140,11 @@ class FavoritesHandler:
                 coordinates=[item.latitude, item.longitude]
             )
 
-        await self.user_data_manager.add_favorite(user_id, item_type, new_fav_item)
+        await self.user_data_manager.add_favorite(ClientType.TELEGRAM.value, user_id, item_type, new_fav_item)
         keyboard = self.keyboard_factory.update_menu(is_favorite=True, item_type=item_type, item_id=item_id, line_id=line_id, previous_callback=previous_callback, has_connections=BoolConverter.from_string(has_connections))
 
         await query.edit_message_reply_markup(reply_markup=keyboard)
 
-    @audit_action(action_type="REMOVE_FAVORITE")
     async def remove_favorite(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         query = update.callback_query
         await query.answer()
@@ -155,7 +153,7 @@ class FavoritesHandler:
         data = query.data
         _, item_type, line_id, item_id, previous_callback, has_connections = data.split(":")
 
-        await self.user_data_manager.remove_favorite(user_id, item_type, item_id)
+        await self.user_data_manager.remove_favorite(ClientType.TELEGRAM.value, user_id, item_type, item_id)
         keyboard = self.keyboard_factory.update_menu(is_favorite=False, item_type=item_type, item_id=item_id, line_id=line_id, previous_callback=previous_callback, has_connections=BoolConverter.from_string(has_connections))
 
         await query.edit_message_reply_markup(reply_markup=keyboard)

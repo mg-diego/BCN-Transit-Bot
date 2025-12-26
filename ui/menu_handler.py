@@ -3,6 +3,7 @@ from telegram.ext import (
     ContextTypes
 )
 from application import MessageService, UpdateManager
+from domain.clients import ClientType
 from providers.helpers import logger
 from providers.manager import UserDataManager, LanguageManager, audit_action
 
@@ -29,7 +30,7 @@ class MenuHandler:
         if is_first_message:
             await self.update_manager.start_loading(update, context, base_text=self.language_manager.t('main.menu.loading'))
             user_id = self.message_service.get_user_id(update)
-            await self.user_data_manager.register_user(user_id, self.message_service.get_username(update))
+            await self.user_data_manager.register_user(ClientType.TELEGRAM.value, user_id, self.message_service.get_username(update))
             user_language = await self.user_data_manager.get_user_language(user_id)
             self.language_manager.set_language(user_language)
             await self.update_manager.stop_loading(update, context)

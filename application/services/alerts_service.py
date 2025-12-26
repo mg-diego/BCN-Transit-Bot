@@ -5,6 +5,7 @@ import html
 from telegram import Bot
 
 from application import MessageService
+from domain.clients import ClientType
 from domain.common.alert import Alert
 from providers.manager import UserDataManager
 from providers.helpers.logger import logger
@@ -62,7 +63,7 @@ class AlertsService:
             for user in [u for u in users if u.receive_notifications]:
                 logger.debug(f"Processing user {user.user_id} | {user.username if hasattr(user, 'username') else 'Unknown'}")
 
-                user_favorites = await self.user_data_manager.get_favorites_by_user(user.user_id)
+                user_favorites = await self.user_data_manager.get_favorites_by_user(ClientType.SYSTEM.value, user.user_id)
                 if not user_favorites:
                     logger.warning(f"User {user.user_id} has no favorite stations. Skipping...")
                     continue

@@ -12,6 +12,7 @@ from application.services.transport.metro_service import MetroService
 from application.services.transport.rodalies_service import RodaliesService
 from application.services.transport.tram_service import TramService
 from domain.api.favorite_model import FavoriteItem
+from domain.clients import ClientType
 from domain.common.location import Location
 from providers.helpers.distance_helper import DistanceHelper
 from providers.helpers.utils import Utils
@@ -312,6 +313,7 @@ def get_user_router(
     async def register_user(user_id: str, request: RegisterRequest = Body(...)):
         try:
             result = await user_data_manager.register_user(
+                client_source=ClientType.ANDROID.value,
                 user_id=user_id,
                 username='android_user',
                 fcm_token=request.fcmToken
@@ -325,6 +327,7 @@ def get_user_router(
     async def toggle_user_notifications(user_id: str, status: bool):
         try:
             result = await user_data_manager.update_user_receive_notifications(
+                ClientType.ANDROID.value,
                 user_id,
                 status
             )
@@ -339,14 +342,14 @@ def get_user_router(
     @router.get("/{user_id}/notifications/configuration")
     async def get_user_notifications_configuration(user_id: str) -> bool:
         try:
-            return await user_data_manager.get_user_receive_notifications(user_id)
+            return await user_data_manager.get_user_receive_notifications(ClientType.ANDROID.value, user_id)
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
         
     @router.get("/{user_id}/favorites", response_model=List[FavoriteItem])
     async def get_favorites(user_id: str):
         try:
-            return await user_data_manager.get_favorites_by_user(user_id)
+            return await user_data_manager.get_favorites_by_user(ClientType.ANDROID.value, user_id)
         except Exception as e:
             # El frontend espera una lista, si devolvemos un dict con "error" la app crasheará al parsear
             raise HTTPException(status_code=500, detail=str(e))
@@ -365,7 +368,7 @@ def get_user_router(
     @router.post("/{user_id}/favorites", status_code=status.HTTP_201_CREATED)
     async def add_favorite(user_id: str, body: FavoriteItem = Body(...)) -> bool:
         try:
-            return await user_data_manager.add_favorite(user_id, type=body.TYPE, item=body)
+            return await user_data_manager.add_favorite(ClientType.ANDROID.value, user_id, type=body.TYPE, item=body)
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
         
@@ -376,7 +379,7 @@ def get_user_router(
         item_id: str = Query(..., description="Código del item a eliminar")
     ) -> bool:
         try:
-            return await user_data_manager.remove_favorite(user_id, type=type, item_id=item_id)
+            return await user_data_manager.remove_favorite(ClientType.ANDROID.value, user_id, type=type, item_id=item_id)
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
         

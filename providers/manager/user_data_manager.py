@@ -1,4 +1,5 @@
 import asyncio
+import inspect
 import json
 import logging
 from typing import Dict, List, Optional
@@ -8,6 +9,7 @@ from functools import wraps
 # SQLAlchemy & DB
 from sqlalchemy import select, delete, update, and_, func
 from sqlalchemy.ext.asyncio import AsyncSession
+from domain.clients import ClientType
 from providers.database.database import AsyncSessionLocal
 from models import (
     User as DBUser, 
@@ -34,26 +36,47 @@ logger = logging.getLogger(__name__)
 # -------------------------------------------------------------------------
 def audit_action(action_type: str, params_args: list = None):
     """
-    Decorador híbrido: Funciona para Telegram y llamadas directas (Android API).
-    Registra la acción en segundo plano sin bloquear la ejecución principal.
+    Decorador para métodos de UserDataManager.
+    Extrae user_id y client_source directamente de los argumentos de la función.
     """
     def decorator(func):
         @wraps(func)
         async def wrapper(self, *args, **kwargs):
-            # 1. EJECUCIÓN INMEDIATA (No bloquear)
+            # -------------------------------------------------------
+            # 1. EJECUCIÓN INMEDIATA
+            # -------------------------------------------------------
             try:
                 result = await func(self, *args, **kwargs)
                 status = "SUCCESS"
                 error_info = None
             except Exception as e:
-                result = e 
+                result = e
                 status = "ERROR"
                 error_info = str(e)
 
-            # 2. EXTRACCIÓN DE DATOS (Rápido)
+            # -------------------------------------------------------
+            # 2. EXTRACCIÓN DE DATOS (Usando Inspección de Firma)
+            # -------------------------------------------------------
             try:
-                user_id_ext = None
-                source = "UNKNOWN"
+                # Esto "mapea" los args y kwargs a los nombres reales de los parámetros de la función
+                sig = inspect.signature(func)
+                # self ya está en el wrapper, bindeamos el resto
+                bound_args = sig.bind(self, *args, **kwargs)
+                bound_args.apply_defaults()
+                
+                # Diccionario con todos los valores pasados a la función
+                func_args = bound_args.arguments
+
+                # Extraemos datos clave
+                # Convertimos a str para asegurar compatibilidad (Enum -> str, Int -> str)
+                
+                raw_source = func_args.get("client_source", "UNKNOWN")
+                source = str(raw_source.value) if hasattr(raw_source, "value") else str(raw_source)
+
+                raw_user_id = func_args.get("user_id")
+                user_id_ext = str(raw_user_id) if raw_user_id is not None else None
+
+                # Preparamos detalles
                 details = {
                     "params": {},
                     "status": status
@@ -61,59 +84,46 @@ def audit_action(action_type: str, params_args: list = None):
                 if error_info:
                     details["error"] = error_info
 
-                # --- ESTRATEGIA DE DETECCIÓN ---
-                
-                # CASO A: Argumentos Explícitos (Android API / Llamada directa)
-                if "user_id" in kwargs:
-                    user_id_ext = str(kwargs["user_id"])
-                    source = "ANDROID"
-                
-                # CASO B: Telegram Update (Bot)
-                elif args and isinstance(args[0], Update):
-                    update = args[0]
-                    source = "TELEGRAM"
-                    if update.effective_user:
-                        user_id_ext = str(update.effective_user.id)
-                        details["username"] = update.effective_user.first_name
-                    if update.callback_query:
-                        details["callback"] = update.callback_query.data
-
-                # --- EXTRACCIÓN DE PARÁMETROS ADICIONALES ---
+                # Extraemos parámetros adicionales solicitados en params_args
                 if params_args:
-                    for name in params_args:
-                        if name in kwargs:
-                            val = kwargs[name]
-                            details["params"][name] = str(val.value) if hasattr(val, "value") else str(val)
+                    for param_name in params_args:
+                        if param_name in func_args:
+                            val = func_args[param_name]
+                            # Manejo inteligente de tipos (Enums, Pydantic, etc)
+                            if hasattr(val, "value"): # Enum
+                                val_str = str(val.value)
+                            elif hasattr(val, "model_dump_json"): # Pydantic v2
+                                val_str = val.model_dump_json()
+                            elif hasattr(val, "dict"): # Pydantic v1
+                                val_str = str(val.dict())
+                            else:
+                                val_str = str(val)
+                            
+                            details["params"][param_name] = val_str
 
-                # 3. GUARDADO ASÍNCRONO (Fire and Forget)
-                if user_id_ext:
-                    manager = None
-
-                    # Búsqueda del Manager
-                    # 1. Si 'self' es el Manager
-                    if hasattr(self, "save_audit_log_background"):
-                        manager = self
-                    
-                    # 2. Si 'self' es un Handler que tiene el Manager
-                    elif hasattr(self, "user_data_manager"):
-                        manager = self.user_data_manager
-
-                    if manager:
-                        asyncio.create_task(
-                            manager.save_audit_log_background(
-                                user_id_ext=user_id_ext,
-                                source=source,
-                                action=action_type,
-                                details=details
-                            )
+                # -------------------------------------------------------
+                # 3. GUARDADO ASÍNCRONO
+                # -------------------------------------------------------
+                # Como el decorador está EN el UserDataManager, 'self' ES el manager.
+                if user_id_ext and hasattr(self, "save_audit_log_background"):
+                    asyncio.create_task(
+                        self.save_audit_log_background(
+                            user_id_ext=user_id_ext,
+                            source=source,
+                            action=action_type,
+                            details=details
                         )
-                    else:
-                        logger.error(f"[Audit] Could not find UserDataManager in class {self.__class__.__name__}")
+                    )
+                else:
+                    if user_id_ext:
+                        logger.error(f"[Audit] Method save_audit_log_background not found in {self.__class__.__name__}")
 
             except Exception as log_err:
-                logger.error(f"[Audit] Failed to prepare log: {log_err}")
+                logger.error(f"[Audit] Failed to log action: {log_err}")
 
-            # 4. FINALIZACIÓN (Relanzar error original si hubo)
+            # -------------------------------------------------------
+            # 4. FINALIZACIÓN
+            # -------------------------------------------------------
             if status == "ERROR" and isinstance(result, Exception):
                 raise result
 
@@ -178,8 +188,8 @@ class UserDataManager:
     # USERS
     # ---------------------------
 
-    @audit_action(action_type="REGISTER_USER", params_args=["user_id", "username"])
-    async def register_user(self, user_id: str, username: str, fcm_token: str = "") -> bool:
+    @audit_action(action_type="REGISTER_USER", params_args=["username"])
+    async def register_user(self, client_source: ClientType, user_id: str, username: str, fcm_token: str = "") -> bool:
         """Registra usuario o actualiza su token/última actividad."""
         async with AsyncSessionLocal() as session:
             try:
@@ -224,7 +234,8 @@ class UserDataManager:
                 await session.rollback()
                 return False
 
-    async def update_user_language(self, user_id: int, new_language: str):
+    @audit_action(action_type="UPDATE_LANGUAGE", params_args=["new_language"])
+    async def update_user_language(self, client_source: ClientType, user_id: int, new_language: str):
         async with AsyncSessionLocal() as session:
             stmt = update(DBUser).where(DBUser.external_id == str(user_id)).values(language=new_language)
             await session.execute(stmt)
@@ -238,7 +249,8 @@ class UserDataManager:
             lang = result.scalars().first()
             return lang if lang else "en"
 
-    async def get_users(self) -> List[User]:
+    @audit_action(action_type="GET_ALL_USERS", params_args=[])
+    async def get_users(self, client_source: ClientType = ClientType.SYSTEM.value) -> List[User]:
         async with AsyncSessionLocal() as session:
             stmt = select(DBUser)
             result = await session.execute(stmt)
@@ -256,7 +268,8 @@ class UserDataManager:
                 ) for u in db_users
             ]
 
-    async def update_notified_alerts(self, user_id, alert_id):
+    @audit_action(action_type="UPDATE_NOTIFIED_ALERTS", params_args=["alert_id"])
+    async def update_notified_alerts(self, user_id, alert_id, client_source: ClientType = ClientType.SYSTEM.value):
         async with AsyncSessionLocal() as session:
             stmt = select(DBUser).where(DBUser.external_id == str(user_id))
             result = await session.execute(stmt)
@@ -271,14 +284,16 @@ class UserDataManager:
                     return True
             return False
 
-    async def get_user_receive_notifications(self, user_id: str) -> bool:
+    @audit_action(action_type="GET_USER_RECEIVE_NOTIFICATIONS", params_args=[])
+    async def get_user_receive_notifications(self, client_source: ClientType, user_id: str) -> bool:
         async with AsyncSessionLocal() as session:
             stmt = select(DBUser.receive_notifications).where(DBUser.external_id == str(user_id))
             result = await session.execute(stmt)
             val = result.scalars().first()
             return val if val is not None else False
 
-    async def update_user_receive_notifications(self, user_id: str, status: bool) -> bool:
+    @audit_action(action_type="UPDATE_USER_RECEIVE_NOTIFICATIONS", params_args=["status"])
+    async def update_user_receive_notifications(self, client_source: ClientType, user_id: str, status: bool) -> bool:
         async with AsyncSessionLocal() as session:
             stmt = update(DBUser).where(DBUser.external_id == str(user_id)).values(receive_notifications=status)
             result = await session.execute(stmt)
@@ -289,7 +304,8 @@ class UserDataManager:
     # FAVORITES
     # ---------------------------
 
-    async def add_favorite(self, user_id: int, type: str, item: FavoriteItem):
+    @audit_action(action_type="ADD_FAVORITE", params_args=["type", "item"])
+    async def add_favorite(self, client_source: ClientType, user_id: int, type: str, item: FavoriteItem):
         async with AsyncSessionLocal() as session:
             try:
                 internal_id = await self._get_user_internal_id(session, user_id)
@@ -297,8 +313,6 @@ class UserDataManager:
                     logger.warning(f"Cannot add favorite: User {user_id} not found in DB")
                     return False
 
-                # Aseguramos lat/lon (item.coordinates suele ser [lon, lat] en GeoJSON, o [lat, lon] según tu app)
-                # Ajusta índices [0] y [1] según lo que envíe tu frontend.
                 lat = item.coordinates[0] if item.coordinates and len(item.coordinates) > 0 else None
                 lon = item.coordinates[1] if item.coordinates and len(item.coordinates) > 1 else None
 
@@ -321,7 +335,8 @@ class UserDataManager:
                 logger.error(f"Error adding favorite: {e}")
                 return False
 
-    async def remove_favorite(self, user_id: int, type: str, item_id: str):
+    @audit_action(action_type="REMOVE_FAVORITE", params_args=["type", "item_id"])
+    async def remove_favorite(self, client_source: ClientType, user_id: int, type: str, item_id: str):
         async with AsyncSessionLocal() as session:
             internal_id = await self._get_user_internal_id(session, user_id)
             if not internal_id: return False
@@ -337,7 +352,8 @@ class UserDataManager:
             await session.commit()
             return result.rowcount > 0
 
-    async def get_favorites_by_user(self, user_id: int) -> List[FavoriteItem]:
+    @audit_action(action_type="GET_FAVORITES", params_args=[])
+    async def get_favorites_by_user(self, client_source: ClientType, user_id: int) -> List[FavoriteItem]:
         async with AsyncSessionLocal() as session:
             internal_id = await self._get_user_internal_id(session, user_id)
             if not internal_id: return []
@@ -383,7 +399,6 @@ class UserDataManager:
     # ---------------------------
     # SEARCHES
     # ---------------------------
-
     async def register_search(self, type: str, line: str, code: str, name: str, user_id_ext: str = None):
         async with AsyncSessionLocal() as session:
             internal_id = None

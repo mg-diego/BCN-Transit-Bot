@@ -3,13 +3,15 @@ from application import MessageService, UpdateManager
 from telegram import Update
 from telegram.ext import ContextTypes
 
+from domain.clients import ClientType
+from providers.manager.language_manager import LanguageManager
 from providers.manager.user_data_manager import UserDataManager, audit_action
 
 
 logger = logging.getLogger(__name__)
 
 class LanguageHandler:
-    def __init__(self, keyboard_factory, user_data_manager: UserDataManager, message_service: MessageService, language_manager, update_manager: UpdateManager):
+    def __init__(self, keyboard_factory, user_data_manager: UserDataManager, message_service: MessageService, language_manager: LanguageManager, update_manager: UpdateManager):
         self.keyboard_factory = keyboard_factory
         self.user_data_manager = user_data_manager
         self.message_service = message_service
@@ -34,11 +36,10 @@ class LanguageHandler:
         await self.update_manager.stop_loading(update, context)
         await self.message_service.handle_interaction(update, self.language_manager.t('language.choose'), reply_markup=reply_markup)
 
-    @audit_action(action_type="UPDATE_LANGUAGE")
     async def update_language(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         _, new_language = self.message_service.get_callback_data(update)
         user_id = self.message_service.get_user_id(update)
 
         self.language_manager.set_language(new_language)
-        await self.user_data_manager.update_user_language(user_id, new_language)
+        await self.user_data_manager.update_user_language(ClientType.TELEGRAM.value, user_id, new_language)
         await self.message_service.edit_inline_message(update, self.language_manager.t('language.updated'))
