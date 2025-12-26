@@ -31,7 +31,6 @@ class MetroHandler(HandlerBase):
         super().__init__(message_service, update_manager, language_manager, user_data_manager, keyboard_factory, telegraph_service)
         self.metro_service = metro_service
         self.mapper = TransportDataCompressor()
-        self.audit_logger = self.user_data_manager.audit_logger
         logger.info(f"[{self.__class__.__name__}] MetroHandler initialized")
 
     async def show_lines(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -80,7 +79,7 @@ class MetroHandler(HandlerBase):
         message = await self.show_stop_intro(update, context, TransportType.METRO.value, line_id, station_code, station.name)
 
         await self.metro_service.get_station_routes(station_code)
-        station_alerts = MetroStation.get_alert_by_language(station, self.user_data_manager.get_user_language(user_id))
+        station_alerts = MetroStation.get_alert_by_language(station, await self.user_data_manager.get_user_language(user_id))
         station_connections = await self.metro_service.get_station_connections(station.code)
         alerts_message = f"{self.language_manager.t("common.alerts")}\n{station_alerts}\n\n" if any(station_alerts) else ""
 
@@ -98,14 +97,14 @@ class MetroHandler(HandlerBase):
                 f"{self.language_manager.t(f'{TransportType.METRO.value}.station.next')}\n{routes.replace('🔜', self.language_manager.t('common.arriving'))}\n\n"
                 f"{self.language_manager.t('common.updates.every_x_seconds', seconds=self.UPDATE_INTERVAL)}"
             )
-            is_fav = self.user_data_manager.has_favorite(user_id, TransportType.METRO.value, station_code)
+            is_fav = await self.user_data_manager.has_favorite(user_id, TransportType.METRO.value, station_code)
             keyboard = self.keyboard_factory.update_menu(is_fav, TransportType.METRO.value, station_code, line_id, callback, has_connections=any(station_connections))
             return text, keyboard
 
         self.start_update_loop(user_id, chat_id, message.message_id, update_text, default_callback)
         logger.info(f"Started update loop task for user {user_id}, station {station_code}")
 
-    @audit_action(action_type="SEARCH", command_or_button="show_station_access")
+    @audit_action(action_type="SHOW_STATION_ACCESS")
     async def show_station_access(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_id = self.message_service.get_chat_id(update)
         self.message_service.set_bot_instance(context.bot)
@@ -118,7 +117,7 @@ class MetroHandler(HandlerBase):
         _, line_id, station_code = self.message_service.get_callback_data(update)
         station = await self.metro_service.get_station_by_code(station_code)        
         station_accesses = await self.metro_service.get_station_accesses(station.CODI_GRUP_ESTACIO)
-        station_alerts = MetroStation.get_alert_by_language(station, self.user_data_manager.get_user_language(user_id))
+        station_alerts = MetroStation.get_alert_by_language(station, await self.user_data_manager.get_user_language(user_id))
         station_connections = await self.metro_service.get_station_connections(station.code)
         alerts_message = f"{self.language_manager.t("common.alerts")}\n{station_alerts}\n\n" if any(station_alerts) else ""
         logger.info(f"[MetroHandler] Showing accesses for station ID: {station_code}")
@@ -134,7 +133,7 @@ class MetroHandler(HandlerBase):
             f"<b><u>Accesos</u></b>\n{access_text} \n\n"
         )
 
-        is_fav = self.user_data_manager.has_favorite(user_id, TransportType.METRO.value, station_code)
+        is_fav = await self.user_data_manager.has_favorite(user_id, TransportType.METRO.value, station_code)
 
         # 5. Mostrar información estática
         await self.message_service.edit_inline_message(
@@ -143,7 +142,7 @@ class MetroHandler(HandlerBase):
             reply_markup=self.keyboard_factory.update_menu(is_fav, TransportType.METRO.value, station_code, line_id, self.message_service.get_callback_query(update), has_connections=any(station_connections))
         )
 
-    @audit_action(action_type="SEARCH", command_or_button="show_station_connections")
+    @audit_action(action_type="SHOW_STATION_CONNECTIONS")
     async def show_station_connections(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_id = self.message_service.get_chat_id(update)
         self.message_service.set_bot_instance(context.bot)
@@ -156,7 +155,7 @@ class MetroHandler(HandlerBase):
         _, line_id, station_code = self.message_service.get_callback_data(update)
         station = await self.metro_service.get_station_by_code(station_code)        
         station_connections = ''#format_metro_connections(station.connections) #TODO: Fix this
-        station_alerts = MetroStation.get_alert_by_language(station, self.user_data_manager.get_user_language(user_id))
+        station_alerts = MetroStation.get_alert_by_language(station, await self.user_data_manager.get_user_language(user_id))
         alerts_message = f"{self.language_manager.t("common.alerts")}\n{station_alerts}\n\n" if any(station_alerts) else ""
         logger.info(f"[MetroHandler] Showing connections for station ID: {station_code}")
 
@@ -167,7 +166,7 @@ class MetroHandler(HandlerBase):
             f"<b><u>Connections</u></b>\n{station_connections} \n\n"
         )
 
-        is_fav = self.user_data_manager.has_favorite(user_id, TransportType.METRO.value, station_code)
+        is_fav = await self.user_data_manager.has_favorite(user_id, TransportType.METRO.value, station_code)
 
         # 5. Mostrar información estática
         await self.message_service.edit_inline_message(

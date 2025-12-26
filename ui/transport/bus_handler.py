@@ -27,7 +27,6 @@ class BusHandler(HandlerBase):
     ):
         super().__init__(message_service, update_manager, language_manager, user_data_manager, keyboard_factory, telegraph_service)
         self.bus_service = bus_service
-        self.audit_logger = self.user_data_manager.audit_logger
         self.mapper = TransportDataCompressor()
 
     async def show_bus_categories(self, update: Update, context: ContextTypes.DEFAULT_TYPE):        
@@ -40,7 +39,7 @@ class BusHandler(HandlerBase):
             keyboard_menu_builder=self.keyboard_factory.bus_category_menu
         )
 
-    @audit_action(action_type="SEARCH", command_or_button="show_lines")
+    @audit_action(action_type="SHOW_LINES")
     async def show_lines(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         _, category = self.message_service.get_callback_data(update)
         lines = await self.bus_service.get_lines_by_category(category)
@@ -50,7 +49,7 @@ class BusHandler(HandlerBase):
             reply_markup=self.keyboard_factory.bus_lines_menu(lines)
         )
 
-    @audit_action(action_type="SEARCH", command_or_button="show_bus_stops")
+    @audit_action(action_type="SHOW_BUS_STOPS")
     async def show_line_stops(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Display stops of a bus line."""
         self.message_service.set_bot_instance(context.bot)
@@ -78,7 +77,7 @@ class BusHandler(HandlerBase):
         default_callback = Callbacks.BUS_STATION.format(line_code=line_id, station_code=bus_stop_code)
 
         bus_stop = await self.bus_service.get_stop_by_code(bus_stop_code)
-        station_alerts = BusStop.get_alert_by_language(bus_stop, self.user_data_manager.get_user_language(user_id))
+        station_alerts = BusStop.get_alert_by_language(bus_stop, await self.user_data_manager.get_user_language(user_id))
         alerts_message = f"{self.language_manager.t("common.alerts")}\n{station_alerts}\n\n" if any(station_alerts) else ""
         
         message = await self.show_stop_intro(update, context, TransportType.BUS.value, line_id, bus_stop_code, bus_stop.name)
@@ -91,7 +90,7 @@ class BusHandler(HandlerBase):
                     LineRoute.simple_list(route, arriving_threshold=60,default_msg=self.language_manager.t('no.departures.found'))
                     for route in await self.bus_service.get_stop_routes(bus_stop.code)
                 )
-            is_fav = self.user_data_manager.has_favorite(user_id, TransportType.BUS.value, bus_stop_code)
+            is_fav = await self.user_data_manager.has_favorite(user_id, TransportType.BUS.value, bus_stop_code)
             text = (
                 f"{self.language_manager.t(f'{TransportType.BUS.value}.stop.name', name=bus_stop.name.upper())}\n\n"
                 f"{alerts_message}"

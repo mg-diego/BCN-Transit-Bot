@@ -10,8 +10,7 @@ class HelpHandler:
         self.message_service = message_service
         self.keyboard_factory = keyboard_factory
         self.language_manager = language_manager
-        self.audit_logger = user_data_manager.audit_logger
     
-    @audit_action(action_type="SETTINGS", command_or_button="show_help")
+    @audit_action(action_type="SHOW_HELP")
     async def show_help(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         await self.message_service.handle_interaction(update, self.language_manager.t('help.text'), reply_markup=self.keyboard_factory._back_reply_button())

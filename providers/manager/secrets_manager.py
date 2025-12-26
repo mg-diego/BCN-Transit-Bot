@@ -26,7 +26,8 @@ class SecretsManager:
             'TMB_APP_KEY',
             'TRAM_CLIENT_ID',
             'TRAM_CLIENT_SECRET',
-            'ADMIN_ID'
+            'ADMIN_ID',
+            'DATABASE_URL',
         ]
         for key in keys:
             value = os.environ.get(key)

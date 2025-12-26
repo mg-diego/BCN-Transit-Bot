@@ -89,7 +89,7 @@ class TramHandler(HandlerBase):
                 f"{self.language_manager.t(f'{TransportType.TRAM.value}.stop.next')}\n{grouped_routes.replace('🔜', self.language_manager.t('common.arriving'))}"
                 f"{self.language_manager.t('common.updates.every_x_seconds', seconds=self.UPDATE_INTERVAL)}\n\n"
             )
-            is_fav = self.user_data_manager.has_favorite(user_id, TransportType.TRAM.value, stop_id)
+            is_fav = await self.user_data_manager.has_favorite(user_id, TransportType.TRAM.value, stop_id)
             keyboard = self.keyboard_factory.update_menu(is_fav, TransportType.TRAM.value, stop_id, line_id, default_callback, has_connections=False)
             return text, keyboard
         

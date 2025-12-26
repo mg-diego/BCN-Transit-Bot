@@ -15,15 +15,14 @@ class LanguageHandler:
         self.message_service = message_service
         self.language_manager = language_manager
         self.update_manager = update_manager
-        self.audit_logger = self.user_data_manager.audit_logger
 
-    @audit_action(action_type="SETTINGS", command_or_button="show_languages")
+    @audit_action(action_type="SHOW_LANGUAGES")
     async def show_languages(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_id, chat_id, line_id, stop_id = self.message_service.extract_context(update, context)
 
         await self.update_manager.start_loading(update, context, self.language_manager.t('main.menu.loading'), self.keyboard_factory._back_reply_button())
         user_id = self.message_service.get_user_id(update)
-        current_language = self.user_data_manager.get_user_language(user_id)
+        current_language = await self.user_data_manager.get_user_language(user_id)
         available_languages = self.language_manager.get_available_languages()
 
         user_available_new_languages = {}
@@ -35,11 +34,11 @@ class LanguageHandler:
         await self.update_manager.stop_loading(update, context)
         await self.message_service.handle_interaction(update, self.language_manager.t('language.choose'), reply_markup=reply_markup)
 
-    @audit_action(action_type="SETTINGS", command_or_button="update_language")
+    @audit_action(action_type="UPDATE_LANGUAGE")
     async def update_language(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         _, new_language = self.message_service.get_callback_data(update)
         user_id = self.message_service.get_user_id(update)
 
         self.language_manager.set_language(new_language)
-        self.user_data_manager.update_user_language(user_id, new_language)
+        await self.user_data_manager.update_user_language(user_id, new_language)
         await self.message_service.edit_inline_message(update, self.language_manager.t('language.updated'))

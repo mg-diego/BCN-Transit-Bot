@@ -20,7 +20,7 @@ def create_app(
     app.include_router(get_rodalies_router(rodalies_service), prefix="/api/rodalies", tags=["Rodalies"])
     app.include_router(get_bicing_router(bicing_service), prefix="/api/bicing", tags=["Bicing"])
 
-    app.include_router(get_results_router(metro_service, bus_service, tram_service, rodalies_service, bicing_service, fgc_service), prefix="/api/results", tags=["Search Stations"])
+    app.include_router(get_results_router(metro_service, bus_service, tram_service, rodalies_service, bicing_service, fgc_service, user_data_manager), prefix="/api/results", tags=["Search Stations"])
 
     app.include_router(get_user_router(user_data_manager), prefix="/api/users", tags=["Users"])
 

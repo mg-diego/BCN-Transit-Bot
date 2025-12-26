@@ -12,3 +12,6 @@ pandas
 protobuf
 gtfs-realtime-bindings
 firebase-admin
+sqlalchemy
+asyncpg
+psycopg2-binary

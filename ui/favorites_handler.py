@@ -20,13 +20,12 @@ class FavoritesHandler:
         self.rodalies_service = rodalies_service
         self.bicing_service = bicing_service
         self.fgc_service = fgc_service
-        self.language_manager = language_manager
-        self.audit_logger = self.user_data_manager.audit_logger        
+        self.language_manager = language_manager      
 
-    @audit_action(action_type="FAVORITES", command_or_button="show_favorites")
+    @audit_action(action_type="SHOW_FAVORITES")
     async def show_favorites(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_id = self.message_service.get_user_id(update)
-        favs = self.user_data_manager.get_favorites_by_user(user_id)
+        favs = await self.user_data_manager.get_favorites_by_user(user_id)
 
         await self.message_service.send_new_message(
             update,
@@ -48,7 +47,7 @@ class FavoritesHandler:
                 reply_markup=self.keyboard_factory.favorites_menu(favs)
             )
 
-    @audit_action(action_type="FAVORITES", command_or_button="add_favorite")
+    @audit_action(action_type="ADD_FAVORITE")
     async def add_favorite(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         query = update.callback_query
         await query.answer()
@@ -63,9 +62,9 @@ class FavoritesHandler:
             
             new_fav_item = FavoriteItem(
                 TYPE=item_type,
-                STATION_CODE=item.code,
+                STATION_CODE=str(item.code),
                 STATION_NAME=item.name,
-                STATION_GROUP_CODE=item.CODI_GRUP_ESTACIO,
+                STATION_GROUP_CODE=str(item.CODI_GRUP_ESTACIO),
                 LINE_NAME=item.line_name,
                 LINE_NAME_WITH_EMOJI=item.line_name_with_emoji,
                 LINE_CODE=line_id,
@@ -76,7 +75,7 @@ class FavoritesHandler:
 
             new_fav_item = FavoriteItem(
                 TYPE=item_type,
-                STATION_CODE=item.code,
+                STATION_CODE=str(item.code),
                 STATION_NAME=item.name,
                 STATION_GROUP_CODE='',
                 LINE_NAME=item.line_name,
@@ -90,7 +89,7 @@ class FavoritesHandler:
 
             new_fav_item = FavoriteItem(
                 TYPE=item_type,
-                STATION_CODE=item.code,
+                STATION_CODE=str(item.code),
                 STATION_NAME=item.name,
                 STATION_GROUP_CODE='',
                 LINE_NAME=item.line_name,
@@ -104,7 +103,7 @@ class FavoritesHandler:
 
             new_fav_item = FavoriteItem(
                 TYPE=item_type,
-                STATION_CODE=item.code,
+                STATION_CODE=str(item.code),
                 STATION_NAME=item.name,
                 STATION_GROUP_CODE='',
                 LINE_NAME=item.line_name,
@@ -133,7 +132,7 @@ class FavoritesHandler:
 
             new_fav_item = FavoriteItem(
                 TYPE=item_type,
-                STATION_CODE=item.code,
+                STATION_CODE=str(item.code),
                 STATION_NAME=item.name,
                 STATION_GROUP_CODE='',
                 LINE_NAME=line.name,
@@ -142,12 +141,12 @@ class FavoritesHandler:
                 coordinates=[item.latitude, item.longitude]
             )
 
-        self.user_data_manager.add_favorite(user_id, item_type, new_fav_item)
+        await self.user_data_manager.add_favorite(user_id, item_type, new_fav_item)
         keyboard = self.keyboard_factory.update_menu(is_favorite=True, item_type=item_type, item_id=item_id, line_id=line_id, previous_callback=previous_callback, has_connections=BoolConverter.from_string(has_connections))
 
         await query.edit_message_reply_markup(reply_markup=keyboard)
 
-    @audit_action(action_type="FAVORITES", command_or_button="remove_favorite")
+    @audit_action(action_type="REMOVE_FAVORITE")
     async def remove_favorite(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         query = update.callback_query
         await query.answer()
@@ -156,7 +155,7 @@ class FavoritesHandler:
         data = query.data
         _, item_type, line_id, item_id, previous_callback, has_connections = data.split(":")
 
-        self.user_data_manager.remove_favorite(user_id, item_type, item_id)
+        await self.user_data_manager.remove_favorite(user_id, item_type, item_id)
         keyboard = self.keyboard_factory.update_menu(is_favorite=False, item_type=item_type, item_id=item_id, line_id=line_id, previous_callback=previous_callback, has_connections=BoolConverter.from_string(has_connections))
 
         await query.edit_message_reply_markup(reply_markup=keyboard)

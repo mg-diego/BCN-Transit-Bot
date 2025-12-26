@@ -30,7 +30,6 @@ class RodaliesHandler(HandlerBase):
         super().__init__(message_service, update_manager, language_manager, user_data_manager, keyboard_factory, telegraph_service)
         self.rodalies_service = rodalies_service
         self.mapper = TransportDataCompressor()
-        self.audit_logger = self.user_data_manager.audit_logger
 
         logger.info(f"[{self.__class__.__name__}] RodaliesHandler initialized")
 
@@ -43,7 +42,7 @@ class RodaliesHandler(HandlerBase):
             keyboard_menu_builder=self.keyboard_factory.rodalies_lines_menu
         )
 
-    @audit_action(action_type="SEARCH", command_or_button="show_rodalies_stops")
+    @audit_action(action_type="SHOW_RODALIES_STOPS")
     async def show_line_stops(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Display stations of a rodalies line."""
         self.message_service.set_bot_instance(context.bot)
@@ -79,7 +78,7 @@ class RodaliesHandler(HandlerBase):
         async def update_text():
             next_rodalies = "\n\n".join(LineRoute.scheduled_list(route, with_arrival_date=False) for route in await self.rodalies_service.get_station_routes(rodalies_station.code) if route.line_id == line_id)
             next_rodalies = next_rodalies if next_rodalies != '' else self.language_manager.t('no.departures.found')
-            is_fav = self.user_data_manager.has_favorite(user_id, TransportType.RODALIES.value, rodalies_station_id)
+            is_fav = await self.user_data_manager.has_favorite(user_id, TransportType.RODALIES.value, rodalies_station_id)
             text = (
                 f"{self.language_manager.t(f'{TransportType.RODALIES.value}.station.name', name=rodalies_station.name.upper())}\n\n"
                 f"<a href='{GoogleMapsHelper.build_directions_url(latitude=rodalies_station.latitude, longitude=rodalies_station.longitude, travel_mode='transit')}'>{self.language_manager.t('common.map.view.location')}</a>\n\n"

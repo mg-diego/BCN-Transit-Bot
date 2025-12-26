@@ -14,6 +14,8 @@ from providers.manager import SecretsManager, UserDataManager, LanguageManager
 from providers.api import TmbApiService, TramApiService, RodaliesApiService, BicingApiService, FgcApiService
 from providers.helpers import logger
 
+from providers.database.database import init_db
+
 
 class BotApp:
     """
@@ -136,7 +138,7 @@ class BotApp:
         self.help_handler = HelpHandler(self.message_service, self.keyboard_factory, self.language_manager, self.user_data_manager)
         self.language_handler = LanguageHandler(self.keyboard_factory, self.user_data_manager, self.message_service, self.language_manager, self.update_manager)
         self.web_app_handler = WebAppHandler(self.metro_handler, self.bus_handler, self.tram_handler, self.rodalies_handler, self.bicing_handler, self.fgc_handler)
-        self.settings_handler = SettingsHandler(self.message_service, self.keyboard_factory, self.language_manager, self.user_data_manager)
+        self.settings_handler = SettingsHandler(self.message_service, self.keyboard_factory, self.language_manager)
         self.notifications_handler = NotificationsHandler(self.message_service, self.keyboard_factory, self.language_manager, self.user_data_manager)
         self.reply_handler = ReplyHandler(self.menu_handler, self.metro_handler, self.bus_handler, self.tram_handler, self.rodalies_handler, self.favorites_handler, self.language_handler, self.help_handler, self.settings_handler, self.bicing_handler, self.fgc_handler, self.notifications_handler)
 
@@ -322,7 +324,7 @@ async def start_fastapi(app):
 
 async def start_bot_and_api():
     bot = BotApp()
-    bot.init_services()  # inicializa todos los services
+    bot.init_services()
 
     # Crear FastAPI pasando los services ya inicializados
     app = create_app(
@@ -337,8 +339,8 @@ async def start_bot_and_api():
 
     # Ejecutar ambos en paralelo
     await asyncio.gather(
-        bot.run(),          # tu bot actual
-        start_fastapi(app)  # FastAPI
+        bot.run(),
+        start_fastapi(app)
     )
 
 if __name__ == "__main__":

@@ -42,8 +42,6 @@ class ReplyHandler:
         self.fgc_handler = fgc_handler
         self.notifications_handler = notifications_handler
 
-        self.audit_logger = self.menu_handler.audit_logger
-
         self.mapper = TransportDataCompressor()
 
         self.previous_search = None
@@ -103,7 +101,7 @@ class ReplyHandler:
             await message_service.send_new_message(update, language_manager.t('common.map.open'), keyboard_factory.map_reply_menu(encoded))
 
 
-    @audit_action(action_type="REPLY", command_or_button="reply_router", params_args=["user_location", "only_bicing"])
+    @audit_action(action_type="REPLY_ROUTER", params_args=["user_location", "only_bicing"])
     async def handle_reply_from_user(self, update: Update, context: ContextTypes.DEFAULT_TYPE, user_location = None, only_bicing = False):        
         message_service = self.menu_handler.message_service
         update_manager = self.menu_handler.update_manager
@@ -235,7 +233,7 @@ class ReplyHandler:
 
         return metro_stations, bus_stops, tram_stops, rodalies_stations, bicing_stations, fgc_stations
 
-    @audit_action(action_type="REPLY", command_or_button="location_handler")
+    @audit_action(action_type="LOCATION_HANDLER")
     async def location_handler(self, update, context):
         if self.previous_search == "🚴 Bicing":
             await self.handle_reply_from_user(update, context, update.message.location, only_bicing=True)

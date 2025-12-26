@@ -84,7 +84,7 @@ class FgcHandler(HandlerBase):
         async def update_text():
             next_fgc = "\n\n".join(LineRoute.scheduled_list(route) for route in await self.fgc_service.get_station_routes(fgc_station.code) if route.line_id == line_id)
             next_fgc = next_fgc if next_fgc != '' else self.language_manager.t('no.departures.found')
-            is_fav = self.user_data_manager.has_favorite(user_id, TransportType.FGC.value, fgc_station_id)
+            is_fav = await self.user_data_manager.has_favorite(user_id, TransportType.FGC.value, fgc_station_id)
             text = (
                 f"{self.language_manager.t(f'{TransportType.FGC.value}.station.name', name=fgc_station.name.upper())}\n\n"
                 f"<a href='{GoogleMapsHelper.build_directions_url(latitude=fgc_station.latitude, longitude=fgc_station.longitude, travel_mode='transit')}'>{self.language_manager.t('common.map.view.location')}</a>\n\n"

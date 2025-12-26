@@ -1,89 +1,135 @@
+import asyncio
 import json
-import os
-from typing import Dict, List
+import logging
+from typing import Dict, List, Optional
+from datetime import datetime
+from functools import wraps
 
+# SQLAlchemy & DB
+from sqlalchemy import select, delete, update, and_, func
+from sqlalchemy.ext.asyncio import AsyncSession
+from providers.database.database import AsyncSessionLocal
+from models import (
+    User as DBUser, 
+    Favorite as DBFavorite, 
+    ServiceIncident as DBServiceIncident, 
+    AuditLog as DBAuditLog, 
+    SearchHistory as DBSearchHistory,
+    UserDevice as DBUserDevice
+)
+
+# Domain Models
 from domain.api.favorite_model import FavoriteItem
 from domain.common.alert import AffectedEntity, Alert, Publication
 from domain.common.user import User
 from domain.transport_type import TransportType
-import gspread
-from oauth2client.service_account import ServiceAccountCredentials
-from datetime import datetime, timedelta
-from providers.helpers import logger
-import ast
-from functools import wraps
 
-from providers.manager.audit_logger import AuditLogger
+# Telegram
 from telegram import Update
 
-def audit_action(action_type: str, command_or_button: str = "", params_args: list = None):
-    """
-    Decorador para registrar auditoría de acciones de usuario.
+logger = logging.getLogger(__name__)
 
-    :param action_type: Tipo de acción, ej. "SEARCH", "START", etc.
-    :param command_or_button: Nombre del comando o botón.
-    :param params_args: Lista de nombres de argumentos de la función que se guardarán en params.
+# -------------------------------------------------------------------------
+# DECORADOR DE AUDITORÍA (Debe estar definido antes de la clase)
+# -------------------------------------------------------------------------
+def audit_action(action_type: str, params_args: list = None):
+    """
+    Decorador híbrido: Funciona para Telegram y llamadas directas (Android API).
+    Registra la acción en segundo plano sin bloquear la ejecución principal.
     """
     def decorator(func):
         @wraps(func)
-        def wrapper(self, *args, **kwargs):
+        async def wrapper(self, *args, **kwargs):
+            # 1. EJECUCIÓN INMEDIATA (No bloquear)
             try:
-                # Ejecutar la función original primero
-                result = func(self, *args, **kwargs)
+                result = await func(self, *args, **kwargs)
+                status = "SUCCESS"
+                error_info = None
+            except Exception as e:
+                result = e 
+                status = "ERROR"
+                error_info = str(e)
 
-                # Intentar extraer audit_logger
-                audit_logger = getattr(self, "audit_logger", None)
-                if not audit_logger:
-                    return result
+            # 2. EXTRACCIÓN DE DATOS (Rápido)
+            try:
+                user_id_ext = None
+                source = "UNKNOWN"
+                details = {
+                    "params": {},
+                    "status": status
+                }
+                if error_info:
+                    details["error"] = error_info
+
+                # --- ESTRATEGIA DE DETECCIÓN ---
                 
-                user_id = None
-                username = None 
-                chat_type = None
-                callback = None
+                # CASO A: Argumentos Explícitos (Android API / Llamada directa)
+                if "user_id" in kwargs:
+                    user_id_ext = str(kwargs["user_id"])
+                    source = "ANDROID"
+                
+                # CASO B: Telegram Update (Bot)
+                elif args and isinstance(args[0], Update):
+                    update = args[0]
+                    source = "TELEGRAM"
+                    if update.effective_user:
+                        user_id_ext = str(update.effective_user.id)
+                        details["username"] = update.effective_user.first_name
+                    if update.callback_query:
+                        details["callback"] = update.callback_query.data
 
-                # Extraer user_id, username, chat_id si existen
-                if isinstance(args[0], Update):
-                    update = args[0] if args else None
-                    user_id = update.effective_user.id
-                    username = update.effective_user.first_name
-                    chat_type = update.effective_chat.type.value
-                    callback = update.callback_query.data if update.callback_query else None
-
-                # Construir params automáticamente
-                params = {}
+                # --- EXTRACCIÓN DE PARÁMETROS ADICIONALES ---
                 if params_args:
-                    func_params = func.__code__.co_varnames
                     for name in params_args:
                         if name in kwargs:
-                            if isinstance(kwargs[name], TransportType):
-                                params[name] = kwargs[name].value
-                            else:
-                                params[name] = kwargs[name]
-                        elif name in func_params:
-                            idx = func_params.index(name)
-                            if idx < len(args):
-                                params[name] = args[idx]
+                            val = kwargs[name]
+                            details["params"][name] = str(val.value) if hasattr(val, "value") else str(val)
 
-                # Añadir evento a la caché del logger
-                audit_logger.add_event(
-                    user_id=user_id or '',
-                    username=username or '',
-                    chat_type=chat_type or '',
-                    action_type=action_type,
-                    command_or_button=command_or_button,
-                    callback=callback or '',
-                    params=params
-                )
+                # 3. GUARDADO ASÍNCRONO (Fire and Forget)
+                if user_id_ext:
+                    manager = None
 
-                return result
-            except Exception as e:
-                logger.warning(f"[audit_action] Error registrando auditoría en {func.__name__}: {e}")
-                return func(self, *args, **kwargs)
+                    # Búsqueda del Manager
+                    # 1. Si 'self' es el Manager
+                    if hasattr(self, "save_audit_log_background"):
+                        manager = self
+                    
+                    # 2. Si 'self' es un Handler que tiene el Manager
+                    elif hasattr(self, "user_data_manager"):
+                        manager = self.user_data_manager
+
+                    if manager:
+                        asyncio.create_task(
+                            manager.save_audit_log_background(
+                                user_id_ext=user_id_ext,
+                                source=source,
+                                action=action_type,
+                                details=details
+                            )
+                        )
+                    else:
+                        logger.error(f"[Audit] Could not find UserDataManager in class {self.__class__.__name__}")
+
+            except Exception as log_err:
+                logger.error(f"[Audit] Failed to prepare log: {log_err}")
+
+            # 4. FINALIZACIÓN (Relanzar error original si hubo)
+            if status == "ERROR" and isinstance(result, Exception):
+                raise result
+
+            return result
         return wrapper
     return decorator
 
+
+# -------------------------------------------------------------------------
+# CLASE USER DATA MANAGER
+# -------------------------------------------------------------------------
 class UserDataManager:
-    CACHE_TTL = 300
+    """
+    Gestor de datos usando PostgreSQL + SQLAlchemy (Async).
+    Reemplaza al antiguo gestor basado en Google Sheets.
+    """
 
     FAVORITE_TYPE_ORDER = {
         TransportType.METRO.value: 0,
@@ -92,484 +138,329 @@ class UserDataManager:
         TransportType.RODALIES.value: 3
     }
 
-    def __init__(self, spreadsheet_name: str = "TMB"):
-        google_sheets_credentials_file = "google-sheets-credentials.json"
-
-        logger.info("Initializing UserDataManager...")
-        try:
-            scope = [
-                "https://spreadsheets.google.com/feeds",
-                "https://www.googleapis.com/auth/drive"
-            ]
-
-            google_creds_json = None
-
-            # GOOGLE SHEETS
-            if os.path.isfile(google_sheets_credentials_file):
-                logger.info(f"Loading credentials from file '{google_sheets_credentials_file}'")
-                google_creds = ServiceAccountCredentials.from_json_keyfile_name(google_sheets_credentials_file, scope)
-            else:
-                google_creds_json = os.getenv("GOOGLE_CREDENTIALS_JSON")
-                if google_creds_json:
-                    logger.info("Loading credentials from environment variable 'GOOGLE_CREDENTIALS_JSON'")
-                    google_creds_dict = json.loads(google_creds_json)
-                    google_creds = ServiceAccountCredentials.from_json_keyfile_dict(google_creds_dict, scope)
-                else:
-                    raise FileNotFoundError(
-                        f"Credentials file '{google_sheets_credentials_file}' not found and 'GOOGLE_CREDENTIALS_JSON' environment variable is not set."
-                    )                
-
-            # Autorizar cliente
-            client = gspread.authorize(google_creds)
-
-            # Abrir spreadsheet y pestañas
-            self.sheet = client.open(spreadsheet_name)
-            self.users_ws = self.sheet.worksheet("users")
-            self.favorites_ws = self.sheet.worksheet("favorites")
-            self.searches_ws = self.sheet.worksheet("searches")
-            self.alerts_ws = self.sheet.worksheet("alerts")
-            self.audit_ws = self.sheet.worksheet("audit")
-            self.audit_logger = AuditLogger(self.audit_ws, max_buffer_size=50)
-
-            # Inicializar caches y columnas
-            self.USERS_LANGUAGE_INDEX = 4
-            self.USERS_RECEIVE_NOTIFICATIONS_INDEX = 5
-            self.USERS_ALREADY_NOTIFIED = 6
-            self.USERS_FCM_TOKEN = 7
-            self.SEARCHES_LAST_SEARCH_COLUMN_INDEX = 6
-            self.SEARCHES_USES_COLUMN_INDEX = 7
-            self._users_cache = {"data": None, "timestamp": None}
-            self._favorites_cache = {"data": None, "timestamp": None}
-            self._searches_cache = {"data": None, "timestamp": None}
-            self._alerts_cache = {"data": None, "timestamp": None}
-            self._audit_cache = {"data": None, "timestamp": None}
-
-            logger.info(f"Connected to Google Spreadsheet '{spreadsheet_name}' successfully.")
-
-        except Exception as e:
-            logger.critical(f"Failed to initialize UserDataManager: {e}")
-            raise
+    def __init__(self):
+        logger.info("Initializing UserDataManager with PostgreSQL...")
 
     # ---------------------------
-    # MÉTODOS DE CARGA CON CACHÉ
+    # MÉTODO DE AUDITORÍA (MÓVIDO DENTRO DE LA CLASE)
     # ---------------------------
+    async def save_audit_log_background(self, user_id_ext, source, action, details):
+        """Tarea en segundo plano: no bloquea la respuesta al usuario"""
+        async with AsyncSessionLocal() as session:
+            try:
+                # Buscar ID interno
+                stmt = select(DBUser.id).where(DBUser.external_id == str(user_id_ext))
+                res = await session.execute(stmt)
+                internal_id = res.scalars().first()
 
-    def _load_users(self, force_refresh=False):
-        if not force_refresh and self._users_cache["data"] is not None:
-            if datetime.now() - self._users_cache["timestamp"] < timedelta(seconds=self.CACHE_TTL):
-                return self._users_cache["data"]
+                # Creamos el log aunque el usuario no exista (user_id=None) o con el ID encontrado
+                new_log = DBAuditLog(
+                    user_id=internal_id,
+                    client_source=source, # "TELEGRAM" o "ANDROID"
+                    action=action,
+                    details=details
+                )
+                session.add(new_log)
+                await session.commit()
+            except Exception as e:
+                logger.error(f"[Audit] DB Write Failed: {e}")
 
-        users = self.users_ws.get_all_records()
-
-        # Conversión explícita de campos booleanos conocidos
-        for user in users:
-            if "RECEIVE_NOTIFICATIONS" in user:
-                user["RECEIVE_NOTIFICATIONS"] = str(user["RECEIVE_NOTIFICATIONS"]).strip().lower() in ("true", "1", "yes", "y")
-
-        self._users_cache = {"data": users, "timestamp": datetime.now()}
-        return users
-
-    def _load_favorites(self, force_refresh=False) -> List[FavoriteItem]:
-        if not force_refresh and self._favorites_cache["data"] is not None:
-            if datetime.now() - self._favorites_cache["timestamp"] < timedelta(seconds=self.CACHE_TTL):
-                return self._favorites_cache["data"]
-        favorites = self.favorites_ws.get_all_records()
-        favoriteItems = []
-        for fav in favorites:
-            favoriteItems.append(FavoriteItem(
-                USER_ID=str(fav.get("USER_ID", '')),
-                TYPE=fav.get("TYPE", ''),
-                STATION_CODE=str(fav.get("STATION_CODE", '')),
-                STATION_NAME=fav.get("STATION_NAME", ''),
-                STATION_GROUP_CODE=str(fav.get("STATION_GROUP_CODE", '')),
-                LINE_NAME=fav.get("LINE_NAME", ''),
-                LINE_NAME_WITH_EMOJI=fav.get("LINE_NAME_WITH_EMOJI", ''),
-                LINE_CODE=str(fav.get("LINE_CODE", '')),
-                coordinates=[fav.get("LONGITUDE", 0), fav.get("LATITUDE", 0)]
-            ))
-
-        self._favorites_cache = {"data": favoriteItems, "timestamp": datetime.now()}
-        return favoriteItems
-
-    def _load_searches(self, force_refresh=False):
-        if not force_refresh and self._searches_cache["data"] is not None:
-            if datetime.now() - self._searches_cache["timestamp"] < timedelta(seconds=self.CACHE_TTL):
-                return self._searches_cache["data"]
-        searches = self.searches_ws.get_all_records()
-        self._searches_cache = {"data": searches, "timestamp": datetime.now()}
-        return searches
-    
-    def _load_alerts(self, force_refresh=False):
-        if not force_refresh and self._alerts_cache["data"] is not None:
-            if datetime.now() - self._alerts_cache["timestamp"] < timedelta(seconds=self.CACHE_TTL):
-                return self._alerts_cache["data"]
-        alerts = self.alerts_ws.get_all_records()
-        self._alerts_cache = {"data": alerts, "timestamp": datetime.now()}
-        return alerts
-
-    def _invalidate_favorites_cache(self):
-        self._favorites_cache = {"data": None, "timestamp": None}
+    # ---------------------------
+    # HELPER: Context Manager
+    # ---------------------------
+    async def _get_user_internal_id(self, session: AsyncSession, external_id: str) -> Optional[int]:
+        """Busca el ID numérico (PK) a partir del ID de Telegram/Android"""
+        stmt = select(DBUser.id).where(DBUser.external_id == str(external_id))
+        result = await session.execute(stmt)
+        return result.scalars().first()
 
     # ---------------------------
     # USERS
     # ---------------------------
 
-    @audit_action(action_type="START", command_or_button="register_user", params_args=["USER_ID", "USERNAME"])
-    def register_user(self, user_id: str, username: str, fcm_token: str = "") -> bool:
-        """Registra usuario en 'users' si no existe, o actualiza 'last_start' y FCM_TOKEN si es necesario"""
-        logger.debug(f"Registering user_id={user_id}, username={username}, fcm_token={fcm_token}")
-        users = self._load_users()
-        now = datetime.now().strftime("%Y:%m:%d %H:%M:%S")
+    @audit_action(action_type="REGISTER_USER", params_args=["user_id", "username"])
+    async def register_user(self, user_id: str, username: str, fcm_token: str = "") -> bool:
+        """Registra usuario o actualiza su token/última actividad."""
+        async with AsyncSessionLocal() as session:
+            try:
+                # Buscar usuario
+                stmt = select(DBUser).where(DBUser.external_id == str(user_id))
+                result = await session.execute(stmt)
+                db_user = result.scalars().first()
+                
+                is_new = False
 
-        # Buscar usuario existente
-        existing_user = next((u for u in users if u["USER_ID"] == user_id), None)
+                if not db_user:
+                    # Crear nuevo
+                    is_new = True
+                    db_user = DBUser(
+                        external_id=str(user_id),
+                        username=username,
+                        language="es", # Default
+                        receive_notifications=True
+                    )
+                    session.add(db_user)
+                    await session.flush() # Para obtener el ID generado
+                else:
+                    if username:
+                        db_user.username = username
 
-        if existing_user is None:
-            # Usuario no existe → crear
-            self.users_ws.append_row([user_id, username, now, 'en', True, json.dumps([]), fcm_token])
-            self._users_cache["data"].append({
-                "USER_ID": user_id,
-                "USERNAME": username,
-                "CREATED_AT": now,
-                "LANGUAGE": "en",
-                "RECEIVE_NOTIFICATIONS": True,
-                "ALREADY_NOTIFIED": json.dumps([e.__dict__ for e in []], ensure_ascii=False),
-                "FCM_TOKEN": fcm_token
-            })
+                # Gestionar Dispositivo (FCM)
+                if fcm_token:
+                    stmt_device = select(DBUserDevice).where(
+                        and_(DBUserDevice.user_id == db_user.id, DBUserDevice.token == fcm_token)
+                    )
+                    res_device = await session.execute(stmt_device)
+                    device = res_device.scalars().first()
+
+                    if not device:
+                        new_device = DBUserDevice(user_id=db_user.id, token=fcm_token)
+                        session.add(new_device)
+
+                await session.commit()
+                return is_new
+            except Exception as e:
+                logger.error(f"Error registering user {user_id}: {e}")
+                await session.rollback()
+                return False
+
+    async def update_user_language(self, user_id: int, new_language: str):
+        async with AsyncSessionLocal() as session:
+            stmt = update(DBUser).where(DBUser.external_id == str(user_id)).values(language=new_language)
+            await session.execute(stmt)
+            await session.commit()
             return True
-        else:
-            # Usuario existe → actualizar FCM_TOKEN si es diferente
-            if existing_user.get("FCM_TOKEN") != fcm_token:
-                self.update_user_fcm_token(user_id, fcm_token)
+
+    async def get_user_language(self, user_id: int) -> str:
+        async with AsyncSessionLocal() as session:
+            stmt = select(DBUser.language).where(DBUser.external_id == str(user_id))
+            result = await session.execute(stmt)
+            lang = result.scalars().first()
+            return lang if lang else "en"
+
+    async def get_users(self) -> List[User]:
+        async with AsyncSessionLocal() as session:
+            stmt = select(DBUser)
+            result = await session.execute(stmt)
+            db_users = result.scalars().all()
+            
+            return [
+                User(
+                    user_id=u.external_id,
+                    username=u.username,
+                    created_at=u.created_at,
+                    language=u.language,
+                    receive_notifications=u.receive_notifications,
+                    already_notified=u.already_notified_ids if u.already_notified_ids else [], 
+                    fcm_token=""
+                ) for u in db_users
+            ]
+
+    async def update_notified_alerts(self, user_id, alert_id):
+        async with AsyncSessionLocal() as session:
+            stmt = select(DBUser).where(DBUser.external_id == str(user_id))
+            result = await session.execute(stmt)
+            user = result.scalars().first()
+            
+            if user:
+                current_list = list(user.already_notified_ids) if user.already_notified_ids else []
+                if alert_id not in current_list:
+                    current_list.append(alert_id)
+                    user.already_notified_ids = current_list 
+                    await session.commit()
+                    return True
             return False
 
-    def update_user_language(self, user_id: int, new_language: str):
-        logger.debug(f"Updating language for user_id={user_id} to '{new_language}'")
-        users = self._load_users()
-        for idx, user in enumerate(users, start=2):
-            if str(user["USER_ID"]) == str(user_id):
-                self.users_ws.update_cell(idx, self.USERS_LANGUAGE_INDEX, new_language)
-                self._users_cache["data"][idx - 2]["LANGUAGE"] = new_language
-                return True
-        return False
-    
-    def update_user_fcm_token(self, user_id: int, new_fcm_token: str):
-        logger.debug(f"Updating FCM_TOKEN for user_id={user_id} to '{new_fcm_token}'")
-        users = self._load_users()
-        for idx, user in enumerate(users, start=2):
-            if str(user["USER_ID"]) == str(user_id):
-                self.users_ws.update_cell(idx, self.USERS_FCM_TOKEN, new_fcm_token)
-                self._users_cache["data"][idx - 2]["FCM_TOKEN"] = new_fcm_token
-                return True
-        return False
+    async def get_user_receive_notifications(self, user_id: str) -> bool:
+        async with AsyncSessionLocal() as session:
+            stmt = select(DBUser.receive_notifications).where(DBUser.external_id == str(user_id))
+            result = await session.execute(stmt)
+            val = result.scalars().first()
+            return val if val is not None else False
 
-    def get_user_language(self, user_id: int):
-        logger.debug(f"Fetching language for user_id={user_id}")
-        users = self._load_users()
-        return next(
-            (
-                user["LANGUAGE"]
-                for user in users
-                if str(user["USER_ID"]) == str(user_id)
-            ),
-            "en",
-        )
-    
-    def get_users(self) -> List[User]:
-        ws_users = self._load_users()
-        return [self.row_to_user(ws_user) for ws_user in ws_users]
-    
-    def update_notified_alerts(self, user_id, alert_id):
-        logger.debug(f"Updating notified alerts for user_id={user_id} -> '{alert_id}'")
-        users = self._load_users()
-        for idx, user in enumerate(users, start=2):
-            if str(user["USER_ID"]) == str(user_id):
-                already_notified = self.safe_str_to_list(user.get('ALREADY_NOTIFIED'))
-                already_notified.append(alert_id)
-                self.users_ws.update_cell(idx, self.USERS_ALREADY_NOTIFIED, json.dumps(already_notified))
-                self._users_cache["data"][idx - 2]["ALREADY_NOTIFIED"] = already_notified
-                return True
-        return False
-    
-    def remove_deprecated_notified_alert(self, user_id, alert_id):
-        logger.debug(f"Removing deprecated notified alerts for user_id={user_id} -> '{alert_id}'")
-        users = self._load_users()
-        for idx, user in enumerate(users, start=2):
-            if str(user["USER_ID"]) == str(user_id):
-                already_notified = self.safe_str_to_list(user.get('ALREADY_NOTIFIED'))
-                already_notified.remove(alert_id)
-                self.users_ws.update_cell(idx, self.USERS_ALREADY_NOTIFIED, json.dumps(already_notified))
-                self._users_cache["data"][idx - 2]["ALREADY_NOTIFIED"] = already_notified
-                return True
-        return False
-
-    def get_user_receive_notifications(self, user_id) -> bool:
-        logger.debug(f"Fetching receive_notifications for user_id={user_id}")
-        users = self._load_users()
-        return next(
-            (
-                user["RECEIVE_NOTIFICATIONS"]
-                for user in users
-                if str(user["USER_ID"]) == str(user_id)
-            ),
-            False,
-        )
-    
-    def update_user_receive_notifications(self, user_id, value: bool):
-        bool_value = value.lower() == "true" if isinstance(value, str) else value
-        logger.debug(f"Updating receive_notifications for user_id={user_id} to '{value}'")
-        users = self._load_users()
-        for idx, user in enumerate(users, start=2):
-            if str(user["USER_ID"]) == str(user_id):
-                self.users_ws.update_cell(idx, self.USERS_RECEIVE_NOTIFICATIONS_INDEX, bool_value)                
-                self._users_cache["data"][idx - 2]["RECEIVE_NOTIFICATIONS"] = bool_value
-                return True
-        return False
-    
-    def row_to_user(self, row: List[str]) -> User:
-        """
-        row: [
-            user_id, username, created_at, last_start, uses,
-            language, receive_notifications, already_notified
-        ]
-        """
-        return User(
-            user_id=str(row.get('USER_ID')),
-            username=row.get('USERNAME'),
-            created_at=datetime.strptime(row.get('CREATED_AT'), "%Y:%m:%d %H:%M:%S"),
-            language=row.get('LANGUAGE'),
-            receive_notifications=row.get('RECEIVE_NOTIFICATIONS'),
-            already_notified=self.safe_str_to_list(row.get('ALREADY_NOTIFIED')),
-            fcm_token=row.get('FCM_TOKEN', '')
-        )
-    
-    def safe_str_to_list(self, value):
-    # Si ya es lista, la devolvemos tal cual
-        if isinstance(value, list):
-            return value
-        
-        # Si es None o vacío, devolvemos lista vacía
-        if value in (None, "", "[]"):
-            return []
-
-        # Aseguramos que es str
-        if not isinstance(value, str):
-            value = str(value)
-
-        try:
-            return ast.literal_eval(value)
-        except (SyntaxError, ValueError):
-            # Si falla, devolvemos lista vacía como fallback
-            return []
+    async def update_user_receive_notifications(self, user_id: str, status: bool) -> bool:
+        async with AsyncSessionLocal() as session:
+            stmt = update(DBUser).where(DBUser.external_id == str(user_id)).values(receive_notifications=status)
+            result = await session.execute(stmt)
+            await session.commit()
+            return result.rowcount > 0
 
     # ---------------------------
     # FAVORITES
     # ---------------------------
 
-    def add_favorite(self, user_id: int, type: str, item: FavoriteItem):
-        """Añade una estación/parada favorita"""
-        logger.debug(f"Adding favorite for user_id={user_id}, type={type}, item={item}")
-        coordinates = item.coordinates
-        try:
-            if type.lower() == TransportType.METRO.value:
-                self.favorites_ws.append_row([
-                    user_id, type.lower(),
-                    item.STATION_CODE, item.STATION_NAME,
-                    item.STATION_GROUP_CODE, item.LINE_NAME, item.LINE_NAME_WITH_EMOJI,
-                    item.LINE_CODE, coordinates[0], coordinates[1]
-                ])
-            elif type.lower() == TransportType.BUS.value:
-                self.favorites_ws.append_row([
-                    user_id, type.lower(),
-                    item.STATION_CODE, item.STATION_NAME,
-                    '', '', '', item.LINE_CODE, coordinates[0], coordinates[1]
-                ])
-            elif type.lower() == TransportType.TRAM.value:
-                self.favorites_ws.append_row([
-                    user_id, type.lower(),
-                    item.STATION_CODE, item.STATION_NAME,
-                    '', item.LINE_NAME, item.LINE_NAME_WITH_EMOJI, item.LINE_CODE,
-                    coordinates[0], coordinates[1]
-                ])
-            elif type.lower() == TransportType.RODALIES.value:
-                self.favorites_ws.append_row([
-                    user_id, type.lower(),
-                    item.STATION_CODE, item.STATION_NAME,
-                    '', item.LINE_NAME, item.LINE_NAME_WITH_EMOJI, item.LINE_CODE,
-                    coordinates[0], coordinates[1]
-                ])
-            elif type.lower() == TransportType.BICING.value:
-                self.favorites_ws.append_row([
-                    user_id, type.lower(),
-                    item.STATION_CODE, item.STATION_NAME,
-                    '', item.LINE_NAME, item.LINE_NAME_WITH_EMOJI, item.LINE_CODE,
-                    coordinates[0], coordinates[1]
-                ])
-            elif type.lower() == TransportType.FGC.value:
-                self.favorites_ws.append_row([
-                    user_id, type.lower(),
-                    item.STATION_CODE, item.STATION_NAME,
-                    '', item.LINE_NAME, item.LINE_NAME_WITH_EMOJI, item.LINE_CODE,
-                    coordinates[0], coordinates[1]
-                ])
+    async def add_favorite(self, user_id: int, type: str, item: FavoriteItem):
+        async with AsyncSessionLocal() as session:
+            try:
+                internal_id = await self._get_user_internal_id(session, user_id)
+                if not internal_id:
+                    logger.warning(f"Cannot add favorite: User {user_id} not found in DB")
+                    return False
 
-            logger.info(f"Added {type} favorite for user_id={user_id}")
-            self._invalidate_favorites_cache()
-            return True
-        except Exception as e:
-            logger.error(f"Failed to add favorite for user_id={user_id}: {e}")
-            return False
+                # Aseguramos lat/lon (item.coordinates suele ser [lon, lat] en GeoJSON, o [lat, lon] según tu app)
+                # Ajusta índices [0] y [1] según lo que envíe tu frontend.
+                lat = item.coordinates[0] if item.coordinates and len(item.coordinates) > 0 else None
+                lon = item.coordinates[1] if item.coordinates and len(item.coordinates) > 1 else None
 
-    def remove_favorite(self, user_id: int, type: str, item_id: str):
-        """Elimina una estación/parada favorita por user_id + stop_id"""
-        logger.debug(f"Removing favorite: user_id={user_id}, type={type}, item_id={item_id}")
-        favorites = self._load_favorites()
-        for idx, fav in enumerate(favorites, start=2):
-            if str(fav.TYPE) == str(type) and str(fav.STATION_CODE) == str(item_id) and str(fav.USER_ID) == str(user_id):
-                self.favorites_ws.delete_rows(idx)
-                self._invalidate_favorites_cache()
+                new_fav = DBFavorite(
+                    user_id=internal_id,
+                    transport_type=type.lower(),
+                    station_code=item.STATION_CODE,
+                    station_name=item.STATION_NAME,
+                    station_group_code=item.STATION_GROUP_CODE,
+                    line_name=item.LINE_NAME,
+                    line_name_with_emoji=item.LINE_NAME_WITH_EMOJI,
+                    line_code=item.LINE_CODE,
+                    latitude=lat,
+                    longitude=lon
+                )
+                session.add(new_fav)
+                await session.commit()
                 return True
-        return False
+            except Exception as e:
+                logger.error(f"Error adding favorite: {e}")
+                return False
 
-    def get_favorites_by_user(self, user_id: int) -> List[FavoriteItem]:
-        logger.debug(f"Fetching favorites for user_id={user_id}")
-        favorites = self._load_favorites()
-        user_fav = [f for f in favorites if str(f.USER_ID) == str(user_id)]
-    
-        return sorted(
-            user_fav,
-            key=lambda f: self.FAVORITE_TYPE_ORDER.get(f.TYPE, 999)
-        )
+    async def remove_favorite(self, user_id: int, type: str, item_id: str):
+        async with AsyncSessionLocal() as session:
+            internal_id = await self._get_user_internal_id(session, user_id)
+            if not internal_id: return False
 
-    def has_favorite(self, user_id, type, item_id):
-        logger.debug(f"Checking if user_id={user_id} has favorite {type}:{item_id}")
-        favorites = self.get_favorites_by_user(user_id)
-        return any(
-            f.TYPE == str(type) and str(f.STATION_CODE) == str(item_id) and str(f.USER_ID) == str(user_id)
-            for f in favorites
-        )
+            stmt = delete(DBFavorite).where(
+                and_(
+                    DBFavorite.user_id == internal_id,
+                    DBFavorite.transport_type == type.lower(),
+                    DBFavorite.station_code == str(item_id)
+                )
+            )
+            result = await session.execute(stmt)
+            await session.commit()
+            return result.rowcount > 0
+
+    async def get_favorites_by_user(self, user_id: int) -> List[FavoriteItem]:
+        async with AsyncSessionLocal() as session:
+            internal_id = await self._get_user_internal_id(session, user_id)
+            if not internal_id: return []
+
+            stmt = select(DBFavorite).where(DBFavorite.user_id == internal_id)
+            result = await session.execute(stmt)
+            db_favs = result.scalars().all()
+
+            fav_items = []
+            for f in db_favs:
+                fav_items.append(FavoriteItem(
+                    USER_ID=str(user_id),
+                    TYPE=f.transport_type,
+                    STATION_CODE=f.station_code,
+                    STATION_NAME=f.station_name,
+                    STATION_GROUP_CODE=f.station_group_code or "",
+                    LINE_NAME=f.line_name or "",
+                    LINE_NAME_WITH_EMOJI=f.line_name_with_emoji or "",
+                    LINE_CODE=f.line_code or "",
+                    coordinates=[f.latitude or 0, f.longitude or 0] # Revisa el orden aquí también
+                ))
+            
+            return sorted(
+                fav_items,
+                key=lambda f: self.FAVORITE_TYPE_ORDER.get(f.TYPE, 999)
+            )
+
+    async def has_favorite(self, user_id, type, item_id) -> bool:
+        async with AsyncSessionLocal() as session:
+            internal_id = await self._get_user_internal_id(session, user_id)
+            if not internal_id: return False
+            
+            stmt = select(DBFavorite).where(
+                and_(
+                    DBFavorite.user_id == internal_id,
+                    DBFavorite.transport_type == str(type).lower(),
+                    DBFavorite.station_code == str(item_id)
+                )
+            )
+            result = await session.execute(stmt)
+            return result.scalars().first() is not None
 
     # ---------------------------
     # SEARCHES
     # ---------------------------
 
-    def register_search(self, type: str, line: str, code: str, name: str):
-        """Registra búsqueda o incrementa usos si ya existe"""
-        logger.debug(f"Registering search: type={type}, line={line}, code={code}, name={name}")
-        searches = self._load_searches()
-        now = datetime.now().strftime("%Y:%m:%d %H:%M:%S")
-
-        for idx, search in enumerate(searches, start=2):
-            if (str(search.get("TYPE")) == str(type) and
-                    str(search.get("CODE")) == str(code) and
-                    str(search.get("LINE")) == str(line)):
-                new_uses = int(search.get("SEARCHES", 0)) + 1
-                self.searches_ws.update_cell(idx, self.SEARCHES_LAST_SEARCH_COLUMN_INDEX, now)
-                self.searches_ws.update_cell(idx, self.SEARCHES_USES_COLUMN_INDEX, new_uses)
-                self._searches_cache["data"][idx - 2]["SEARCHES"] = new_uses
-                return new_uses
-
-        self.searches_ws.append_row([type, line, code, name, now, now, 1])
-        self._searches_cache["data"].append({
-            "TYPE": type,
-            "LINE": line,
-            "CODE": code,
-            "name": name,
-            "CREATED_AT": now,
-            "LAST_SEARCH": now,
-            "SEARCHES": 1
-        })
-        return 1
-    
-
-    # ---------------------------
-    # ALERTS
-    # ---------------------------
-
-    def register_alert(self, transport_type: TransportType, api_alert: Alert):
-        logger.debug(f"Registering alert: type={transport_type}, alert={api_alert}")
-        ws_alerts = self._load_alerts()
-        
-        for idx, ws_alert in enumerate(ws_alerts, start=2):
-            if str(ws_alert.get("TYPE")) == str(transport_type.value) and str(ws_alert.get("ID")) == str(api_alert.id):
-                logger.debug(f"Alert already registered: type={transport_type}, alert_id={api_alert.id}")
-                return False
+    async def register_search(self, type: str, line: str, code: str, name: str, user_id_ext: str = None):
+        async with AsyncSessionLocal() as session:
+            internal_id = None
+            if user_id_ext:
+                internal_id = await self._get_user_internal_id(session, user_id_ext)
             
-        self.alerts_ws.append_row([api_alert.id, transport_type.value, api_alert.begin_date.isoformat() if api_alert.begin_date else "", api_alert.end_date.isoformat() if api_alert.end_date else "", api_alert.status, api_alert.cause, json.dumps([pub.__dict__ for pub in api_alert.publications], ensure_ascii=False), json.dumps([ent.__dict__ for ent in api_alert.affected_entities], ensure_ascii=False)])
-        self._alerts_cache["data"].append({
-            "ID": api_alert.id,
-            "TRANSPORT_TYPE": transport_type,
-            "BEGIN_DATE": api_alert.begin_date.isoformat() if api_alert.begin_date else "",
-            "END_DATE": api_alert.end_date.isoformat() if api_alert.end_date else "",
-            "STATUS": api_alert.status,
-            "CAUSE": api_alert.cause,
-            "PUBLICATIONS": json.dumps([pub.__dict__ for pub in api_alert.publications], ensure_ascii=False),
-            "AFFECTED_ENTITIES": json.dumps([ent.__dict__ for ent in api_alert.affected_entities], ensure_ascii=False)
-        })        
+            if internal_id:
+                new_search = DBSearchHistory(
+                    user_id=internal_id,
+                    query=f"{type} | {line} | {name}", 
+                    result_type="STATION" if code else "LINE",
+                    selected_id=code or line
+                )
+                session.add(new_search)
+                await session.commit()
+                return 1
+            return 0
 
-        logger.info(f"New alert registered: type={transport_type}, alert_id={api_alert.id}")
-        return True
-    
-    def remove_alert(self, alert: Alert) -> bool:
-        """
-        Elimina una alerta de la hoja de cálculo y de la caché según ID y tipo de transporte.
-        
-        :param transport_type: Tipo de transporte de la alerta.
-        :param alert_id: ID de la alerta a eliminar.
-        :return: True si la alerta fue eliminada, False si no se encontró.
-        """
-        logger.debug(f"Removing alert: type={alert.transport_type}, alert_id={alert.id}")
-        
-        ws_alerts = self._load_alerts()
-        
-        for idx, ws_alert in enumerate(ws_alerts, start=2):  # start=2 porque la fila 1 es encabezado
-            if ws_alert.get("TYPE") and alert.transport_type is not None and str(ws_alert.get("TYPE")) == str(alert.transport_type.value) and str(ws_alert.get("ID")) == str(alert.id):
-                self.alerts_ws.delete_rows(idx)
-                logger.info(f"Alert removed from spreadsheet: type={alert.transport_type}, alert_id={alert.id}")
-                
-                if self._alerts_cache["data"] is not None:
-                    self._alerts_cache["data"] = [
-                        a for a in self._alerts_cache["data"]
-                        if not (str(a.get("TRANSPORT_TYPE")) == str(alert.transport_type) and str(a.get("ID")) == str(alert.id))
-                    ]
-                return True
-        
-        logger.warning(f"Alert not found: type={alert.transport_type}, alert_id={alert.id}")
-        return False
+    # ---------------------------
+    # ALERTS (Service Incidents)
+    # ---------------------------
 
-    
-    def get_alerts(self) -> List[Alert]:
-        ws_alerts = self._load_alerts()
-        return [self.row_to_alert(ws_alert) for ws_alert in ws_alerts]
-
-    def row_to_alert(self, row: Dict[str, str]) -> Alert:
-        """
-        Convierte una fila de Google Sheets en un objeto Alert.
-
-        :param row: Diccionario con los datos de la fila.
-        :return: Instancia de Alert.
-        """
-        try:
-            publications = [
-                Publication(**pub) for pub in json.loads(row.get("PUBLICATIONS", "[]"))
-            ]
-
-            affected_entities = [
-                AffectedEntity(**ent) for ent in json.loads(row.get("AFFECTED_ENTITIES", "[]"))
-            ]
-
-            begin_date = datetime.fromisoformat(row.get("BEGIN_DATE")) if row.get("BEGIN_DATE") else None
-            end_date = datetime.fromisoformat(row.get("END_DATE")) if row.get("END_DATE") else None
-
-            return Alert(
-                id=row.get("ID"),
-                transport_type=TransportType(str(row.get('TYPE').lower())) if row.get('TYPE') else None,
-                begin_date=begin_date,
-                end_date=end_date,
-                status=row.get("STATUS") if row.get("STATUS") else None,
-                cause=row.get("CAUSE") if row.get("CAUSE") else None,
-                publications=publications,
-                affected_entities=affected_entities
+    async def register_alert(self, transport_type: TransportType, api_alert: Alert):
+        async with AsyncSessionLocal() as session:
+            stmt = select(DBServiceIncident).where(
+                and_(
+                    DBServiceIncident.external_id == str(api_alert.id),
+                    DBServiceIncident.transport_type == transport_type.value
+                )
             )
-        except Exception as e:
-            raise ValueError(f"Error parsing row into Alert: {e}")
+            result = await session.execute(stmt)
+            exists = result.scalars().first()
+
+            if exists:
+                return False
+
+            new_incident = DBServiceIncident(
+                external_id=str(api_alert.id),
+                transport_type=transport_type.value,
+                begin_date=api_alert.begin_date,
+                end_date=api_alert.end_date,
+                status=api_alert.status,
+                cause=api_alert.cause,
+                publications=[pub.__dict__ for pub in api_alert.publications],
+                affected_entities=[ent.__dict__ for ent in api_alert.affected_entities]
+            )
+            session.add(new_incident)
+            await session.commit()
+            logger.info(f"New ServiceIncident registered: {api_alert.id}")
+            return True
+
+    async def get_alerts(self, only_active: bool = True) -> List[Alert]:
+        async with AsyncSessionLocal() as session:
+            stmt = select(DBServiceIncident)
+
+            if only_active:
+                now = datetime.now()
+                stmt = stmt.where(
+                    (DBServiceIncident.end_date == None) | 
+                    (DBServiceIncident.end_date > now)
+                )
+            result = await session.execute(stmt)
+            db_alerts = result.scalars().all()
+
+            domain_alerts = []
+            for a in db_alerts:
+                pubs = [Publication(**p) for p in (a.publications or [])]
+                ents = [AffectedEntity(**e) for e in (a.affected_entities or [])]
+
+                domain_alerts.append(Alert(
+                    id=a.external_id,
+                    transport_type=TransportType(a.transport_type) if a.transport_type else None,
+                    begin_date=a.begin_date,
+                    end_date=a.end_date,
+                    status=a.status,
+                    cause=a.cause,
+                    publications=pubs,
+                    affected_entities=ents
+                ))
+            return domain_alerts

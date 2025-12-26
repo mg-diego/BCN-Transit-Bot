@@ -24,10 +24,9 @@ class BicingHandler(HandlerBase):
     ):
         super().__init__(message_service, update_manager, language_manager, user_data_manager, keyboard_factory, telegraph_service)
         self.bicing_service = bicing_service
-        self.audit_logger = self.user_data_manager.audit_logger
         self.mapper = TransportDataCompressor()
 
-    @audit_action(action_type="SEARCH", command_or_button="show_bicing_instructions")
+    @audit_action(action_type="SHOW_BICING_INSTRUCTIONS")
     async def show_instructions(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         self.message_service.set_bot_instance(context.bot)
 
@@ -59,7 +58,7 @@ class BicingHandler(HandlerBase):
                 )}\n\n"
                 f"{self.language_manager.t('common.updates.every_x_seconds', seconds=self.UPDATE_INTERVAL)}\n\n"
             )
-            is_fav = self.user_data_manager.has_favorite(user_id, TransportType.BICING.value, bicing_station_id)
+            is_fav = await self.user_data_manager.has_favorite(user_id, TransportType.BICING.value, bicing_station_id)
             keyboard = self.keyboard_factory.update_menu(is_fav, TransportType.BICING.value, bicing_station_id, '', default_callback, has_connections=False)
             return text, keyboard
         

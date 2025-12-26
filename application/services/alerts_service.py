@@ -51,8 +51,8 @@ class AlertsService:
     async def check_new_alerts(self):
         """Comprueba alertas activas y notifica a los usuarios que tengan nuevas alertas."""
         try:
-            alerts = self.user_data_manager.get_alerts()
-            users = self.user_data_manager.get_users()
+            alerts = await self.user_data_manager.get_alerts()
+            users = await self.user_data_manager.get_users()
 
             logger.debug(f"Total alerts fetched: {len(alerts)} | Total users: {len(users)}")
 
@@ -62,7 +62,7 @@ class AlertsService:
             for user in [u for u in users if u.receive_notifications]:
                 logger.debug(f"Processing user {user.user_id} | {user.username if hasattr(user, 'username') else 'Unknown'}")
 
-                user_favorites = self.user_data_manager.get_favorites_by_user(user.user_id)
+                user_favorites = await self.user_data_manager.get_favorites_by_user(user.user_id)
                 if not user_favorites:
                     logger.warning(f"User {user.user_id} has no favorite stations. Skipping...")
                     continue
@@ -85,7 +85,7 @@ class AlertsService:
                                     f"🚨 Sending new alert {alert.id} to user {user.user_id} "
                                     f"({entity.station_name} - code {entity.station_code})"
                                 )
-                                self.user_data_manager.update_notified_alerts(user.user_id, alert.id)
+                                await self.user_data_manager.update_notified_alerts(user.user_id, alert.id)
                                 if user.fcm_token is not None:
                                     self.send_push_notification(
                                         user.fcm_token,
@@ -116,7 +116,7 @@ class AlertsService:
             logger.exception(f"Error checking alerts: {e}")
 
     async def remove_duplicated_alerts(self):
-        alerts = self.user_data_manager.get_alerts()
+        alerts = await self.user_data_manager.get_alerts()
         seen = set()
         duplicated_alerts = []
 
@@ -165,39 +165,7 @@ class AlertsService:
             except Exception as e:
                 logger.error(f"⚠️ Error deleting row {row_idx}: {e}")
 
-        logger.info(f"🎯 Cleanup complete | Removed {len(rows_to_delete)} duplicated alerts")
-
-    async def remove_expired_alerts(self):  
-        alerts = self.user_data_manager.get_alerts()
-        users = self.user_data_manager.get_users()
-        now = datetime.now()
-
-        logger.debug(f"Loaded {len(alerts)} alerts and {len(users)} users")
-        removed_alerts = 0
-        removed_notified_references = 0
-
-        for alert in alerts:
-            if alert.end_date and alert.end_date < now:
-                logger.info(f"🗑️ Alert expired → Removing | ID={alert.id}, Transport={alert.transport_type}, EndDate={alert.end_date}")
-
-                # Eliminar referencias de esta alerta en los usuarios
-                for user in users:
-                    if alert.id in user.already_notified:
-                        self.user_data_manager.remove_deprecated_notified_alert(user.user_id, alert.id)
-                        removed_notified_references += 1
-                        logger.debug(f"   ↳ Removed alert {alert.id} from user {user.user_id} notified list")
-
-                # Eliminar la alerta en sí
-                self.user_data_manager.remove_alert(alert)
-                removed_alerts += 1
-                logger.info(f"✅ Alert {alert.id} successfully removed")
-
-        if removed_alerts > 0:
-            logger.info(f"🎯 Cleanup complete | Removed {removed_alerts} expired alerts and {removed_notified_references} notified references")
-        else:
-            logger.info("✨ No expired alerts found")
-
-        logger.debug("🧹 Expired alerts cleanup finished")
+        logger.info(f"🎯 Cleanup complete | Removed {len(rows_to_delete)} duplicated alerts")    
 
 
     async def scheduler(self):
@@ -210,7 +178,6 @@ class AlertsService:
                 iteration += 1
                 logger.info(f"🔍 Starting Alert Service scheduler | Interval: {self.interval} seconds")
                 await self.remove_duplicated_alerts()
-                await self.remove_expired_alerts()          
                 await self.check_new_alerts()
                 await asyncio.sleep(self.interval)
                 

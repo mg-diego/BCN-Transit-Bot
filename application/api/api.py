@@ -1,7 +1,7 @@
 
 import math
 from typing import List
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, status
 from fastapi.params import Body
 from pydantic import BaseModel
 
@@ -232,7 +232,8 @@ def get_results_router(
     tram_service: TramService,
     rodalies_service: RodaliesService,
     bicing_service: BicingService,
-    fgc_service: FgcService
+    fgc_service: FgcService,
+    user_data_manager: UserDataManager
 ) -> APIRouter:
     router = APIRouter()
 
@@ -263,7 +264,22 @@ def get_results_router(
         return near_results
 
     @router.get("/search")
-    async def search_stations(name: str):
+    async def search_stations(name: str, user_id: str = None):
+        # 1. Registrar auditoría (Fire and Forget)
+        # Aunque search espera (type, line, code), aquí es una búsqueda genérica de texto.
+        # Puedes adaptar register_search o crear uno nuevo log_generic_search
+        if user_id:
+             # Lanzamos la tarea sin await para no frenar la búsqueda
+             asyncio.create_task(
+                 user_data_manager.register_search(
+                     type="GLOBAL", 
+                     line="", 
+                     code="", 
+                     name=name, 
+                     user_id_ext=user_id
+                 )
+             )
+
         tasks = [
             metro_service.get_stations_by_name(name),
             bus_service.get_stops_by_name(name),
@@ -292,44 +308,49 @@ def get_user_router(
 ) -> APIRouter:
     router = APIRouter()
 
-    @router.post("/{user_id}/register")
+    @router.post("/{user_id}/register", status_code=status.HTTP_201_CREATED)
     async def register_user(user_id: str, request: RegisterRequest = Body(...)):
         try:
-            result = user_data_manager.register_user(
-                user_id,
-                'android_user',
-                request.fcmToken
+            result = await user_data_manager.register_user(
+                user_id=user_id,
+                username='android_user',
+                fcm_token=request.fcmToken
             )
             return result
         except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
+            # MEJORA: HTTPException en lugar de devolver dict
+            raise HTTPException(status_code=500, detail=f"Error registering user: {str(e)}")
         
     @router.post("/{user_id}/notifications/toggle/{status}")
     async def toggle_user_notifications(user_id: str, status: bool):
         try:
-            result = user_data_manager.update_user_receive_notifications(
+            result = await user_data_manager.update_user_receive_notifications(
                 user_id,
                 status
             )
+            if not result:
+                raise HTTPException(status_code=404, detail="User not found")
             return result
+        except HTTPException as he:
+            raise he
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
         
     @router.get("/{user_id}/notifications/configuration")
     async def get_user_notifications_configuration(user_id: str) -> bool:
         try:
-            return user_data_manager.get_user_receive_notifications(user_id)
+            return await user_data_manager.get_user_receive_notifications(user_id)
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
         
-    @router.get("/{user_id}/favorites")
-    async def get_favorites(user_id: str) -> List[FavoriteItem]:
+    @router.get("/{user_id}/favorites", response_model=List[FavoriteItem])
+    async def get_favorites(user_id: str):
         try:
-            return user_data_manager.get_favorites_by_user(user_id)
+            return await user_data_manager.get_favorites_by_user(user_id)
         except Exception as e:
-            return {"status": "ERROR", "message": str(e)}
+            # El frontend espera una lista, si devolvemos un dict con "error" la app crasheará al parsear
+            raise HTTPException(status_code=500, detail=str(e))
         
-    
     @router.get("/{user_id}/favorites/exists")
     async def has_favorite(
         user_id: str,
@@ -337,16 +358,16 @@ def get_user_router(
         item_id: str = Query(..., description="Código del item a buscar")
     ) -> bool:
         try:
-            return user_data_manager.has_favorite(user_id, type=type, item_id=item_id)
+            return await user_data_manager.has_favorite(user_id, type=type, item_id=item_id)
         except Exception as e:
-            return {"status": "ERROR", "message": str(e)}
+            raise HTTPException(status_code=500, detail=str(e))
         
-    @router.post("/{user_id}/favorites")
+    @router.post("/{user_id}/favorites", status_code=status.HTTP_201_CREATED)
     async def add_favorite(user_id: str, body: FavoriteItem = Body(...)) -> bool:
         try:
-            return user_data_manager.add_favorite(user_id, type=body.TYPE, item=body)
+            return await user_data_manager.add_favorite(user_id, type=body.TYPE, item=body)
         except Exception as e:
-            return {"status": "ERROR", "message": str(e)}
+            raise HTTPException(status_code=500, detail=str(e))
         
     @router.delete("/{user_id}/favorites")
     async def delete_favorite(
@@ -355,9 +376,9 @@ def get_user_router(
         item_id: str = Query(..., description="Código del item a eliminar")
     ) -> bool:
         try:
-            return user_data_manager.remove_favorite(user_id, type=type, item_id=item_id)
+            return await user_data_manager.remove_favorite(user_id, type=type, item_id=item_id)
         except Exception as e:
-            return {"status": "ERROR", "message": str(e)}
+            raise HTTPException(status_code=500, detail=str(e))
         
     return router
 

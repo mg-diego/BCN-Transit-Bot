@@ -62,7 +62,7 @@ class MetroService(ServiceBase):
 
         result = defaultdict(list)
         for alert in alerts:
-            self.user_data_manager.register_alert(TransportType.METRO, alert)
+            await self.user_data_manager.register_alert(TransportType.METRO, alert)
             seen_lines = set()
             for entity in alert.affected_entities:
                 if entity.line_name and entity.line_name not in seen_lines:
