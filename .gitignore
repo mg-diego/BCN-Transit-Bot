@@ -216,3 +216,4 @@ test.py
 temp/
 app.log
 logs/
+web/dashboard.py

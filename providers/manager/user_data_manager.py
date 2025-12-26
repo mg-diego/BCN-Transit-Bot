@@ -151,22 +151,17 @@ class UserDataManager:
     def __init__(self):
         logger.info("Initializing UserDataManager with PostgreSQL...")
 
-    # ---------------------------
-    # MÉTODO DE AUDITORÍA (MÓVIDO DENTRO DE LA CLASE)
-    # ---------------------------
     async def save_audit_log_background(self, user_id_ext, source, action, details):
         """Tarea en segundo plano: no bloquea la respuesta al usuario"""
         async with AsyncSessionLocal() as session:
             try:
-                # Buscar ID interno
                 stmt = select(DBUser.id).where(DBUser.external_id == str(user_id_ext))
                 res = await session.execute(stmt)
                 internal_id = res.scalars().first()
 
-                # Creamos el log aunque el usuario no exista (user_id=None) o con el ID encontrado
                 new_log = DBAuditLog(
                     user_id=internal_id,
-                    client_source=source, # "TELEGRAM" o "ANDROID"
+                    client_source=source,
                     action=action,
                     details=details
                 )
@@ -175,9 +170,7 @@ class UserDataManager:
             except Exception as e:
                 logger.error(f"[Audit] DB Write Failed: {e}")
 
-    # ---------------------------
-    # HELPER: Context Manager
-    # ---------------------------
+
     async def _get_user_internal_id(self, session: AsyncSession, external_id: str) -> Optional[int]:
         """Busca el ID numérico (PK) a partir del ID de Telegram/Android"""
         stmt = select(DBUser.id).where(DBUser.external_id == str(external_id))
@@ -395,6 +388,94 @@ class UserDataManager:
             )
             result = await session.execute(stmt)
             return result.scalars().first() is not None
+        
+    async def get_active_users_with_favorites(self) -> List[tuple[User, List[FavoriteItem]]]:
+        """
+        Obtiene usuarios que tienen notificaciones activas Y tienen favoritos.
+        Incluye el FCM Token haciendo JOIN con DBUserDevice.
+        """
+        async with AsyncSessionLocal() as session:
+            # 1. MODIFICAMOS LA CONSULTA
+            # Añadimos DBUserDevice.token al select
+            # Hacemos outerjoin (LEFT JOIN) porque un usuario de Telegram podría no tener device
+            stmt = (
+                select(DBUser, DBFavorite, DBUserDevice.token) 
+                .join(DBFavorite, DBUser.id == DBFavorite.user_id)
+                .outerjoin(DBUserDevice, DBUser.id == DBUserDevice.user_id)
+                .where(DBUser.receive_notifications == True)
+            )
+            
+            result = await session.execute(stmt)
+            rows = result.all()
+            
+            grouped_data = {}
+
+            # 2. DESEMPAQUETAMOS 3 VALORES (User, Fav, Token)
+            for db_user, db_fav, token in rows:
+                user_id_ext = db_user.external_id
+                
+                # Si es la primera vez que vemos al usuario
+                if user_id_ext not in grouped_data:
+                    domain_user = self._to_domain_user(db_user)
+                    
+                    # ASIGNAMOS EL TOKEN SI EXISTE
+                    # (Si el usuario tiene varios dispositivos, se quedará con el último procesado)
+                    if token:
+                        domain_user.fcm_token = token
+
+                    grouped_data[user_id_ext] = {
+                        "user": domain_user,
+                        "favorites": {}, # Usamos un DICT para evitar duplicados temporalmente
+                        "seen_favs": set() # Set auxiliar para control
+                    }
+                
+                # ACTUALIZAR TOKEN (Por si apareció en una fila posterior debido al JOIN)
+                if token and not grouped_data[user_id_ext]["user"].fcm_token:
+                    grouped_data[user_id_ext]["user"].fcm_token = token
+
+                # 3. EVITAR FAVORITOS DUPLICADOS
+                # El JOIN con devices multiplica las filas. Si tienes 2 dispositivos, 
+                # cada favorito sale 2 veces. Hay que filtrar.
+                
+                # Usamos STATION_CODE + TYPE como clave única temporal
+                fav_unique_key = f"{db_fav.station_code}_{db_fav.transport_type}"
+                
+                if fav_unique_key not in grouped_data[user_id_ext]["seen_favs"]:
+                    domain_fav = self._to_domain_favorite(db_fav, user_id_ext)
+                    grouped_data[user_id_ext]["favorites"][fav_unique_key] = domain_fav
+                    grouped_data[user_id_ext]["seen_favs"].add(fav_unique_key)
+
+            # 4. CONVERTIR DICT DE FAVORITOS A LISTA
+            return [
+                (data["user"], list(data["favorites"].values())) 
+                for data in grouped_data.values()
+            ]
+
+    # El método _to_domain_user lo dejamos igual, ya que asignamos el token "por fuera"
+    # para no romper otras partes del código que usen este helper.
+    def _to_domain_user(self, db_user: DBUser) -> User:
+        return User(
+            user_id=db_user.external_id,
+            username=db_user.username,
+            created_at=db_user.created_at,
+            language=db_user.language,
+            receive_notifications=db_user.receive_notifications,
+            already_notified=db_user.already_notified_ids if db_user.already_notified_ids else [],
+            fcm_token="" # Se inicializa vacío, pero el método principal lo sobreescribe
+        )
+
+    def _to_domain_favorite(self, f: DBFavorite, user_id_ext: str) -> FavoriteItem:
+        return FavoriteItem(
+            USER_ID=str(user_id_ext),
+            TYPE=f.transport_type,
+            STATION_CODE=f.station_code,
+            STATION_NAME=f.station_name,
+            STATION_GROUP_CODE=f.station_group_code or "",
+            LINE_NAME=f.line_name or "",
+            LINE_NAME_WITH_EMOJI=f.line_name_with_emoji or "",
+            LINE_CODE=f.line_code or "",
+            coordinates=[f.latitude or 0, f.longitude or 0]
+        )
 
     # ---------------------------
     # SEARCHES
@@ -479,3 +560,9 @@ class UserDataManager:
                     affected_entities=ents
                 ))
             return domain_alerts
+        
+
+    # AUDIT
+    @audit_action(action_type="NOTIFICATION", params_args=["alert"])
+    async def register_notification(self, client_source: ClientType, user_id: str, alert: Alert):
+        pass

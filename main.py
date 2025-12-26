@@ -13,6 +13,7 @@ from application import MessageService, MetroService, BusService, TramService, R
 from providers.manager import SecretsManager, UserDataManager, LanguageManager
 from providers.api import TmbApiService, TramApiService, RodaliesApiService, BicingApiService, FgcApiService
 from providers.helpers import logger
+from providers.manager.firebase_client import initialize_firebase as initialize_firebase_app
 
 from providers.database.database import init_db
 
@@ -269,9 +270,9 @@ class BotApp:
 
     async def run(self):
         """Main async entrypoint for the bot."""
-        
-        # Run the async seeder
+        await init_db()        
         await self.run_seeder()
+        initialize_firebase_app()
 
         # Telegram application
         self.application = ApplicationBuilder().token(self.telegram_token).build()
@@ -287,25 +288,22 @@ class BotApp:
             await self.application.updater.start_polling()
             
             logger.info("Creando tarea recurrente...")
-            recurring_task = asyncio.create_task(self.alerts_service.scheduler())
-            logger.info(f"Tarea creada: {recurring_task}")
+            await self.alerts_service.start()
 
             # Keep the bot running
             logger.info("Bot is running. Press Ctrl+C to stop.")
-            await asyncio.Event().wait()  # Run forever until interrupted
+            await asyncio.Event().wait()
             
         except KeyboardInterrupt:
             logger.info("Received interrupt signal, shutting down...")
-            recurring_task.cancel()
-            try:
-                await recurring_task
-            except asyncio.CancelledError:
-                pass
         except Exception as e:
             logger.error(f"Unexpected error: {e}")
         finally:
             # Cleanup
             logger.info("Stopping bot...")
+            if self.alerts_service:
+                await self.alerts_service.stop()
+
             if self.application.updater.running:
                 await self.application.updater.stop()
             await self.application.stop()
