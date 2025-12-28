@@ -1,6 +1,8 @@
 import asyncio
+from datetime import datetime, timedelta
 import time
 from typing import List
+from zoneinfo import ZoneInfo
 
 from domain.common.connections import Connections
 from domain.common.line import Line
@@ -124,29 +126,64 @@ class FgcService(ServiceBase):
 
     async def get_station_routes(self, station_code) -> List[LineRoute]:
         start = time.perf_counter()
+        cache_key = f"fgc_station_{station_code}_routes"
+
+        cached_routes = await self.cache_service.get(cache_key)
+        if cached_routes:
+            return cached_routes
+
         station = await self.get_station_by_code(station_code)
+        if not station:
+            logger.warning(f"Station {station_code} not found")
+            return []
+        
+        def parse_to_timestamp(time_input):
+            """
+            Convierte una entrada (minutos restantes o string 'HH:MM') 
+            a Timestamp absoluto corregido por zona horaria.
+            """
+            madrid_tz = ZoneInfo("Europe/Madrid")
+            now_madrid = datetime.now(madrid_tz)
+            
+            target_dt = None
 
-        routes = await self._get_from_cache_or_data(
-            f"fgc_station_{station_code}_routes",
-            None,
-            cache_ttl=30
-        )
+            if isinstance(time_input, int):
+                target_dt = now_madrid + timedelta(minutes=time_input)
 
-        if routes is None:
+            elif isinstance(time_input, str) and ":" in time_input:
+                try:
+                    h, m = map(int, time_input.split(":"))
+                    target_dt = now_madrid.replace(hour=h, minute=m, second=0, microsecond=0)
+
+                    if (target_dt - now_madrid).total_seconds() < -43200: 
+                        target_dt += timedelta(days=1)
+                except ValueError:
+                    return 0
+            
+            if target_dt:
+                return int(target_dt.timestamp())
+            return 0
+
+        routes = []
+        
+        try:
             if station.moute_id is not None:
+                # --- API MOUTE (Más fiable) ---
                 raw_routes = await self.fgc_api_service.get_moute_next_departures(station.moute_id)
-                routes = []
+                
                 for line, destinations in raw_routes.items():
                     for destination, trips in destinations.items():
-                        nextFgc = [
-                            NextTrip(
-                                id="",
-                                arrival_time=normalize_to_seconds(int(trip.get("departure_time"))),
-                            )
-                            for trip in trips
-                        ]
-                        routes.append(
-                            LineRoute(
+                        nextFgc = []
+                        for trip in trips:
+                            # Moute a veces devuelve minutos (int) o hora (str)
+                            raw_time = trip.get("departure_time")
+                            ts = parse_to_timestamp(raw_time) 
+                            
+                            if ts > 0:
+                                nextFgc.append(NextTrip(id="", arrival_time=ts))
+
+                        if nextFgc:
+                            routes.append(LineRoute(
                                 destination=destination,
                                 next_trips=nextFgc,
                                 line_name=line,
@@ -155,21 +192,25 @@ class FgcService(ServiceBase):
                                 line_type=TransportType.FGC,
                                 color=None,
                                 route_id=line,
-                            )
-                        )
+                            ))
             else:
+                # --- API LEGACY (Scraping/Vieja) ---
                 raw_routes = await self.fgc_api_service.get_next_departures(station.name, station.line_name)
-                routes = []
+                
                 for direction, trips in raw_routes.items():
-                    nextFgc = [
-                        NextTrip(
-                            id=trip.get("trip_id"),
-                            arrival_time=normalize_to_seconds(trip.get("departure_time")),
-                        )
-                        for trip in trips
-                    ]
-                    routes.append(
-                        LineRoute(
+                    nextFgc = []
+                    for trip in trips:
+                        raw_time = trip.get("departure_time")
+                        ts = parse_to_timestamp(raw_time)
+                        
+                        if ts > 0:
+                            nextFgc.append(NextTrip(
+                                id=trip.get("trip_id"),
+                                arrival_time=ts
+                            ))
+                    
+                    if nextFgc:
+                        routes.append(LineRoute(
                             destination=direction,
                             next_trips=nextFgc,
                             line_name=station.line_name,
@@ -178,17 +219,18 @@ class FgcService(ServiceBase):
                             line_type=TransportType.FGC,
                             color=None,
                             route_id=station.line_name,
-                        )
-                    )
+                        ))
 
-            routes = await self._get_from_cache_or_data(
-                f"fgc_station_{station_code}_routes",
-                routes,
-                cache_ttl=30,
-            )
-        
+            if routes:
+                await self.cache_service.set(cache_key, routes, ttl=30)
+
+        except Exception as e:
+            logger.error(f"Error fetching FGC routes for {station_code}: {e}")
+            return []
+
         elapsed = (time.perf_counter() - start)
         logger.info(f"[{self.__class__.__name__}] get_station_routes({station_code}) ejecutado en {elapsed:.4f} s")
+        
         return routes
 
     async def get_station_by_id(self, station_id, line_id) -> FgcStation:
