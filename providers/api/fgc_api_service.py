@@ -2,6 +2,7 @@ from datetime import datetime
 from io import StringIO
 import ssl
 import time
+from zoneinfo import ZoneInfo
 import aiohttp
 import inspect
 import asyncio
@@ -107,7 +108,6 @@ class FgcApiService:
         """Obtener todas las estaciones de una línea concreta con orden correcto"""
         await self._load_csvs()
 
-        # 1. Filtrar por línea
         route = self._routes[self._routes["route_short_name"] == line_name]
         if route.empty:
             raise ValueError(f"No se encontró la línea {line_name}")
@@ -117,20 +117,16 @@ class FgcApiService:
         if trips_for_route.empty:
             return []
 
-        # 2. Tomamos el primer trip como referencia para el orden
         first_trip_id = trips_for_route.iloc[0]["trip_id"]
 
         stop_times_line = self._stop_times[self._stop_times["trip_id"] == first_trip_id]
         stop_times_line = stop_times_line.sort_values("stop_sequence")
 
-        # 3. Asignar orden incremental limpio
         stop_order_map = {stop_id: idx + 1 for idx, stop_id in enumerate(stop_times_line["stop_id"].tolist())}
 
-        # 4. Obtener info de estaciones
         stations_df = self._stops[self._stops["stop_id"].isin(stop_order_map.keys())].copy()
         stations_df = stations_df.dropna(subset=["stop_id"])
 
-        # 5. Crear lista de FgcStation con order correcto
         stations = [
             FgcStation.create_fgc_station(row, line_name=line_name, order=stop_order_map[row["stop_id"]])
             for _, row in stations_df.iterrows()
@@ -142,28 +138,59 @@ class FgcApiService:
 
     async def get_moute_next_departures(self, moute_id):
         data = await self._request("GET", f"{self.MOUTE_BASE_URL}/nextdeparturesNEW?paradaId={moute_id}&useRealTime=true&language=ca_ES", params=None, use_FGC_BASE_URL=False)
-        lines = data["parada"]["lineas"]["linia"]
+        
+        lines = data.get("parada", {}).get("lineas", {}).get("linia", [])
+        if isinstance(lines, dict): 
+            lines = [lines]
+
+        madrid_tz = ZoneInfo("Europe/Madrid")
 
         next_departures = {}
+        
         for line in lines:
             line_id = line['idLinia']
-            next_departures[line.get('nomLinia')] = {}
-            directions = set([s["direccio"] for s in data["sortides"]["sortida"] if line_id in s["tripId"]])
+            line_name = line.get('nomLinia')
+            next_departures[line_name] = {}
+            
+            all_departures = data.get("sortides", {}).get("sortida", [])
+            if not all_departures: continue
+            
+            directions = set([s["direccio"] for s in all_departures if line_id in s.get("tripId", "")])
+            
             for direction in directions:
-                next_departures[line.get('nomLinia')][direction] = []
-                sortides_realtime = [s for s in data["sortides"]["sortida"] if line_id in s["tripId"] and s["realtime"] and s["direccio"] == direction]
-                sortides_scheduled = [s for s in data["sortides"]["sortida"] if line_id in s["tripId"] and s["realtime"] == False and s["direccio"] == direction]
+                next_departures[line_name][direction] = []
+                
+                sortides_realtime = [s for s in all_departures if line_id in s["tripId"] and s.get("realtime") and s["direccio"] == direction]
+                sortides_scheduled = [s for s in all_departures if line_id in s["tripId"] and not s.get("realtime") and s["direccio"] == direction]
 
                 for rt in sortides_realtime:
-                    next_departures[line.get('nomLinia')][direction].append({
-                        "departure_time": datetime(year=int(rt["any"]), month=int(rt["mes"]), day=int(rt["dia"]), hour=int(rt["hora"]), minute=int(rt["minuts"])).timestamp(),
+                    dt = datetime(
+                        year=int(rt["any"]), 
+                        month=int(rt["mes"]), 
+                        day=int(rt["dia"]), 
+                        hour=int(rt["hora"]), 
+                        minute=int(rt["minuts"]),
+                        tzinfo=madrid_tz
+                    )
+                    
+                    next_departures[line_name][direction].append({
+                        "departure_time": int(dt.timestamp()),
                         "type": "RT"
                     })
 
                 for scheduled in sortides_scheduled:
-                    if len(next_departures[line.get('nomLinia')][direction]) < 3:
-                        next_departures[line.get('nomLinia')][direction].append({
-                            "departure_time": datetime(year=int(scheduled["any"]), month=int(scheduled["mes"]), day=int(scheduled["dia"]), hour=int(scheduled["hora"]), minute=int(scheduled["minuts"])).timestamp(),
+                    if len(next_departures[line_name][direction]) < 3:
+                        dt = datetime(
+                            year=int(scheduled["any"]), 
+                            month=int(scheduled["mes"]), 
+                            day=int(scheduled["dia"]), 
+                            hour=int(scheduled["hora"]), 
+                            minute=int(scheduled["minuts"]),
+                            tzinfo=madrid_tz
+                        )
+
+                        next_departures[line_name][direction].append({
+                            "departure_time": int(dt.timestamp()),
                             "type": "Scheduled"
                         })
                     else:
@@ -175,9 +202,11 @@ class FgcApiService:
     async def get_next_departures(self, station_name: str, line_name: str, max_results: int = 5) -> Dict[str, List[Dict]]:
         log_file = "realtime_departures.log"
 
+        madrid_tz = ZoneInfo("Europe/Madrid")
+
         def log(msg: str):
             with open(log_file, "a", encoding="utf-8") as f:
-                f.write(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} - {msg}\n")
+                f.write(f"{datetime.now(tz=madrid_tz).strftime('%Y-%m-%d %H:%M:%S')} - {msg}\n")
 
         # Resetear log
         with open(log_file, "w", encoding="utf-8") as f:
@@ -284,7 +313,7 @@ class FgcApiService:
                 return float("inf")  # Si hay datos corruptos, los descartamos
             extra_days = h // 24
             h %= 24
-            ts = datetime.now().replace(hour=h, minute=m, second=s, microsecond=0).timestamp()
+            ts = datetime.now(tz=madrid_tz).replace(hour=h, minute=m, second=s, microsecond=0).timestamp()
             return ts + extra_days * 24 * 3600
 
         stop_times_for_stop["departure_ts"] = stop_times_for_stop["departure_time"].map(to_timestamp)
